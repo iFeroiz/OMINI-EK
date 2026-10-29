@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMINI Electrical Lab - Calculadora de Engenharia</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#121315',
+                            card: '#1e2023',
+                            border: '#2a2d32',
+                            input: '#181a1d',
+                            accent: '#10B981', // Mint Green
+                            accentHover: '#059669',
+                            teal: '#00E676',
+                            text: '#e2e8f0',
+                            muted: '#94a3b8'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #121315;
+            color: #e2e8f0;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121315;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2d32;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10B981;
+        }
+        .glow-accent {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row bg-brand-dark text-brand-text overflow-x-hidden">
+
+    <!-- Sidebar Layout based on OMINI UI -->
+    <aside class="w-full md:w-72 bg-[#17181c] border-r border-brand-border p-4 flex flex-col justify-between shrink-0">
+        <div>
+            <!-- Header Brand -->
+            <div class="flex items-center gap-3 px-2 py-3 mb-6 border-b border-brand-border/60">
+                <div class="w-9 h-9 rounded-lg bg-brand-accent/20 border border-brand-accent flex items-center justify-center text-brand-accent font-bold text-xl glow-accent">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold tracking-wider text-white text-base">OMINI</h1>
+                    <p class="text-[10px] text-brand-accent tracking-widest font-mono uppercase">Electrical Lab</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="space-y-1">
+                <p class="px-3 text-[11px] font-semibold text-brand-muted tracking-wider uppercase mb-2">Cálculos Técnicos</p>
+                
+                <button onclick="switchTab('gerais')" id="nav-gerais" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 bg-brand-accent/15 text-brand-accent border border-brand-accent/30">
+                    <i class="fa-solid fa-calculator w-5 text-center"></i>
+                    <span>Gerais</span>
+                </button>
+
+                <button onclick="switchTab('motor')" id="nav-motor" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-muted hover:text-white hover:bg-brand-card transition-all duration-200 border border-transparent">
+                    <i class="fa-solid fa-gears w-5 text-center"></i>
+                    <span>Motores</span>
+                </button>
+
+                <button onclick="switchTab('trafo')" id="nav-trafo" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-muted hover:text-white hover:bg-brand-card transition-all duration-200 border border-transparent">
+                    <i class="fa-solid fa-network-wired w-5 text-center"></i>
+                    <span>Transformadores</span>
+                </button>
+
+                <button onclick="switchTab('climatizacao')" id="nav-climatizacao" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-muted hover:text-white hover:bg-brand-card transition-all duration-200 border border-transparent">
+                    <i class="fa-solid fa-snowflake w-5 text-center"></i>
+                    <span>Climatização Painel</span>
+                </button>
+
+                <button onclick="switchTab('conversoes')" id="nav-conversoes" class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-muted hover:text-white hover:bg-brand-card transition-all duration-200 border border-transparent">
+                    <i class="fa-solid fa-arrows-rotate w-5 text-center"></i>
+                    <span>Conversões Potência</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer Status -->
+        <div class="mt-8 pt-4 border-t border-brand-border/60 px-2">
+            <div class="flex items-center gap-2 text-xs text-brand-muted">
+                <span class="w-2 h-2 rounded-full bg-brand-accent animate-pulse"></span>
+                <span>Assistente OMINI ativo</span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-1">Normas IEC / NBR - v2.4</p>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Top App Bar -->
+        <header class="h-16 border-b border-brand-border bg-[#17181c]/80 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-10">
+            <div class="flex items-center gap-3">
+                <span id="tab-icon" class="text-brand-accent text-lg"><i class="fa-solid fa-calculator"></i></span>
+                <h2 id="tab-title" class="font-semibold text-white text-base">Cálculos Gerais</h2>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+                <button onclick="resetAllInputs()" class="px-3 py-1.5 rounded-md bg-brand-card hover:bg-brand-border text-brand-muted hover:text-white transition-all flex items-center gap-1.5 border border-brand-border">
+                    <i class="fa-solid fa-rotate-left"></i> Limpar Dados
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Tab Content Wrapper -->
+        <div class="p-4 md:p-8 max-w-6xl w-full mx-auto space-y-6">
+
+            <!-- TAB 1: GERAIS -->
+            <div id="tab-content-gerais" class="tab-panel space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- 1. I kW Monofásico -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-start border-b border-brand-border/60 pb-3">
+                            <div>
+                                <h3 class="font-medium text-white text-base">Corrente em kW Monofásico</h3>
+                                <p class="text-xs text-brand-muted">I (A) = (Potência [kW] × 1000) / Tensão [V]</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-brand-accent/10 text-brand-accent text-xs font-mono">1Ø</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Potência (kW)</label>
+                                <input type="number" id="ikw_mono_p" placeholder="Ex: 5" oninput="calcIKwMono()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão (V)</label>
+                                <input type="number" id="ikw_mono_v" value="220" oninput="calcIKwMono()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                        </div>
+                        <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                            <span class="text-xs text-brand-muted font-medium">Corrente (I):</span>
+                            <span id="res_ikw_mono" class="font-mono text-lg font-bold text-brand-accent">0.00 A</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. I kW Trifásico -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-start border-b border-brand-border/60 pb-3">
+                            <div>
+                                <h3 class="font-medium text-white text-base">Corrente em kW Trifásico</h3>
+                                <p class="text-xs text-brand-muted">I (A) = (Potência [kW] × 1000) / (Tensão [V] × √3)</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-brand-accent/10 text-brand-accent text-xs font-mono">3Ø</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Potência (kW)</label>
+                                <input type="number" id="ikw_tri_p" placeholder="Ex: 15" oninput="calcIKwTri()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão (V)</label>
+                                <input type="number" id="ikw_tri_v" value="380" oninput="calcIKwTri()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                        </div>
+                        <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                            <span class="text-xs text-brand-muted font-medium">Corrente (I):</span>
+                            <span id="res_ikw_tri" class="font-mono text-lg font-bold text-brand-accent">0.00 A</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. kVA Monofásico -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-start border-b border-brand-border/60 pb-3">
+                            <div>
+                                <h3 class="font-medium text-white text-base">Potência Aparente (kVA Monofásico)</h3>
+                                <p class="text-xs text-brand-muted">kVA = (Corrente [A] × Tensão [V]) / 1000</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-brand-accent/10 text-brand-accent text-xs font-mono">1Ø</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Corrente (A)</label>
+                                <input type="number" id="kva_mono_i" placeholder="Ex: 25" oninput="calcKvaMono()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão (V)</label>
+                                <input type="number" id="kva_mono_v" value="220" oninput="calcKvaMono()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                        </div>
+                        <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                            <span class="text-xs text-brand-muted font-medium">Potência Aparente:</span>
+                            <span id="res_kva_mono" class="font-mono text-lg font-bold text-brand-accent">0.00 kVA</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. kVA Trifásico -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-start border-b border-brand-border/60 pb-3">
+                            <div>
+                                <h3 class="font-medium text-white text-base">Potência Aparente (kVA Trifásico)</h3>
+                                <p class="text-xs text-brand-muted">kVA = (Corrente [A] × Tensão [V] × √3) / 1000</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-brand-accent/10 text-brand-accent text-xs font-mono">3Ø</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Corrente (A)</label>
+                                <input type="number" id="kva_tri_i" placeholder="Ex: 40" oninput="calcKvaTri()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão (V)</label>
+                                <input type="number" id="kva_tri_v" value="380" oninput="calcKvaTri()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                        </div>
+                        <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                            <span class="text-xs text-brand-muted font-medium">Potência Aparente:</span>
+                            <span id="res_kva_tri" class="font-mono text-lg font-bold text-brand-accent">0.00 kVA</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 5. Módulo Icw para Ipk (IEC 61439) -->
+                <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-5">
+                    <div class="border-b border-brand-border/60 pb-3 flex flex-wrap justify-between items-center gap-2">
+                        <div>
+                            <h3 class="font-semibold text-white text-base flex items-center gap-2">
+                                <i class="fa-solid fa-wave-square text-brand-accent"></i>
+                                Corrente de Pico do Painel (I<sub>pk</sub> = I<sub>cw</sub> × n)
+                            </h3>
+                            <p class="text-xs text-brand-muted mt-0.5">Determinação do fator de pico <strong>n</strong> conforme IEC 61439 / NBR IEC 61439</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-brand-accent/10 text-brand-accent border border-brand-accent/30 text-xs font-mono font-medium">ABNT NBR IEC 61439</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        <!-- Inputs and Outputs (7 cols) -->
+                        <div class="lg:col-span-7 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-brand-muted mb-1">Corrente Eficaz (I<sub>cw</sub>)</label>
+                                    <div class="relative flex items-center">
+                                        <input type="number" id="icw_val" placeholder="Ex: 25" oninput="calcIpk()" class="w-full bg-brand-input border border-brand-border rounded-lg pl-3 pr-16 py-2.5 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                        <select id="icw_unit" onchange="calcIpk()" class="absolute right-1 bg-brand-card text-xs text-brand-accent font-semibold border border-brand-border rounded px-2 py-1 focus:outline-none cursor-pointer">
+                                            <option value="ka" selected>kA</option>
+                                            <option value="a">A</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="bg-brand-input/40 border border-brand-border/50 rounded-lg p-2.5 flex items-center justify-around text-center">
+                                    <div>
+                                        <span class="text-[10px] text-brand-muted block uppercase">cos φ</span>
+                                        <span id="res_ipk_cos" class="font-mono text-sm font-semibold text-amber-400">--</span>
+                                    </div>
+                                    <div class="h-6 w-px bg-brand-border"></div>
+                                    <div>
+                                        <span class="text-[10px] text-brand-muted block uppercase">Fator (n)</span>
+                                        <span id="res_ipk_n" class="font-mono text-sm font-semibold text-brand-accent">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Result Cards -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                <div class="bg-brand-input/90 border border-brand-border rounded-xl p-4 space-y-1">
+                                    <span class="text-xs text-brand-muted font-medium block">Corrente de Pico (I<sub>pk</sub>) em kA</span>
+                                    <div class="flex items-baseline justify-between">
+                                        <span id="res_ipk_ka" class="font-mono text-2xl font-bold text-brand-accent">0.0 kA</span>
+                                        <button onclick="copyToClipboard('res_ipk_ka')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                    </div>
+                                </div>
+                                <div class="bg-brand-input/90 border border-brand-border rounded-xl p-4 space-y-1">
+                                    <span class="text-xs text-brand-muted font-medium block">Corrente de Pico (I<sub>pk</sub>) em Amperes</span>
+                                    <div class="flex items-baseline justify-between">
+                                        <span id="res_ipk_a" class="font-mono text-xl font-bold text-white">0 A</span>
+                                        <button onclick="copyToClipboard('res_ipk_a')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reference Table (5 cols) -->
+                        <div class="lg:col-span-5 bg-brand-input/50 border border-brand-border/70 rounded-xl p-3.5 space-y-2">
+                            <span class="text-xs font-semibold text-white flex items-center gap-1.5 border-b border-brand-border/50 pb-2">
+                                <i class="fa-solid fa-table text-brand-accent"></i> Tabela Normativa NBR IEC 61439
+                            </span>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-[11px] font-mono">
+                                    <thead>
+                                        <tr class="text-brand-muted border-b border-brand-border/40">
+                                            <th class="pb-1">Faixa de I<sub>cw</sub></th>
+                                            <th class="pb-1 text-center">cos φ</th>
+                                            <th class="pb-1 text-right">Fator n</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-brand-border/30 text-gray-300">
+                                        <tr id="row-icw-1" class="transition-colors">
+                                            <td class="py-1">I<sub>cw</sub> ≤ 5 kA</td>
+                                            <td class="text-center">0,70</td>
+                                            <td class="text-right font-bold text-brand-accent">1,5</td>
+                                        </tr>
+                                        <tr id="row-icw-2" class="transition-colors">
+                                            <td class="py-1">5 kA &lt; I<sub>cw</sub> ≤ 10 kA</td>
+                                            <td class="text-center">0,50</td>
+                                            <td class="text-right font-bold text-brand-accent">1,7</td>
+                                        </tr>
+                                        <tr id="row-icw-3" class="transition-colors">
+                                            <td class="py-1">10 kA &lt; I<sub>cw</sub> ≤ 20 kA</td>
+                                            <td class="text-center">0,30</td>
+                                            <td class="text-right font-bold text-brand-accent">2,0</td>
+                                        </tr>
+                                        <tr id="row-icw-4" class="transition-colors">
+                                            <td class="py-1">20 kA &lt; I<sub>cw</sub> ≤ 50 kA</td>
+                                            <td class="text-center">0,25</td>
+                                            <td class="text-right font-bold text-brand-accent">2,1</td>
+                                        </tr>
+                                        <tr id="row-icw-5" class="transition-colors">
+                                            <td class="py-1">I<sub>cw</sub> &gt; 50 kA</td>
+                                            <td class="text-center">0,20</td>
+                                            <td class="text-right font-bold text-brand-accent">2,2</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: MOTOR -->
+            <div id="tab-content-motor" class="tab-panel hidden space-y-6">
+                <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-6">
+                    <div class="border-b border-brand-border/60 pb-4">
+                        <h3 class="font-semibold text-white text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-gears text-brand-accent"></i> Cálculos para Dimensionamento de Motor
+                        </h3>
+                        <p class="text-xs text-brand-muted mt-1">Fórmulas: I_Motor = (kW × 1000) / V / 1.73 / 0.9 / 0.9 | I_Disjuntor = I_Motor × 1.15</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Potência do Motor</label>
+                                <div class="relative flex items-center">
+                                    <input type="number" id="motor_kw" placeholder="Ex: 7.5" oninput="calcMotor()" class="w-full bg-brand-input border border-brand-border rounded-lg pl-3.5 pr-20 py-2.5 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                    <select id="motor_unit" onchange="calcMotor()" class="absolute right-1 bg-brand-card text-xs text-brand-accent font-semibold border border-brand-border rounded px-2 py-1.5 focus:outline-none cursor-pointer">
+                                        <option value="kw" selected>kW</option>
+                                        <option value="cv">CV</option>
+                                        <option value="hp">HP</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão nominal (V)</label>
+                                <input type="number" id="motor_v" value="380" oninput="calcMotor()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div class="p-3 bg-brand-input/40 rounded-lg border border-brand-border/40 text-xs text-brand-muted space-y-1">
+                                <p><span class="text-white font-medium">Rendimento (η):</span> 0.90 (90%)</p>
+                                <p><span class="text-white font-medium">Fator de Potência (cos φ):</span> 0.90</p>
+                                <p><span class="text-white font-medium">Fator Trifásico (√3):</span> 1.73</p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col justify-between space-y-4">
+                            <div class="bg-brand-input border border-brand-border rounded-xl p-4 space-y-3">
+                                <span class="text-xs font-medium text-brand-muted uppercase tracking-wider block">Corrente Nominal (I Motor)</span>
+                                <div class="flex items-baseline justify-between">
+                                    <span id="res_i_motor" class="font-mono text-3xl font-bold text-brand-accent">0.00 A</span>
+                                    <button onclick="copyToClipboard('res_i_motor')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i> Copiar</button>
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-input border border-brand-border rounded-xl p-4 space-y-3 border-l-4 border-l-brand-accent">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-medium text-brand-muted uppercase tracking-wider">Corrente Máx. para Disjuntor (115%)</span>
+                                    <span class="text-[10px] bg-brand-accent/20 text-brand-accent px-2 py-0.5 rounded font-mono">+15% margem</span>
+                                </div>
+                                <div class="flex items-baseline justify-between">
+                                    <span id="res_i_disj" class="font-mono text-3xl font-bold text-white">0.00 A</span>
+                                    <button onclick="copyToClipboard('res_i_disj')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i> Copiar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: TRAFO -->
+            <div id="tab-content-trafo" class="tab-panel hidden space-y-6">
+                
+                <!-- 1. Estimativa de Trafo de Comando AC -->
+                <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-6">
+                    <div class="border-b border-brand-border/60 pb-4 flex flex-wrap justify-between items-center gap-2">
+                        <div>
+                            <h3 class="font-semibold text-white text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-brand-accent"></i> Dimensionamento do Transformador de Comando AC
+                            </h3>
+                            <p class="text-xs text-brand-muted mt-1">Estimativa rápida para painéis e comando | Seleção da Potência Comercial Adequada</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-brand-muted font-medium">Tensão Comando:</label>
+                            <select id="trafo_cmd_v" onchange="calcTrafoComando()" class="bg-brand-input text-xs text-brand-accent border border-brand-border rounded px-2.5 py-1 font-semibold focus:outline-none cursor-pointer">
+                                <option value="220" selected>220 V</option>
+                                <option value="110">110 V</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        <!-- Tabela de Cargas de Comando (7 cols) -->
+                        <div class="lg:col-span-7 bg-brand-input/40 border border-brand-border rounded-xl p-4 space-y-3">
+                            <span class="text-xs font-semibold text-white uppercase tracking-wider block border-b border-brand-border/50 pb-2">
+                                <i class="fa-solid fa-list-check text-brand-accent"></i> Levantamento de Cargas do Painel
+                            </span>
+
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs font-mono">
+                                    <thead>
+                                        <tr class="text-brand-muted border-b border-brand-border/50">
+                                            <th class="pb-2 w-16 text-center">Qtde.</th>
+                                            <th class="pb-2">Cargas</th>
+                                            <th class="pb-2 w-28 text-center">Pot. (Watts)</th>
+                                            <th class="pb-2 w-28 text-right">Pot. Total (W)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-brand-border/30 text-gray-200">
+                                        <!-- Carga 1: Iluminação -->
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q1" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Iluminação</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p1" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot1" class="py-1.5 text-right font-bold text-white">0</td>
+                                        </tr>
+                                        <!-- Carga 2: Tomadas Auxiliares -->
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q2" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Tomadas Auxiliares</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p2" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot2" class="py-1.5 text-right font-bold text-white">0</td>
+                                        </tr>
+                                        <!-- Carga 3: Exaustores -->
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q3" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Exaustores</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p3" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot3" class="py-1.5 text-right font-bold text-white">0</td>
+                                        </tr>
+                                        <!-- Carga 4: Ar-Condicionado -->
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q4" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Ar-Condicionado</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p4" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot4" class="py-1.5 text-right font-bold text-white">0</td>
+                                        </tr>
+                                        <!-- Carga 5: Fontes DC -->
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q5" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Fontes DC</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p5" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot5" class="py-1.5 text-right font-bold text-white">0</td>
+                                        </tr>
+                                        <!-- Carga 6: Mais / Outros -->
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q6" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Mais (Outras Cargas)</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p6" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-white focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot6" class="py-1.5 text-right font-bold text-white">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Resultados do Dimensionamento (5 cols) -->
+                        <div class="lg:col-span-5 space-y-4">
+                            
+                            <!-- Card Potência e Corrente Total Calculadas -->
+                            <div class="bg-brand-input/60 border border-brand-border rounded-xl p-4 space-y-3">
+                                <div class="grid grid-cols-2 gap-3 text-center">
+                                    <div class="p-2.5 bg-brand-input rounded-lg border border-brand-border/60">
+                                        <span class="text-[10px] text-brand-muted block uppercase font-medium">Potência Total</span>
+                                        <span id="res_cmd_p_tot" class="font-mono text-lg font-bold text-white">0 W</span>
+                                    </div>
+                                    <div class="p-2.5 bg-brand-input rounded-lg border border-brand-border/60">
+                                        <span class="text-[10px] text-brand-muted block uppercase font-medium">Corrente Total</span>
+                                        <span id="res_cmd_i_tot" class="font-mono text-lg font-bold text-white">0,00 A</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card Modelo Comercial de Transformador Enquadrado -->
+                            <div class="bg-brand-input border border-brand-accent/40 rounded-xl p-4 space-y-3 border-l-4 border-l-brand-accent">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-brand-accent uppercase tracking-wider">Transformador Comercial Recomendado</span>
+                                    <span class="text-[10px] bg-brand-accent/20 text-brand-accent px-2 py-0.5 rounded font-mono">Linha Comercial</span>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-baseline">
+                                        <span class="text-xs text-brand-muted">Modelo de Trafo (VA):</span>
+                                        <span id="res_cmd_trafo_va" class="font-mono text-2xl font-bold text-brand-accent">0 VA (0 kVA)</span>
+                                    </div>
+                                    <div class="flex justify-between items-baseline border-t border-brand-border/50 pt-2">
+                                        <span class="text-xs text-brand-muted">Corrente do Trafo:</span>
+                                        <span id="res_cmd_trafo_i" class="font-mono text-lg font-bold text-white">0,00 A</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- 2. Trafo Trifásico -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-start border-b border-brand-border/60 pb-3">
+                            <div>
+                                <h3 class="font-medium text-white text-base">Trafo Trifásico - Corrente Nominal</h3>
+                                <p class="text-xs text-brand-muted">I (A) = (Potência [kVA] × 1000) / (Tensão [V] × √3)</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-brand-accent/10 text-brand-accent text-xs font-mono">3Ø Trafo</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Potência (kVA)</label>
+                                <input type="number" id="trafo_tri_kva" placeholder="Ex: 112.5" oninput="calcTrafoTri()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão (V)</label>
+                                <input type="number" id="trafo_tri_v" value="380" oninput="calcTrafoTri()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                        </div>
+                        <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                            <span class="text-xs text-brand-muted font-medium">Corrente Nominal:</span>
+                            <span id="res_trafo_tri" class="font-mono text-lg font-bold text-brand-accent">0.00 A</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Trafo Monofásico -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-start border-b border-brand-border/60 pb-3">
+                            <div>
+                                <h3 class="font-medium text-white text-base">Trafo Monofásico - Corrente Nominal</h3>
+                                <p class="text-xs text-brand-muted">I (A) = (Potência [kVA] × 1000) / Tensão [V]</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded bg-brand-accent/10 text-brand-accent text-xs font-mono">1Ø Trafo</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Potência (kVA)</label>
+                                <input type="number" id="trafo_mono_kva" placeholder="Ex: 15" oninput="calcTrafoMono()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-brand-muted mb-1">Tensão (V)</label>
+                                <input type="number" id="trafo_mono_v" value="220" oninput="calcTrafoMono()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                            </div>
+                        </div>
+                        <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                            <span class="text-xs text-brand-muted font-medium">Corrente Nominal:</span>
+                            <span id="res_trafo_mono" class="font-mono text-lg font-bold text-brand-accent">0.00 A</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 4. Impedância Ômica (%Z -> Ohms) e Corrente de Curto (Icc) -->
+                <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-5">
+                    <div class="border-b border-brand-border/60 pb-3 flex flex-wrap justify-between items-center gap-2">
+                        <div>
+                            <h3 class="font-semibold text-white text-base flex items-center gap-2">
+                                <i class="fa-solid fa-bolt text-brand-accent"></i>
+                                Impedância Ômica (Z<sub>Ω</sub>) e Corrente de Curto-Circuito (I<sub>cc</sub>)
+                            </h3>
+                            <p class="text-xs text-brand-muted mt-0.5">Z<sub>Ω</sub> = (%Z / 100) · (V<sub>L-L</sub>² / S) | I<sub>cc</sub> = I<sub>n</sub> / (%Z / 100)</p>
+                        </div>
+                        <select id="icc_system" onchange="calcTrafoFull()" class="bg-brand-input text-xs text-brand-accent border border-brand-border rounded px-2.5 py-1 font-semibold focus:outline-none cursor-pointer">
+                            <option value="tri" selected>Trifásico (3Ø)</option>
+                            <option value="mono">Monofásico (1Ø)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-brand-muted mb-1">Impedância (%Z)</label>
+                            <input type="number" id="z_percent" placeholder="Ex: 4.5" oninput="calcTrafoFull()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-brand-muted mb-1">Tensão V<sub>L-L</sub> (V)</label>
+                            <input type="number" id="z_vll" value="380" oninput="calcTrafoFull()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-brand-muted mb-1">Potência (S)</label>
+                            <div class="relative flex items-center">
+                                <input type="number" id="z_s" placeholder="Ex: 112.5" oninput="calcTrafoFull()" class="w-full bg-brand-input border border-brand-border rounded-lg pl-3 pr-16 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                <select id="z_s_unit" onchange="calcTrafoFull()" class="absolute right-1 bg-brand-card text-xs text-brand-accent font-semibold border border-brand-border rounded px-2 py-1 focus:outline-none cursor-pointer">
+                                    <option value="kva" selected>kVA</option>
+                                    <option value="va">VA</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Result Grid Trafo -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        <div class="bg-brand-input/90 border border-brand-border rounded-xl p-4 space-y-1">
+                            <span class="text-xs text-brand-muted font-medium block">Corrente Nominal (I<sub>n</sub>)</span>
+                            <span id="res_trafo_in" class="font-mono text-xl font-bold text-white">0.00 A</span>
+                        </div>
+                        <div class="bg-brand-input/90 border border-brand-border rounded-xl p-4 space-y-1">
+                            <span class="text-xs text-brand-muted font-medium block">Impedância (Z<sub>Ω</sub>)</span>
+                            <span id="res_trafo_z" class="font-mono text-xl font-bold text-brand-accent">0.0000 Ω</span>
+                        </div>
+                        <div class="bg-brand-input/90 border border-red-500/30 rounded-xl p-4 space-y-1 bg-red-950/10">
+                            <span class="text-xs text-red-400 font-medium block">Corrente Curto (I<sub>cc</sub>)</span>
+                            <span id="res_trafo_icc" class="font-mono text-xl font-bold text-red-400">0.00 A (0 kA)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CLIMATIZAÇÃO DE PAINÉIS -->
+            <div id="tab-content-climatizacao" class="tab-panel hidden space-y-6">
+                <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-6">
+                    <div class="border-b border-brand-border/60 pb-4 flex flex-wrap justify-between items-center gap-2">
+                        <div>
+                            <h3 class="font-semibold text-white text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-snowflake text-sky-400"></i>
+                                Climatização de Painel Elétrico (Ar-Condicionado / Dissipação)
+                            </h3>
+                            <p class="text-xs text-brand-muted mt-1">Fórmula: Q<sub>req</sub> = P<sub>d</sub> + k · A · (T<sub>e</sub> - T<sub>i</sub>) | Q<sub>BTU</sub> = Q<sub>W</sub> × 3.41214</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20 text-xs font-mono font-medium">Padrão Planilha / IEC 60890</span>
+                    </div>
+
+                    <!-- Layout 2 Colunas (Inputs e Resultados) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        
+                        <!-- Coluna de Entradas (7 Colunas) -->
+                        <div class="lg:col-span-7 space-y-4">
+                            
+                            <!-- Dissipação Térmica dos Equipamentos -->
+                            <div class="bg-brand-input/40 border border-brand-border rounded-xl p-4 space-y-3">
+                                <h4 class="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-temperature-arrow-up text-amber-400"></i> 1. Dissipação Térmica Interna (P<sub>d</sub>)
+                                </h4>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Perdas Totais dos Componentes</label>
+                                        <div class="relative flex items-center">
+                                            <input type="number" id="clim_pd" placeholder="Ex: 100" oninput="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg pl-3 pr-16 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                            <select id="clim_pd_unit" onchange="calcClimatizacao()" class="absolute right-1 bg-brand-card text-xs text-brand-accent font-semibold border border-brand-border rounded px-2 py-1 focus:outline-none cursor-pointer">
+                                                <option value="w" selected>Watts (W)</option>
+                                                <option value="kw">kW</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Material do Painel (k)</label>
+                                        <select id="clim_k_factor" onchange="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition cursor-pointer">
+                                            <option value="5.5" selected>Aço Carbono / Pintado (k = 5,5 W/m²K)</option>
+                                            <option value="3.7">Aço Inoxidável (k = 3,7 W/m²K)</option>
+                                            <option value="12.0">Alumínio (k = 12,0 W/m²K)</option>
+                                            <option value="3.5">Poliéster / Plástico (k = 3,5 W/m²K)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Entradas individuais de perdas dos componentes (Soma automática) -->
+                                <div class="pt-2 border-t border-brand-border/40 space-y-2">
+                                    <span class="text-[11px] text-brand-muted font-medium block">Entradas Individuais de Perdas (Watts):</span>
+                                    <div class="grid grid-cols-5 gap-2">
+                                        <div>
+                                            <label class="block text-[10px] text-brand-muted mb-0.5">Comp. 1</label>
+                                            <input type="number" id="comp_loss_1" placeholder="0" oninput="updateTotalLosses()" class="w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-brand-accent transition">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] text-brand-muted mb-0.5">Comp. 2</label>
+                                            <input type="number" id="comp_loss_2" placeholder="0" oninput="updateTotalLosses()" class="w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-brand-accent transition">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] text-brand-muted mb-0.5">Comp. 3</label>
+                                            <input type="number" id="comp_loss_3" placeholder="0" oninput="updateTotalLosses()" class="w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-brand-accent transition">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] text-brand-muted mb-0.5">Comp. 4</label>
+                                            <input type="number" id="comp_loss_4" placeholder="0" oninput="updateTotalLosses()" class="w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-brand-accent transition">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] text-brand-muted mb-0.5">Comp. 5</label>
+                                            <input type="number" id="comp_loss_5" placeholder="0" oninput="updateTotalLosses()" class="w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-brand-accent transition">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dimensões do Painel -->
+                            <div class="bg-brand-input/40 border border-brand-border rounded-xl p-4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <h4 class="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+                                        <i class="fa-solid fa-cube text-brand-accent"></i> 2. Dimensões do Invólucro
+                                    </h4>
+                                    <div class="flex items-center gap-2 text-[11px] font-mono">
+                                        <label class="cursor-pointer text-brand-muted hover:text-white"><input type="radio" name="dim_unit" value="mm" checked onchange="calcClimatizacao()"> mm</label>
+                                        <label class="cursor-pointer text-brand-muted hover:text-white"><input type="radio" name="dim_unit" value="m" onchange="calcClimatizacao()"> metros</label>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Altura (A)</label>
+                                        <input type="number" id="clim_h" placeholder="Ex: 2000" oninput="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Largura (L)</label>
+                                        <input type="number" id="clim_w" placeholder="Ex: 600" oninput="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Profundidade (P)</label>
+                                        <input type="number" id="clim_d" placeholder="Ex: 600" oninput="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-brand-muted mb-1">Montagem / Posição do Painel (Troca de Calor Eficiente)</label>
+                                    <select id="clim_pos" onchange="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition cursor-pointer">
+                                        <option value="1.0" selected>Livre de todos os lados (5 superfícies expostas)</option>
+                                        <option value="0.85">Traseira encostada na parede</option>
+                                        <option value="0.75">Uma lateral encostada na parede</option>
+                                        <option value="0.65">Uma lateral e a traseira encostadas na parede</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Temperaturas -->
+                            <div class="bg-brand-input/40 border border-brand-border rounded-xl p-4 space-y-3">
+                                <h4 class="text-xs font-semibold text-white uppercase tracking-wider flex items-center gap-2">
+                                    <i class="fa-solid fa-temperature-three-quarters text-sky-400"></i> 3. Temperaturas de Projeto (°C)
+                                </h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Temp. Externa Máxima (T<sub>e</sub>)</label>
+                                        <input type="number" id="clim_te" value="45" oninput="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-brand-muted mb-1">Temp. Interna Desejada (T<sub>i</sub>)</label>
+                                        <input type="number" id="clim_ti" value="35" oninput="calcClimatizacao()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Coluna de Resultados e Resumo (5 Colunas) -->
+                        <div class="lg:col-span-5 space-y-4">
+                            
+                            <!-- Resultado Principal: Capacidade do Ar-Condicionado e Ventilação -->
+                            <div class="bg-brand-input border border-sky-500/40 rounded-xl p-5 space-y-4 border-l-4 border-l-sky-400">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-sky-400 uppercase tracking-wider">Resultados de Climatização</span>
+                                    <span class="text-[10px] bg-sky-500/20 text-sky-300 px-2 py-0.5 rounded font-mono">Padrão Planilha</span>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <!-- Ar Condicionado (W e BTU) -->
+                                    <div>
+                                        <span class="text-xs text-brand-muted block">AR CONDICIONADO ( W ):</span>
+                                        <div class="flex items-baseline justify-between">
+                                            <span id="res_clim_watts" class="font-mono text-xl font-bold text-white">0,00 W</span>
+                                            <button onclick="copyToClipboard('res_clim_watts')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span class="text-xs text-brand-muted block">AR CONDICIONADO ( BTU ):</span>
+                                        <div class="flex items-baseline justify-between">
+                                            <span id="res_clim_btu" class="font-mono text-xl font-bold text-sky-400">0,00 BTU</span>
+                                            <button onclick="copyToClipboard('res_clim_btu')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="border-t border-brand-border/60 pt-2"></div>
+
+                                    <!-- Ventilador / Insuflador (m³/h e CFM) -->
+                                    <div>
+                                        <span class="text-xs text-brand-muted block">VENTILADOR/INSUFLADOR (m³/h):</span>
+                                        <div class="flex items-baseline justify-between">
+                                            <span id="res_clim_m3h" class="font-mono text-lg font-bold text-emerald-400">0,00 m³/h</span>
+                                            <button onclick="copyToClipboard('res_clim_m3h')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span class="text-xs text-brand-muted block">VENTILADOR/INSUFLADOR (CFM):</span>
+                                        <div class="flex items-baseline justify-between">
+                                            <span id="res_clim_cfm" class="font-mono text-lg font-bold text-white">0,00 CFM</span>
+                                            <button onclick="copyToClipboard('res_clim_cfm')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="border-t border-brand-border/60 pt-2"></div>
+
+                                    <!-- Área da Grelha -->
+                                    <div>
+                                        <span class="text-xs text-brand-muted block">AREA DA GRELHA ( m² ):</span>
+                                        <div class="flex items-baseline justify-between">
+                                            <span id="res_clim_grelha" class="font-mono text-lg font-bold text-amber-400">0,0000 m²</span>
+                                            <button onclick="copyToClipboard('res_clim_grelha')" class="text-xs text-brand-muted hover:text-white transition"><i class="fa-regular fa-copy"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resumo dos Parâmetros de Troca Térmica -->
+                            <div class="bg-brand-input/60 border border-brand-border rounded-xl p-4 space-y-3">
+                                <span class="text-xs font-semibold text-white block border-b border-brand-border/50 pb-2">
+                                    <i class="fa-solid fa-list-check text-brand-accent"></i> Resumo Técnico da Análise
+                                </span>
+                                
+                                <div class="space-y-2 text-xs font-mono">
+                                    <div class="flex justify-between">
+                                        <span class="text-brand-muted">Área Efetiva (A):</span>
+                                        <span id="res_clim_area" class="text-white font-semibold">0.00 m²</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-brand-muted">Diferencial Temp. (ΔT):</span>
+                                        <span id="res_clim_dt" class="text-white font-semibold">0 °C</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-brand-muted">Ganho/Perda pelo Painel:</span>
+                                        <span id="res_clim_qp" class="text-amber-400 font-semibold">0 W</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-brand-muted">Diagnóstico de Climatização:</span>
+                                        <span id="res_clim_diag" class="text-brand-accent font-semibold">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-brand-input/30 rounded-lg border border-brand-border/30 text-[11px] text-brand-muted space-y-1">
+                                <p><i class="fa-solid fa-circle-info text-sky-400"></i> <strong>Nota:</strong> Quando T<sub>e</sub> &gt; T<sub>i</sub>, o calor absorvido pelo invólucro do ambiente é somado à dissipação interna dos componentes para determinar a carga térmica total.</p>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: CONVERSÕES -->
+            <div id="tab-content-conversoes" class="tab-panel hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                    <!-- Conversão CV > kW -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-5">
+                        <div class="border-b border-brand-border/60 pb-3">
+                            <h3 class="font-medium text-white text-base">Cavalo-Vapor (CV) para kW / W</h3>
+                            <p class="text-xs text-brand-muted">1 CV = 736 Watts (0.736 kW)</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-brand-muted mb-1">Potência em CV</label>
+                            <input type="number" id="conv_cv" placeholder="Ex: 10" oninput="calcCvToKw()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                                <span class="text-xs text-brand-muted font-medium">Em Quilowatts (kW):</span>
+                                <span id="res_cv_kw" class="font-mono text-lg font-bold text-brand-accent">0.00 kW</span>
+                            </div>
+                            <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                                <span class="text-xs text-brand-muted font-medium">Em Watts (W):</span>
+                                <span id="res_cv_w" class="font-mono text-lg font-semibold text-white">0 W</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conversão HP > kW -->
+                    <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-5">
+                        <div class="border-b border-brand-border/60 pb-3">
+                            <h3 class="font-medium text-white text-base">Horse Power (HP) para kW / W</h3>
+                            <p class="text-xs text-brand-muted">1 HP = 746 Watts (0.746 kW)</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-brand-muted mb-1">Potência em HP</label>
+                            <input type="number" id="conv_hp" placeholder="Ex: 10" oninput="calcHpToKw()" class="w-full bg-brand-input border border-brand-border rounded-lg px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-brand-accent transition">
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                                <span class="text-xs text-brand-muted font-medium">Em Quilowatts (kW):</span>
+                                <span id="res_hp_kw" class="font-mono text-lg font-bold text-brand-accent">0.00 kW</span>
+                            </div>
+                            <div class="bg-brand-input/70 border border-brand-border rounded-lg p-3 flex justify-between items-center">
+                                <span class="text-xs text-brand-muted font-medium">Em Watts (W):</span>
+                                <span id="res_hp_w" class="font-mono text-lg font-semibold text-white">0 W</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-brand-card border border-brand-accent text-white text-xs px-4 py-2.5 rounded-lg shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2">
+        <i class="fa-solid fa-check text-brand-accent"></i>
+        <span id="toast-msg">Copiado para a área de transferência!</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Constants
+        const SQRT3 = 1.73;
+
+        // Commercial Trafo Options in VA (Catalog List)
+        const TRAFO_CATALOG_VA = [150, 500, 750, 1000, 1500, 2000, 3000];
+
+        // Navigation Switcher
+        function switchTab(tabKey) {
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.add('hidden');
+            });
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-brand-muted hover:text-white hover:bg-brand-card transition-all duration-200 border border-transparent";
+            });
+
+            const activePanel = document.getElementById(`tab-content-${tabKey}`);
+            if (activePanel) {
+                activePanel.classList.remove('hidden');
+            }
+
+            const activeNav = document.getElementById(`nav-${tabKey}`);
+            if (activeNav) {
+                activeNav.className = "nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 bg-brand-accent/15 text-brand-accent border border-brand-accent/30";
+            }
+
+            const titleElem = document.getElementById('tab-title');
+            const iconElem = document.getElementById('tab-icon');
+
+            switch(tabKey) {
+                case 'gerais':
+                    titleElem.innerText = 'Cálculos Gerais';
+                    iconElem.innerHTML = '<i class="fa-solid fa-calculator"></i>';
+                    break;
+                case 'motor':
+                    titleElem.innerText = 'Cálculos para Motores Elétricos';
+                    iconElem.innerHTML = '<i class="fa-solid fa-gears"></i>';
+                    break;
+                case 'trafo':
+                    titleElem.innerText = 'Transformadores de Potência e Comando';
+                    iconElem.innerHTML = '<i class="fa-solid fa-network-wired"></i>';
+                    break;
+                case 'climatizacao':
+                    titleElem.innerText = 'Climatização de Painéis Elétricos';
+                    iconElem.innerHTML = '<i class="fa-solid fa-snowflake"></i>';
+                    break;
+                case 'conversoes':
+                    titleElem.innerText = 'Conversões de Potência';
+                    iconElem.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i>';
+                    break;
+            }
+        }
+
+        // --- GERAIS CALCULATIONS ---
+
+        function calcIKwMono() {
+            const p = parseFloat(document.getElementById('ikw_mono_p').value);
+            const v = parseFloat(document.getElementById('ikw_mono_v').value);
+            const resElem = document.getElementById('res_ikw_mono');
+
+            if (!p || !v || v === 0) {
+                resElem.innerText = '0.00 A';
+                return;
+            }
+
+            const i = (p * 1000) / v;
+            resElem.innerText = i.toFixed(2) + ' A';
+        }
+
+        function calcIKwTri() {
+            const p = parseFloat(document.getElementById('ikw_tri_p').value);
+            const v = parseFloat(document.getElementById('ikw_tri_v').value);
+            const resElem = document.getElementById('res_ikw_tri');
+
+            if (!p || !v || v === 0) {
+                resElem.innerText = '0.00 A';
+                return;
+            }
+
+            const i = (p * 1000) / (v * SQRT3);
+            resElem.innerText = i.toFixed(2) + ' A';
+        }
+
+        function calcKvaMono() {
+            const i = parseFloat(document.getElementById('kva_mono_i').value);
+            const v = parseFloat(document.getElementById('kva_mono_v').value);
+            const resElem = document.getElementById('res_kva_mono');
+
+            if (!i || !v) {
+                resElem.innerText = '0.00 kVA';
+                return;
+            }
+
+            const kva = (i * v) / 1000;
+            resElem.innerText = kva.toFixed(2) + ' kVA';
+        }
+
+        function calcKvaTri() {
+            const i = parseFloat(document.getElementById('kva_tri_i').value);
+            const v = parseFloat(document.getElementById('kva_tri_v').value);
+            const resElem = document.getElementById('res_kva_tri');
+
+            if (!i || !v) {
+                resElem.innerText = '0.00 kVA';
+                return;
+            }
+
+            const kva = (i * v * SQRT3) / 1000;
+            resElem.innerText = kva.toFixed(2) + ' kVA';
+        }
+
+        function calcIpk() {
+            const valInput = parseFloat(document.getElementById('icw_val').value);
+            const unit = document.getElementById('icw_unit').value;
+
+            const resCos = document.getElementById('res_ipk_cos');
+            const resN = document.getElementById('res_ipk_n');
+            const resIpkKa = document.getElementById('res_ipk_ka');
+            const resIpkA = document.getElementById('res_ipk_a');
+
+            for (let i = 1; i <= 5; i++) {
+                const row = document.getElementById(`row-icw-${i}`);
+                if (row) row.className = "transition-colors";
+            }
+
+            if (!valInput || valInput <= 0) {
+                resCos.innerText = '--';
+                resN.innerText = '--';
+                resIpkKa.innerText = '0.0 kA';
+                resIpkA.innerText = '0 A';
+                return;
+            }
+
+            const icwKa = (unit === 'a') ? valInput / 1000 : valInput;
+
+            let cosPhi = 0;
+            let nFactor = 0;
+            let activeRowId = '';
+
+            if (icwKa <= 5) {
+                cosPhi = 0.7;
+                nFactor = 1.5;
+                activeRowId = 'row-icw-1';
+            } else if (icwKa <= 10) {
+                cosPhi = 0.5;
+                nFactor = 1.7;
+                activeRowId = 'row-icw-2';
+            } else if (icwKa <= 20) {
+                cosPhi = 0.3;
+                nFactor = 2.0;
+                activeRowId = 'row-icw-3';
+            } else if (icwKa <= 50) {
+                cosPhi = 0.25;
+                nFactor = 2.1;
+                activeRowId = 'row-icw-4';
+            } else {
+                cosPhi = 0.2;
+                nFactor = 2.2;
+                activeRowId = 'row-icw-5';
+            }
+
+            const activeRow = document.getElementById(activeRowId);
+            if (activeRow) {
+                activeRow.className = "bg-brand-accent/20 text-white font-semibold transition-colors";
+            }
+
+            const ipkKa = icwKa * nFactor;
+            const ipkA = ipkKa * 1000;
+
+            resCos.innerText = cosPhi.toFixed(2).replace('.', ',');
+            resN.innerText = nFactor.toFixed(1).replace('.', ',');
+            resIpkKa.innerText = ipkKa.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + ' kA';
+            resIpkA.innerText = ipkA.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' A';
+        }
+
+
+        // --- MOTOR CALCULATIONS ---
+
+        function calcMotor() {
+            const inputVal = parseFloat(document.getElementById('motor_kw').value);
+            const unit = document.getElementById('motor_unit').value;
+            const v = parseFloat(document.getElementById('motor_v').value);
+            
+            const resMotor = document.getElementById('res_i_motor');
+            const resDisj = document.getElementById('res_i_disj');
+
+            if (!inputVal || !v || v === 0) {
+                resMotor.innerText = '0.00 A';
+                resDisj.innerText = '0.00 A';
+                return;
+            }
+
+            let kw = inputVal;
+            if (unit === 'cv') {
+                kw = (inputVal * 736) / 1000;
+            } else if (unit === 'hp') {
+                kw = (inputVal * 746) / 1000;
+            }
+
+            const iMotor = (kw * 1000) / v / 1.73 / 0.9 / 0.9;
+            const iDisj = iMotor * 1.15;
+
+            resMotor.innerText = iMotor.toFixed(2) + ' A';
+            resDisj.innerText = iDisj.toFixed(2) + ' A';
+        }
+
+
+        // --- TRAFO CALCULATIONS ---
+
+        // 1. Cálculo e Seleção de Trafo de Comando AC
+        function calcTrafoComando() {
+            const vCmd = parseFloat(document.getElementById('trafo_cmd_v').value);
+            let totalWatts = 0;
+
+            for (let i = 1; i <= 6; i++) {
+                const q = parseFloat(document.getElementById(`cmd_q${i}`).value) || 0;
+                const p = parseFloat(document.getElementById(`cmd_p${i}`).value) || 0;
+                const lineTot = q * p;
+                
+                totalWatts += lineTot;
+                document.getElementById(`cmd_tot${i}`).innerText = lineTot.toLocaleString('pt-BR');
+            }
+
+            const resPTot = document.getElementById('res_cmd_p_tot');
+            const resITot = document.getElementById('res_cmd_i_tot');
+            const resTrafoVa = document.getElementById('res_cmd_trafo_va');
+            const resTrafoI = document.getElementById('res_cmd_trafo_i');
+
+            if (totalWatts <= 0 || !vCmd) {
+                resPTot.innerText = '0 W';
+                resITot.innerText = '0,00 A';
+                resTrafoVa.innerText = '0 VA (0 kVA)';
+                resTrafoI.innerText = '0,00 A';
+                return;
+            }
+
+            // Corrente Total do Circuito
+            const iTotal = totalWatts / vCmd;
+
+            // Enquadramento no Modelo Comercial do Catálogo (0.15kVA até 3kVA)
+            let selectedVa = TRAFO_CATALOG_VA[TRAFO_CATALOG_VA.length - 1]; // valor padrão máximo
+            for (let va of TRAFO_CATALOG_VA) {
+                if (totalWatts <= va) {
+                    selectedVa = va;
+                    break;
+                }
+            }
+
+            const selectedKva = selectedVa / 1000;
+            const iTrafo = selectedVa / vCmd;
+
+            // Atualização da Interface
+            resPTot.innerText = totalWatts.toLocaleString('pt-BR') + ' W';
+            resITot.innerText = iTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' A';
+            resTrafoVa.innerText = `${selectedVa} VA (${selectedKva.toLocaleString('pt-BR')} kVA)`;
+            resTrafoI.innerText = iTrafo.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' A';
+        }
+
+        // 2. Trafo Trifásico Nominal
+        function calcTrafoTri() {
+            const kva = parseFloat(document.getElementById('trafo_tri_kva').value);
+            const v = parseFloat(document.getElementById('trafo_tri_v').value);
+            const resElem = document.getElementById('res_trafo_tri');
+
+            if (!kva || !v || v === 0) {
+                resElem.innerText = '0.00 A';
+                return;
+            }
+
+            const i = (kva * 1000) / (v * SQRT3);
+            resElem.innerText = i.toFixed(2) + ' A';
+        }
+
+        // 3. Trafo Monofásico Nominal
+        function calcTrafoMono() {
+            const kva = parseFloat(document.getElementById('trafo_mono_kva').value);
+            const v = parseFloat(document.getElementById('trafo_mono_v').value);
+            const resElem = document.getElementById('res_trafo_mono');
+
+            if (!kva || !v || v === 0) {
+                resElem.innerText = '0.00 A';
+                return;
+            }
+
+            const i = (kva * 1000) / v;
+            resElem.innerText = i.toFixed(2) + ' A';
+        }
+
+        // 4. Impedância Z e Curto-Circuito Icc
+        function calcTrafoFull() {
+            const system = document.getElementById('icc_system').value;
+            const zPercent = parseFloat(document.getElementById('z_percent').value);
+            const vll = parseFloat(document.getElementById('z_vll').value);
+            let sInput = parseFloat(document.getElementById('z_s').value);
+            const sUnit = document.getElementById('z_s_unit').value;
+
+            const resIn = document.getElementById('res_trafo_in');
+            const resZ = document.getElementById('res_trafo_z');
+            const resIcc = document.getElementById('res_trafo_icc');
+
+            if (!zPercent || !vll || !sInput || zPercent === 0 || vll === 0 || sInput === 0) {
+                resIn.innerText = '0.00 A';
+                resZ.innerText = '0.0000 Ω';
+                resIcc.innerText = '0.00 A (0 kA)';
+                return;
+            }
+
+            const sVA = (sUnit === 'kva') ? sInput * 1000 : sInput;
+
+            let inNominal = 0;
+            if (system === 'tri') {
+                inNominal = sVA / (vll * SQRT3);
+            } else {
+                inNominal = sVA / vll;
+            }
+
+            const zOmega = (zPercent / 100) * (Math.pow(vll, 2) / sVA);
+            const iccAmperes = inNominal / (zPercent / 100);
+            const iccKa = iccAmperes / 1000;
+
+            resIn.innerText = inNominal.toFixed(2) + ' A';
+            resZ.innerText = zOmega.toFixed(4) + ' Ω';
+            resIcc.innerText = `${iccAmperes.toFixed(2)} A (${iccKa.toFixed(2)} kA)`;
+        }
+
+
+        // --- CLIMATIZAÇÃO CALCULATIONS ---
+
+        function updateTotalLosses() {
+            let c1 = parseFloat(document.getElementById('comp_loss_1').value) || 0;
+            let c2 = parseFloat(document.getElementById('comp_loss_2').value) || 0;
+            let c3 = parseFloat(document.getElementById('comp_loss_3').value) || 0;
+            let c4 = parseFloat(document.getElementById('comp_loss_4').value) || 0;
+            let c5 = parseFloat(document.getElementById('comp_loss_5').value) || 0;
+
+            let total = c1 + c2 + c3 + c4 + c5;
+            if (total > 0) {
+                document.getElementById('clim_pd').value = total;
+                document.getElementById('clim_pd_unit').value = 'w';
+            }
+            calcClimatizacao();
+        }
+
+        function calcClimatizacao() {
+            let pdInput = parseFloat(document.getElementById('clim_pd').value);
+            const pdUnit = document.getElementById('clim_pd_unit').value;
+            const kFactor = parseFloat(document.getElementById('clim_k_factor').value);
+
+            let h = parseFloat(document.getElementById('clim_h').value);
+            let w = parseFloat(document.getElementById('clim_w').value);
+            let d = parseFloat(document.getElementById('clim_d').value);
+            const dimUnit = document.querySelector('input[name="dim_unit"]:checked').value;
+            const posFactor = parseFloat(document.getElementById('clim_pos').value);
+
+            const te = parseFloat(document.getElementById('clim_te').value);
+            const ti = parseFloat(document.getElementById('clim_ti').value);
+
+            const resBtu = document.getElementById('res_clim_btu');
+            const resWatts = document.getElementById('res_clim_watts');
+            const resM3h = document.getElementById('res_clim_m3h');
+            const resCfm = document.getElementById('res_clim_cfm');
+            const resGrelha = document.getElementById('res_clim_grelha');
+            const resArea = document.getElementById('res_clim_area');
+            const resDt = document.getElementById('res_clim_dt');
+            const resQp = document.getElementById('res_clim_qp');
+            const resDiag = document.getElementById('res_clim_diag');
+
+            if (isNaN(pdInput) || isNaN(w) || isNaN(h) || isNaN(d) || isNaN(te) || isNaN(ti)) {
+                resBtu.innerText = '0,00 BTU';
+                resWatts.innerText = '0,00 W';
+                if (resM3h) resM3h.innerText = '0,00 m³/h';
+                if (resCfm) resCfm.innerText = '0,00 CFM';
+                if (resGrelha) resGrelha.innerText = '0,0000 m²';
+                resArea.innerText = '0.00 m²';
+                resDt.innerText = '0 °C';
+                resQp.innerText = '0 W';
+                resDiag.innerText = '--';
+                return;
+            }
+
+            const pdWatts = (pdUnit === 'kw') ? pdInput * 1000 : pdInput;
+
+            if (dimUnit === 'mm') {
+                h = h / 1000;
+                w = w / 1000;
+                d = d / 1000;
+            }
+
+            const areaFrontal = h * w;
+            const areaTraseira = h * w;
+            const areaLatEsq = h * d;
+            const areaLatDir = h * d;
+            const areaSuperior = w * d;
+
+            const area5Lados = areaFrontal + areaTraseira + areaLatEsq + areaLatDir + areaSuperior;
+            const areaEfetiva = area5Lados * posFactor;
+
+            const deltaT = te - ti;
+            const qParedes = kFactor * areaEfetiva * deltaT;
+
+            let qRefrigeracaoW = pdWatts + qParedes;
+
+            let diagText = '';
+            if (qRefrigeracaoW <= 0) {
+                diagText = 'Troca Natural Suficiente';
+                resDiag.className = 'text-brand-accent font-semibold';
+                qRefrigeracaoW = 0;
+            } else {
+                diagText = 'Ar-Condicionado Recomendado';
+                resDiag.className = 'text-sky-400 font-semibold';
+            }
+
+            const qRefrigeracaoBtu = qRefrigeracaoW * 3.41214;
+
+            const dtAbs = Math.abs(deltaT) === 0 ? 1 : Math.abs(deltaT);
+            const vazaoM3h = 115.14 * (pdWatts / 100) * (10 / dtAbs);
+            const vazaoCfm = vazaoM3h * 0.588231;
+            const areaGrelha = vazaoM3h / (3600 * 3.0);
+
+            resWatts.innerText = qRefrigeracaoW.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' W';
+            resBtu.innerText = qRefrigeracaoBtu.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' BTU';
+            
+            if (resM3h) resM3h.innerText = vazaoM3h.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' m³/h';
+            if (resCfm) resCfm.innerText = vazaoCfm.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' CFM';
+            if (resGrelha) resGrelha.innerText = areaGrelha.toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + ' m²';
+
+            resArea.innerText = areaEfetiva.toFixed(2) + ' m²';
+            resDt.innerText = deltaT.toFixed(1) + ' °C';
+            resQp.innerText = Math.round(qParedes).toLocaleString('pt-BR') + ' W';
+            resDiag.innerText = diagText;
+        }
+
+
+        // --- CONVERSÕES CALCULATIONS ---
+
+        function calcCvToKw() {
+            const cv = parseFloat(document.getElementById('conv_cv').value);
+            const resKw = document.getElementById('res_cv_kw');
+            const resW = document.getElementById('res_cv_w');
+
+            if (!cv || cv < 0) {
+                resKw.innerText = '0.00 kW';
+                resW.innerText = '0 W';
+                return;
+            }
+
+            const w = cv * 736;
+            const kw = w / 1000;
+
+            resKw.innerText = kw.toFixed(3) + ' kW';
+            resW.innerText = Math.round(w).toLocaleString('pt-BR') + ' W';
+        }
+
+        function calcHpToKw() {
+            const hp = parseFloat(document.getElementById('conv_hp').value);
+            const resKw = document.getElementById('res_hp_kw');
+            const resW = document.getElementById('res_hp_w');
+
+            if (!hp || hp < 0) {
+                resKw.innerText = '0.00 kW';
+                resW.innerText = '0 W';
+                return;
+            }
+
+            const w = hp * 746;
+            const kw = w / 1000;
+
+            resKw.innerText = kw.toFixed(3) + ' kW';
+            resW.innerText = Math.round(w).toLocaleString('pt-BR') + ' W';
+        }
+
+
+        // --- HELPER FUNCTIONS ---
+
+        function resetAllInputs() {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                if (input.id.endsWith('_v')) {
+                    if (input.id.includes('mono')) input.value = 220;
+                    else input.value = 380;
+                } else if (input.id === 'clim_te') {
+                    input.value = 45;
+                } else if (input.id === 'clim_ti') {
+                    input.value = 35;
+                } else if (input.id.startsWith('cmd_q')) {
+                    input.value = 1;
+                } else {
+                    input.value = '';
+                }
+            });
+
+            calcIKwMono();
+            calcIKwTri();
+            calcKvaMono();
+            calcKvaTri();
+            calcIpk();
+            calcMotor();
+            calcTrafoComando();
+            calcTrafoTri();
+            calcTrafoMono();
+            calcTrafoFull();
+            calcClimatizacao();
+            calcCvToKw();
+            calcHpToKw();
+
+            showToast('Formulários reiniciados');
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            
+            const dummy = document.createElement("textarea");
+            document.body.appendChild(dummy);
+            dummy.value = text;
+            dummy.select();
+            document.execCommand("copy");
+            document.body.removeChild(dummy);
+
+            showToast(`Valor "${text}" copiado!`);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-msg');
+            toastMsg.innerText = message;
+            
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
