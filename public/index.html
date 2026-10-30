@@ -1106,7 +1106,7 @@ margin-top:4px
 
 .tools-grid{
 display:grid;
-grid-template-columns:repeat(3,minmax(0,1fr));
+grid-template-columns:repeat(2,minmax(0,1fr));
 gap:13px
 }
 
@@ -1789,8 +1789,8 @@ section.manual-library, section.manual-results, section.content { display: none 
   <div class="omni-startup-panel">
     <div class="omni-startup-brand"><span class="omni-startup-brand-mark">ϟ</span><span><strong>OMINI</strong><small>ELECTRICAL LAB</small></span></div>
     <div class="omni-startup-ring" id="omniStartupRing" aria-hidden="true"><span>O</span></div>
-    <h1>Preparando sua biblioteca</h1>
-    <p class="omni-startup-caption">Lendo e organizando seus arquivos para agilizar as pesquisas.</p>
+    <h1 id="omniStartupHeading">Preparando sua biblioteca</h1>
+    <p class="omni-startup-caption" id="omniStartupCaption">Lendo e organizando seus arquivos para agilizar as pesquisas.</p>
           <section class="omni-library-loading" id="omniLibraryLoading" aria-live="polite" aria-label="Estado da biblioteca local">
             <div class="omni-library-loading-head"><span class="omni-library-loading-icon" aria-hidden="true">▤</span><div class="omni-library-loading-title"><strong id="omniLibraryLoadingTitle">Preparando sua biblioteca</strong><span id="omniLibraryLoadingText">Abrindo o armazenamento local…</span></div><span class="omni-library-loading-percent" id="omniLibraryLoadingPercent">8%</span></div>
             <div class="omni-library-progress-track" role="progressbar" aria-label="Preparação da biblioteca" aria-valuemin="0" aria-valuemax="100" aria-valuenow="8" id="omniLibraryProgress"><span id="omniLibraryProgressBar"></span></div>
@@ -1846,7 +1846,7 @@ section.manual-library, section.manual-results, section.content { display: none 
     <button type="button" class="manual-action primary" id="modalImportFolder">Vincular pasta do computador</button>
     <button type="button" class="manual-action primary" id="modalConnectCatalogs">Selecionar outra pasta</button>
   </div>
-  <section class="omni-linked-files" aria-labelledby="omniLinkedTitle"><div class="omni-linked-head"><div><h3 id="omniLinkedTitle">Arquivos vinculados à pesquisa</h3><p id="omniLinkedSummary">Carregando arquivos locais…</p></div><div class="omni-linked-buttons"><button type="button" class="omni-linked-refresh" id="omniLinkedRefresh">Atualizar lista</button><button type="button" class="omni-linked-refresh" id="omniLinkedReindex">Reindexar CATÁLOGOS</button></div></div><div class="omni-linked-origin" id="omniLinkedOrigins" aria-live="polite"></div><div class="omni-linked-list" id="omniLinkedList" aria-live="polite"></div></section>
+  <section class="omni-linked-files" aria-labelledby="omniLinkedTitle"><div class="omni-linked-head"><div><h3 id="omniLinkedTitle">Arquivos vinculados à pesquisa</h3><p id="omniLinkedSummary">Carregando arquivos locais…</p></div><div class="omni-linked-buttons"><button type="button" class="omni-linked-refresh" id="omniLinkedRefresh">Atualizar lista</button><button type="button" class="omni-linked-refresh" id="omniLinkedReindex">Reindexar pasta</button></div></div><div class="omni-linked-origin" id="omniLinkedOrigins" aria-live="polite"></div><div class="omni-linked-list" id="omniLinkedList" aria-live="polite"></div></section>
    <div class="omni-import-note" id="omniFolderSyncStatus">Os arquivos permanecem no computador. O navegador pode pedir autorização de leitura ao reabrir o site.</div>
  </section>
 </div>
@@ -2021,24 +2021,6 @@ Os arquivos ficam armazenados localmente neste navegador.
 
 <button class="manual-action primary" id="importFolderBtn" type="button">Vincular pasta do computador</button>
 
-<input
-class="manual-import"
-id="folderInput"
-type="file"
-webkitdirectory
-directory
-multiple
-accept=".pdf,.docx,.xls,.xlsx,.xlsm,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.json,.xml,.html,.htm,.log,.rtf,.jpg,.jpeg,.png,.webp,.gif,.bmp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/*,image/*"
-/>
-
-<input
-class="manual-import"
-id="filesInput"
-type="file"
-multiple
-accept=".pdf,.docx,.xls,.xlsx,.xlsm,.pptx,.odt,.ods,.odp,.txt,.md,.csv,.json,.xml,.html,.htm,.log,.rtf,.jpg,.jpeg,.png,.webp,.gif,.bmp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/*,image/*"
-/>
-
 </div>
 
 <div class="manual-progress" id="manualProgress">
@@ -2078,11 +2060,10 @@ Todos os documentos
 
 <div class="manual-empty-icon">📁</div>
 
-<b>Nenhuma pasta importada</b>
+<b>Nenhuma pasta vinculada</b>
 
 <p>
-Clique em “Importar pasta” para carregar
-seu banco de manuais.
+Vincule uma pasta do computador para indexar seus arquivos.
 </p>
 
 </div>
@@ -2683,13 +2664,10 @@ let currentFolder='';
 let activeObjectUrl=null;
 
 
-const folderInput=$('#folderInput');
-const filesInput=$('#filesInput');
 const importFolderBtn=$('#importFolderBtn');
-const importFilesBtn=$('#importFilesBtn');
 const connectCatalogsBtn=$('#modalConnectCatalogs');
 const folderSyncStatus=$('#omniFolderSyncStatus');
-let connectedCatalogHandle=null,catalogSyncBusy=false,localCatalogSyncBusy=false,localCatalogInventory=null;
+let connectedCatalogHandle=null,catalogSyncBusy=false;
 const manualSearch=$('#manualSearch');
 const manualTree=$('#manualTree');
 const manualResults=$('#manualResults');
@@ -2840,8 +2818,8 @@ function dbGetAllMetadata(){
   request.onsuccess=()=>{
    const cursor=request.result;
    if(!cursor){resolve(docs);return}
-   const item=cursor.value,text=String(item.text||"");
-   docs.push({id:item.id,name:item.name,path:item.path,folder:item.folder,size:item.size,lastModified:item.lastModified,type:item.type,mimeType:item.mimeType,pages:item.pages,text:text.replace(/\s+/g," ").slice(0,240),textLength:text.length,connectedFolder:item.connectedFolder,serverManaged:Boolean(item.serverManaged),localServerPath:item.localServerPath||''});
+    const item=cursor.value;if(!item.connectedFolder){cursor.continue();return}const text=String(item.text||"");
+    docs.push({id:item.id,name:item.name,path:item.path,folder:item.folder,size:item.size,lastModified:item.lastModified,type:item.type,mimeType:item.mimeType,pages:item.pages,text:text.replace(/\s+/g," ").slice(0,240),textLength:text.length,connectedFolder:true});
    cursor.continue();
   };
   tx.onerror=()=>reject(tx.error);
@@ -3186,11 +3164,10 @@ style="min-height:230px;padding:25px">
 📁
 </div>
 
-<b>Nenhuma pasta importada</b>
+<b>Nenhuma pasta vinculada</b>
 
 <p>
-Clique em “Importar pasta” para carregar
-seu banco de manuais.
+Vincule uma pasta do computador para indexar seus arquivos.
 </p>
 
 </div>
@@ -4055,6 +4032,8 @@ pages:pdf.numPages
 
 async function importFiles(files,options={}){
 
+if(!options.folderOnly)throw new Error('A biblioteca agora lê arquivos somente pela pasta vinculada do computador.');
+
 const allowedExtensions=['.pdf','.docx','.xls','.xlsx','.xlsm','.pptx','.odt','.ods','.odp','.txt','.md','.csv','.json','.xml','.html','.htm','.log','.rtf','.stp','.step','.jpg','.jpeg','.png','.webp','.gif','.bmp'];
 
 const importedFiles=
@@ -4076,7 +4055,7 @@ const existingByName=new Map(existingManuals.map(item=>[documentNameKey(item.nam
 const seenPaths=new Set(),seenNames=new Set(),uniqueFiles=[],duplicateNames=[];
 for(const file of importedFiles){
  const relative=getRelativePath(file),pathKey=normalizePath(relative),nameKey=documentNameKey(file.name),samePath=existingByPath.get(pathKey),sameName=existingByName.get(nameKey),existing=samePath||sameName;
- if(seenNames.has(nameKey)){duplicateNames.push(relative);continue}
+ if(!file.omniConnectedFolder&&seenNames.has(nameKey)){duplicateNames.push(relative);continue}
  seenNames.add(nameKey);
    if(samePath&&samePath.size===file.size&&samePath.lastModified===file.lastModified){duplicateNames.push(relative);if(file.omniConnectedFolder){const stored=await dbGet(samePath.id);if(stored){stored.connectedFolder=true;stored.path=relative;stored.folder=getFolderFromPath(relative);stored.fileHandle=file.omniFileHandle||stored.fileHandle||null;stored.blob=null;await dbPut(stored)}}continue}
  if(sameName&&!file.omniConnectedFolder){duplicateNames.push(relative);continue}
@@ -4112,6 +4091,7 @@ const ext='.'+(file.name.split('.').pop()||'').toLowerCase();
 const isPDF=ext==='.pdf'||file.type==='application/pdf';
 const isImage=file.type.startsWith('image/')||['.jpg','.jpeg','.png','.webp','.gif','.bmp'].includes(ext);
 setProgress(i,filesToImport.length,`${isImage?'Armazenando':'Indexando'} ${file.name}`);
+if(file.omniConnectedFolder)window.OMINI_UPDATE_STARTUP_PROGRESS?.("preloading",`Indexando arquivo ${i+1} de ${filesToImport.length}: ${file.name}`,28+Math.round(i/Math.max(filesToImport.length,1)*52),[{name:file.name,path:getRelativePath(file)}]);
 const path=getRelativePath(file);
 let extracted={text:'',pages:0};
 if(isPDF)extracted=await extractPDFText(file);else if(!isImage)extracted=await extractLocalText(file,ext);
@@ -4157,7 +4137,7 @@ extracted.text||''
 ),
 
 blob:
-file.omniConnectedFolder?null:file,
+null,
 
 fileHandle:
 file.omniFileHandle||null,
@@ -4172,6 +4152,7 @@ await dbPut(item);
 if(file.omniReplaceId)await dbDelete(file.omniReplaceId);
 
 imported++;
+if(file.omniConnectedFolder)window.OMINI_UPDATE_STARTUP_PROGRESS?.("preloading",`Arquivo indexado ${i+1} de ${filesToImport.length}: ${file.name}`,28+Math.round((i+1)/Math.max(filesToImport.length,1)*52),[{name:file.name,path:getRelativePath(file)}]);
 
 }catch(error){
 
@@ -4182,6 +4163,7 @@ error
 );
 
 failed++;
+if(file.omniConnectedFolder)window.OMINI_UPDATE_STARTUP_PROGRESS?.("preloading",`Falha ao indexar ${file.name} · ${i+1} de ${filesToImport.length}`,28+Math.round((i+1)/Math.max(filesToImport.length,1)*52),[{name:file.name,path:getRelativePath(file)}]);
 
 }
 
@@ -4191,6 +4173,7 @@ setProgress(
 filesToImport.length,
 filesToImport.length,
 'Concluído'
+if(options.folderOnly)window.OMINI_UPDATE_STARTUP_PROGRESS?.("preloading","Finalizando o índice de pesquisa…",84,window.OMINI_STARTUP_FILES||[]);
 );
 
 await refreshDatabase();
@@ -4206,20 +4189,22 @@ return{imported,failed,duplicates:duplicateNames.length};
 const CATALOG_CONNECTION_ID='catalogos-root';
 function connectionTransaction(mode,action){return new Promise((resolve,reject)=>{const tx=db.transaction(CONNECTION_STORE,mode),store=tx.objectStore(CONNECTION_STORE);let value;try{value=action(store)}catch(e){reject(e);return}tx.oncomplete=()=>resolve(value);tx.onerror=()=>reject(tx.error||new Error('Falha ao salvar a pasta conectada.'))})}
 async function loadCatalogConnectionRecord(){return new Promise((resolve,reject)=>{const request=db.transaction(CONNECTION_STORE,'readonly').objectStore(CONNECTION_STORE).get(CATALOG_CONNECTION_ID);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error||new Error('Falha ao ler a pasta vinculada.'))})}
-async function waitForCatalogScans(){while(catalogSyncBusy||localCatalogSyncBusy)await new Promise(resolve=>setTimeout(resolve,120))}
+async function waitForCatalogScans(){while(catalogSyncBusy)await new Promise(resolve=>setTimeout(resolve,120))}
 window.omniClearStoredFiles=async()=>{if(!db)await openDatabase();await waitForCatalogScans();await dbClear();currentFolder='';if(manualSearch)manualSearch.value='';await refreshDatabase();window.dispatchEvent(new Event('omni:manuals-updated'));return true};
-window.omniDisconnectCatalogFolder=async()=>{if(!db)await openDatabase();await waitForCatalogScans();const all=await dbGetAllMetadata(),linked=all.filter(item=>item.connectedFolder||item.serverManaged);await new Promise((resolve,reject)=>{const tx=db.transaction([STORE,CONNECTION_STORE],'readwrite'),records=tx.objectStore(STORE),connections=tx.objectStore(CONNECTION_STORE);for(const item of linked)records.delete(item.id);connections.put({id:CATALOG_CONNECTION_ID,disconnected:true,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Não foi possível desvincular a pasta.'))});connectedCatalogHandle=null;localCatalogInventory=null;await refreshDatabase();if(folderSyncStatus)folderSyncStatus.textContent='Pasta desvinculada. Os arquivos originais continuam no computador.';window.dispatchEvent(new Event('omni:manuals-updated'));return linked.length};
+window.omniDisconnectCatalogFolder=async()=>{if(!db)await openDatabase();await waitForCatalogScans();const all=await dbGetAllMetadata(),linked=all.filter(item=>item.connectedFolder||item.serverManaged);await new Promise((resolve,reject)=>{const tx=db.transaction([STORE,CONNECTION_STORE],'readwrite'),records=tx.objectStore(STORE),connections=tx.objectStore(CONNECTION_STORE);for(const item of linked)records.delete(item.id);connections.put({id:CATALOG_CONNECTION_ID,disconnected:true,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Não foi possível desvincular a pasta.'))});connectedCatalogHandle=null;await refreshDatabase();if(folderSyncStatus)folderSyncStatus.textContent='Pasta desvinculada. Os arquivos originais continuam no computador.';window.dispatchEvent(new Event('omni:manuals-updated'));return linked.length};
 async function saveCatalogHandle(handle){await connectionTransaction('readwrite',store=>store.put({id:CATALOG_CONNECTION_ID,handle,updatedAt:Date.now()}));connectedCatalogHandle=handle}
 async function loadCatalogHandle(){return new Promise((resolve,reject)=>{const req=db.transaction(CONNECTION_STORE,'readonly').objectStore(CONNECTION_STORE).get(CATALOG_CONNECTION_ID);req.onsuccess=()=>resolve(req.result?.handle||null);req.onerror=()=>reject(req.error)})}
- async function scanCatalogFiles(dir,prefix='',out=[],issues=[]){let entries=[];try{for await(const item of dir.entries())entries.push(item)}catch(error){issues.push({path:(connectedCatalogHandle?.name||dir.name||'Pasta')+'/'+prefix.replace(/\/$/,''),error:error?.message||String(error)});Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}for(const [name,entry] of entries){if(entry.kind==='directory'){await scanCatalogFiles(entry,prefix+name+'/',out,issues)}else if(entry.kind==='file'){try{const file=await entry.getFile();Object.defineProperty(file,'relativePath',{value:(connectedCatalogHandle?.name||'Pasta')+'/'+prefix+name});Object.defineProperty(file,'omniConnectedFolder',{value:true});Object.defineProperty(file,'omniFileHandle',{value:entry});out.push(file)}catch(error){issues.push({path:prefix+name,error:error?.message||String(error)})}}}Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}
+ async function scanCatalogFiles(dir,prefix='',out=[],issues=[]){let entries=[];try{for await(const item of dir.entries())entries.push(item)}catch(error){issues.push({path:(connectedCatalogHandle?.name||dir.name||'Pasta')+'/'+prefix.replace(/\/$/,''),error:error?.message||String(error)});Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}for(const [name,entry] of entries){if(entry.kind==='directory'){await scanCatalogFiles(entry,prefix+name+'/',out,issues)}else if(entry.kind==='file'){try{const file=await entry.getFile();Object.defineProperty(file,'relativePath',{value:(connectedCatalogHandle?.name||'Pasta')+'/'+prefix+name});Object.defineProperty(file,'omniConnectedFolder',{value:true});Object.defineProperty(file,'omniFileHandle',{value:entry});out.push(file);if(window.OMINI_FOLDER_PROGRESS){const found=out.length;window.OMINI_UPDATE_STARTUP_PROGRESS?.("catalog","Varrendo a pasta… "+found+" arquivo(s) localizados",Math.min(22,6+Math.floor(found/5)),[])} }catch(error){issues.push({path:prefix+name,error:error?.message||String(error)})}}}Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}
+function publishFolderLoad(text,percent,files=[]){window.OMINI_FOLDER_PROGRESS=true;window.OMINI_STARTUP_FILES=files;const state={stage:percent<24?"catalog":"preloading",text,percent,files};window.OMINI_UPDATE_STARTUP_PROGRESS?.(state.stage,state.text,state.percent,state.files);if(!window.OMINI_UPDATE_STARTUP_PROGRESS)window.dispatchEvent(new CustomEvent("omni:startup-progress",{detail:state}))}
 async function syncCatalogFolder(handle=connectedCatalogHandle,quiet=false){
  if(!handle)return{error:'Pasta CATÁLOGOS ainda não vinculada.'};
  if(catalogSyncBusy)return{busy:true};
  catalogSyncBusy=true;
+  publishFolderLoad(`Abrindo e varrendo a pasta “${handle.name}”…`,5,[])
  try{
   const permission=await handle.queryPermission({mode:'read'});
   if(permission!=='granted'){
-   if(folderSyncStatus)folderSyncStatus.textContent='A pasta está vinculada, mas precisa de autorização. Clique em “Vincular pasta CATÁLOGOS”.';
+   if(folderSyncStatus)folderSyncStatus.textContent='A pasta está vinculada, mas precisa de autorização. Clique em “Vincular pasta do computador”.';
    return{error:'A autorização de leitura expirou. Vincule a pasta novamente.'};
   }
   const files=await scanCatalogFiles(handle);
@@ -4229,7 +4214,7 @@ async function syncCatalogFolder(handle=connectedCatalogHandle,quiet=false){
   const unsupported=[...new Set(files.filter(file=>!supported.some(ext=>file.name.toLocaleLowerCase('pt-BR').endsWith(ext))).map(file=>{const dot=file.name.lastIndexOf('.');return dot>=0?file.name.slice(dot).toLowerCase():'(sem extensão)'}))];
   let lastScan={total:files.length,compatible:compatible.length,unsupported:unsupported.slice(0,12),failed:0,inaccessible:scanIssues.length,inaccessibleExamples:scanIssues.slice(0,8).map(item=>item.path),status:'indexando',at:Date.now()};
   await connectionTransaction('readwrite',store=>store.put({id:CATALOG_CONNECTION_ID,handle,updatedAt:Date.now(),lastScan}));
-  if(folderSyncStatus)folderSyncStatus.textContent=`CATÁLOGOS · ${files.length} encontrado(s), ${compatible.length} compatível(is), ${scanIssues.length} inacessível(is). Indexando os disponíveis…`;
+  if(folderSyncStatus)folderSyncStatus.textContent=`${handle.name} · ${files.length} arquivo(s) encontrado(s), indexando conteúdo…`;
   window.dispatchEvent(new Event('omni:manuals-updated'));
   const seen=new Set(files.map(file=>String(file.relativePath).toLocaleLowerCase('pt-BR')));
    const before=await dbGetAllMetadata(),tracked=before.filter(doc=>doc.connectedFolder);
@@ -4241,23 +4226,21 @@ async function syncCatalogFolder(handle=connectedCatalogHandle,quiet=false){
   await connectionTransaction('readwrite',store=>store.put({id:CATALOG_CONNECTION_ID,handle,updatedAt:Date.now(),lastScan}));
   if(removed||result.imported)await refreshDatabase();
   else window.dispatchEvent(new Event('omni:manuals-updated'));
-  if(folderSyncStatus)folderSyncStatus.textContent=`CATÁLOGOS · ${files.length} encontrado(s), ${compatible.length} compatível(is), ${indexed} indexado(s)${scanIssues.length?`, ${scanIssues.length} inacessível(is)`:''}${unsupported.length?`, ${unsupported.length} formato(s) ignorado(s)`:''}${result.failed?`, ${result.failed} falha(s)`:''}.`;
-  if(!quiet&&(result.imported||removed||result.failed))showToast(`CATÁLOGOS atualizada · ${result.imported} novo(s)/alterado(s), ${removed} removido(s)${result.failed?`, ${result.failed} falha(s)`:''}.`);
+  if(folderSyncStatus)folderSyncStatus.textContent=`${handle.name} · ${files.length} encontrado(s), ${indexed} indexado(s)${scanIssues.length?`, ${scanIssues.length} inacessível(is)`:''}${unsupported.length?`, ${unsupported.length} formato(s) ignorado(s)`:''}${result.failed?`, ${result.failed} falha(s)`:''}.`;
+  if(!quiet&&(result.imported||removed||result.failed))showToast(`${handle.name} atualizada · ${result.imported} novo(s)/alterado(s), ${removed} removido(s)${result.failed?`, ${result.failed} falha(s)`:''}.`)
+   if(!quiet&&indexed){window.OMINI_PRESEARCH_PENDING=true;window.dispatchEvent(new Event("omni:presearch-request"))}
   return{lastScan,imported:result.imported,removed};
  }catch(error){
   console.error('Sincronização CATÁLOGOS:',error);
   const message=error?.message||String(error)||'erro desconhecido';
   try{const old=await loadCatalogHandle();await connectionTransaction('readwrite',store=>store.put({id:CATALOG_CONNECTION_ID,handle:old||handle,updatedAt:Date.now(),lastScan:{status:'erro',error:message,at:Date.now()}}))}catch{}
-  if(folderSyncStatus)folderSyncStatus.textContent=`Falha ao ler CATÁLOGOS: ${message}. Clique em “Vincular pasta CATÁLOGOS” para selecionar novamente.`;
+  if(folderSyncStatus)folderSyncStatus.textContent=`Falha ao ler a pasta: ${message}. Clique em “Vincular pasta do computador” para selecionar novamente.`;
   if(!quiet)showToast('Não foi possível sincronizar CATÁLOGOS: '+message);
   return{error:message};
  }finally{catalogSyncBusy=false}
 }
-async function findNamedDirectory(parent,name){const wanted=String(name).normalize('NFC').toLocaleLowerCase('pt-BR');for await(const [entryName,entry] of parent.entries()){if(entry.kind==='directory'&&String(entryName).normalize('NFC').toLocaleLowerCase('pt-BR')===wanted)return entry}return null}
-async function resolveCatalogsDirectory(root){if(String(root.name||'').normalize('NFC').toLocaleLowerCase('pt-BR')==='catálogos')return root;const paths=[['CATÁLOGOS'],['omini','CATÁLOGOS'],['OMINI-EK','omini','CATÁLOGOS'],['DOCS','OMINI-EK','omini','CATÁLOGOS'],['Documentos','DOCS','OMINI-EK','omini','CATÁLOGOS'],['OneDrive - SAT','Documentos','DOCS','OMINI-EK','omini','CATÁLOGOS'],['GERAIS','CATÁLOGOS'],['DOCS','GERAIS','CATÁLOGOS'],['Documentos','DOCS','GERAIS','CATÁLOGOS'],['OneDrive - SAT','Documentos','DOCS','GERAIS','CATÁLOGOS']];for(const parts of paths){let current=root;for(const part of parts){current=await findNamedDirectory(current,part);if(!current)break}if(current)return current}throw new Error('Não encontrei CATÁLOGOS. A pasta disponível está em Documentos\\DOCS\\GERAIS\\CATÁLOGOS; selecione Documentos, DOCS, GERAIS ou a própria CATÁLOGOS.')}
-async function syncLocalServerCatalog(quiet=true,force=false){if(localCatalogSyncBusy)return{busy:true};if(location.protocol!=='http:'||location.hostname!=='127.0.0.1')return{available:false};localCatalogSyncBusy=true;try{if(!force){const connection=await loadCatalogConnectionRecord();if(connection?.disconnected)return{available:false,disconnected:true}}if(folderSyncStatus)folderSyncStatus.textContent='Atualizando a lista de CATÁLOGOS neste computador…';const response=await fetch('/api/catalogos/list',{cache:'no-store'});if(!response.ok){let detail='';try{detail=(await response.json()).error||''}catch{}throw new Error(detail||'O serviço local não conseguiu ler CATÁLOGOS.');}const inventory=await response.json();if(!inventory.ok)throw new Error(inventory.error||'CATÁLOGOS não está disponível.');localCatalogInventory=inventory;const existing=await dbGetAllMetadata(),managed=existing.filter(item=>item.serverManaged),byId=new Map(managed.map(item=>[String(item.id),item])),seen=new Set(),put=[];for(const file of inventory.files||[]){const id=String(file.id),previous=byId.get(id),same=previous&&Number(previous.size)===Number(file.size)&&Number(previous.lastModified)===Number(file.lastModified);seen.add(id);put.push({...same?previous:{},id,name:file.name,path:file.path,folder:getFolderFromPath(file.path),size:Number(file.size||0),lastModified:Number(file.lastModified||0),type:file.type||'',mimeType:file.mimeType||'',serverManaged:true,localServerPath:file.relativePath,contentSupported:file.contentSupported!==false,connectedFolder:true,blob:null,text:same?String(previous.text||''):'',normalizedText:same?String(previous.normalizedText||''):'',pages:same?Number(previous.pages||0):0,learnedFacts:same&&Array.isArray(previous.learnedFacts)?previous.learnedFacts:[],createdAt:same?previous.createdAt:Date.now()});}const remove=managed.filter(item=>!seen.has(String(item.id)));await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);for(const item of put)store.put(item);for(const item of remove)store.delete(item.id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Não foi possível atualizar o índice local.'))});const connection={id:CATALOG_CONNECTION_ID,serverManaged:true,label:inventory.label||'CATÁLOGOS',root:inventory.root,updatedAt:Date.now(),lastScan:{status:'concluída',total:Number(inventory.total||0),compatible:Number(inventory.extractable||0),indexed:(inventory.files||[]).length,inaccessible:Number(inventory.inaccessible||0),unsupported:Object.entries(inventory.unsupported||{}).map(([ext,count])=>`${ext}: ${count}`).slice(0,12),metadataOnly:Object.entries(inventory.metadataOnly||{}).map(([ext,count])=>`${ext}: ${count}`).slice(0,12),at:Date.now()}};await connectionTransaction('readwrite',store=>store.put(connection));await refreshDatabase();if(folderSyncStatus)folderSyncStatus.textContent=`${inventory.label||'Biblioteca local'}: ${(inventory.files||[]).length} arquivo(s) pesquisáveis por nome; conteúdo extraído sob demanda · ${inventory.root}`;if(!quiet)showToast(`${inventory.label||'Biblioteca local'} atualizada: ${(inventory.files||[]).length} arquivo(s) disponíveis. O conteúdo é lido apenas quando necessário.`);return{available:true,total:(inventory.files||[]).length,root:inventory.root}}catch(error){console.warn('Não foi possível atualizar CATÁLOGOS pelo serviço local:',error);if(folderSyncStatus)folderSyncStatus.textContent=`Serviço local de CATÁLOGOS indisponível: ${error?.message||String(error)}`;return{available:false,error:error?.message||String(error)}}finally{localCatalogSyncBusy=false}}
 async function connectCatalogs(){try{if(!window.isSecureContext||!window.showDirectoryPicker)throw new Error('A seleção direta de pasta exige Chrome ou Edge em localhost/HTTPS. Abra o site pelo atalho local do OMINI.');const handle=await window.showDirectoryPicker({id:'omini-user-folder',mode:'read',startIn:'documents'});const permission=await handle.queryPermission({mode:'read'});if(permission!=='granted'&&await handle.requestPermission({mode:'read'})!=='granted')throw new Error('A permissão de leitura não foi concedida.');connectedCatalogHandle=handle;await saveCatalogHandle(handle);if(folderSyncStatus)folderSyncStatus.textContent=`Lendo e indexando a pasta “${handle.name}”…`;await syncCatalogFolder(handle,false)}catch(error){if(error?.name==='AbortError')return;console.error(error);showToast('Não foi possível conectar a pasta: '+(error?.message||String(error)||'erro desconhecido'))}}
-async function restoreCatalogConnection(){try{connectedCatalogHandle=await loadCatalogHandle();if(!connectedCatalogHandle)return;const permission=await connectedCatalogHandle.queryPermission({mode:'read'});if(permission==='granted'){await syncCatalogFolder(connectedCatalogHandle,true)}else if(folderSyncStatus)folderSyncStatus.textContent='CATÁLOGOS vinculada. Clique em “Vincular pasta CATÁLOGOS” para autorizar a leitura novamente.'}catch(error){console.warn('Não foi possível restaurar a pasta CATÁLOGOS:',error)}}
+async function restoreCatalogConnection(){try{connectedCatalogHandle=await loadCatalogHandle();if(!connectedCatalogHandle)return;const permission=await connectedCatalogHandle.queryPermission({mode:'read'});if(permission==='granted'){await syncCatalogFolder(connectedCatalogHandle,true)}else if(folderSyncStatus)folderSyncStatus.textContent='Pasta vinculada. Clique em “Vincular pasta do computador” para autorizar a leitura novamente.'}catch(error){console.warn('Não foi possível restaurar a pasta CATÁLOGOS:',error)}}
 connectCatalogsBtn?.addEventListener('click',connectCatalogs);
 window.addEventListener('omni:connect-folder',connectCatalogs);
 window.omniReindexCatalogs=async()=>{if(!connectedCatalogHandle)connectedCatalogHandle=await loadCatalogHandle();return syncCatalogFolder(connectedCatalogHandle,false)};
@@ -4422,37 +4405,6 @@ activeObjectUrl=null;
 
 importFolderBtn?.addEventListener('click',connectCatalogs);
 
-importFilesBtn?.addEventListener(
-'click',
-()=>filesInput.click()
-);
-
-folderInput?.addEventListener(
-'change',
-async e=>{
-
-await importFiles(
-e.target.files
-);
-
-e.target.value='';
-
-}
-);
-
-filesInput?.addEventListener(
-'change',
-async e=>{
-
-await importFiles(
-e.target.files
-);
-
-e.target.value='';
-
-}
-);
-
 clearDatabaseBtn?.addEventListener(
 'click',
 async()=>{
@@ -4555,7 +4507,6 @@ publishStartup('database','Organizando os arquivos já encontrados…',34);
 await refreshDatabase();
 const initialFiles=await dbGetAllMetadata();
 publishStartup('catalog','Verificando a biblioteca de arquivos…',68,initialFiles);
-let localCatalog={available:false};
 if(!window.OMINI_CANCEL_STARTUP_PRESEARCH)await restoreCatalogConnection();
 const readyFiles=await dbGetAllMetadata();
 if(window.OMINI_CANCEL_STARTUP_PRESEARCH)publishStartup('preloading','Concluindo a limpeza solicitada…',96,readyFiles);
@@ -4684,7 +4635,7 @@ html,body{background:#121315!important;color:#e2e8f0}
 .omni-import-kicker{font-size:10px;letter-spacing:.16em;color:#00E676;margin-bottom:13px}
 .omni-import-dialog h2{margin:0 35px 10px 0;font-size:27px;letter-spacing:-.04em}
 .omni-import-dialog p{margin:0 0 23px;color:rgba(237,242,237,.7);font-size:13px;line-height:1.6}
-.omni-import-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.omni-import-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .omni-import-actions button{width:100%;min-height:48px}
 .omni-import-note{margin-top:18px;font-size:10px;color:rgba(237,242,237,.48)}
 .omni-import-dialog{max-height:min(88vh,820px);overflow:auto}.omni-linked-files{margin-top:22px;padding-top:18px;border-top:1px solid rgba(237,242,237,.14)}.omni-linked-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.omni-linked-head h3{margin:0;font-size:14px}.omni-linked-head p{margin:5px 0 0;color:rgba(237,242,237,.58);font-size:11px}.omni-linked-buttons{display:flex;flex-wrap:wrap;gap:6px}.omni-linked-refresh{flex:none;padding:7px 10px;border:1px solid rgba(237,242,237,.16);border-radius:9px;background:rgba(255,255,255,.06);color:#e2e8f0;font:inherit;font-size:11px;cursor:pointer}.omni-linked-origin{display:grid;gap:6px;margin:14px 0 10px}.omni-linked-origin div{padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.05);font-size:11px;color:rgba(237,242,237,.78)}.omni-linked-list{display:grid;gap:5px;max-height:220px;overflow:auto}.omni-linked-item{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid rgba(237,242,237,.10);border-radius:9px;background:rgba(255,255,255,.035)}.omni-linked-name{min-width:0;overflow-wrap:anywhere;color:#e2e8f0;font-size:11px;font-weight:650}.omni-linked-path{margin-top:3px;overflow-wrap:anywhere;color:rgba(237,242,237,.47);font-size:9px}.omni-linked-type{flex:none;padding:3px 6px;border-radius:5px;background:rgba(145,215,173,.12);color:#00E676;font-size:9px;font-weight:800}.omni-linked-empty{padding:13px 10px;border:1px dashed rgba(237,242,237,.18);border-radius:9px;color:rgba(237,242,237,.58);font-size:11px;line-height:1.5}@media(max-width:480px){.omni-import-dialog{padding:26px 20px}.omni-import-actions{grid-template-columns:1fr}}
@@ -4711,7 +4662,7 @@ html,body{background:#121315!important;color:#e2e8f0}
    request.onsuccess=()=>{
     const cursor=request.result;
     if(!cursor){resolve(items);return}
-    const item=cursor.value;
+     const item=cursor.value;if(name==="manuals"&&!item.connectedFolder){cursor.continue();return}
     items.push(name==="manuals"?{id:item.id,name:item.name,path:item.path,connectedFolder:item.connectedFolder,serverManaged:item.serverManaged,localServerPath:item.localServerPath}:item);
     cursor.continue();
    };
@@ -4719,7 +4670,7 @@ html,body{background:#121315!important;color:#e2e8f0}
   });
  }
  function addOrigin(text){const row=document.createElement('div');row.textContent=text;linkedOrigins.appendChild(row)}
- async function refreshLinkedFiles(){if(!linkedSummary||!linkedOrigins||!linkedList)return;linkedSummary.textContent='Lendo a biblioteca armazenada neste navegador…';linkedOrigins.replaceChildren();linkedList.replaceChildren();try{const db=await openLocalDb();let docs=[],connections=[];try{[docs,connections]=await Promise.all([readStore(db,'manuals'),readStore(db,'folderConnections')])}finally{db.close()}const catalogDocs=docs.filter(d=>d.connectedFolder),catalogImported=docs.filter(d=>!d.connectedFolder&&String(d.path||'').replace(/\\/g,'/').toLocaleUpperCase('pt-BR').startsWith('CATÁLOGOS/')),siteDocs=docs.filter(d=>!d.connectedFolder&&!String(d.path||'').replace(/\\/g,'/').toLocaleUpperCase('pt-BR').startsWith('CATÁLOGOS/')),connection=connections.find(c=>c.id==='catalogos-root');let connectionText=connection?.serverManaged?`${connection.label||'Biblioteca local'}: vinculada ao OMINI neste computador`:'CATÁLOGOS: não vinculada';if(!connection?.serverManaged&&connection&&connection.handle){let permission='unknown';try{permission=await connection.handle.queryPermission({mode:'read'})}catch{}connectionText=permission==='granted'?'CATÁLOGOS: vinculada e autorizada para leitura':'CATÁLOGOS: vinculada; precisa autorizar a leitura'}const scan=connection?.lastScan;if(scan){const countLabel=connection?.serverManaged?'arquivo(s) pesquisáveis por nome':'indexado(s)';addOrigin(`${connectionText} · ${catalogDocs.length} ${countLabel} · ${scan.total||0} encontrado(s) na pasta · ${scan.compatible||0} compatível(is)${scan.failed?` · ${scan.failed} falha(s)`:''}`);if(connection?.serverManaged)addOrigin(`Pasta: ${connection.root||'CATÁLOGOS'} · conteúdo lido sob demanda para evitar copiar os arquivos grandes para o navegador`);if(scan.status==='erro')addOrigin(`Falha na leitura: ${scan.error||'erro desconhecido'}; use “Vincular pasta CATÁLOGOS” para selecionar novamente`);else if(scan.status==='indexando')addOrigin(`Varredura encontrou ${scan.total||0} arquivo(s), ${scan.compatible||0} compatível(is); indexação em andamento`);if(scan.inaccessible)addOrigin(`${scan.inaccessible} item(ns) não puderam ser lidos: ${(scan.inaccessibleExamples||[]).join(', ')}. Arquivos somente online no OneDrive podem precisar estar baixados no computador.`);if(scan.unsupported?.length)addOrigin(`Extensões ignoradas: ${scan.unsupported.join(', ')}`)}else addOrigin(`${connectionText} · ${catalogDocs.length} indexado(s) · nenhuma varredura registrada; use “Reindexar CATÁLOGOS”`);if(catalogImported.length)addOrigin(`CATÁLOGOS importada para a biblioteca local: ${catalogImported.length} arquivo(s), disponíveis para pesquisa; sincronização automática ${catalogDocs.length?'ativa':'não confirmada'}`);if(siteDocs.length||!catalogImported.length)addOrigin(`Outros arquivos importados para a biblioteca local: ${siteDocs.length}`);linkedSummary.textContent=`${docs.length} arquivo(s) disponíveis na pesquisa local.`;if(!docs.length){const empty=document.createElement('div');empty.className='omni-linked-empty';empty.textContent='Nenhum arquivo está disponível para pesquisa. Importe arquivos ou vincule a pasta CATÁLOGOS.';linkedList.appendChild(empty);return}docs.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));for(const doc of docs){const row=document.createElement('div');row.className='omni-linked-item';const info=document.createElement('div');info.style.minWidth='0';const name=document.createElement('div');name.className='omni-linked-name';name.textContent=doc.name||'Arquivo sem nome';const path=document.createElement('div');path.className='omni-linked-path';const fromCatalogPath=String(doc.path||'').replace(/\\/g,'/').toLocaleUpperCase('pt-BR').startsWith('CATÁLOGOS/');path.textContent=(doc.serverManaged?'Origem: biblioteca sincronizada · ':doc.connectedFolder?'Origem: pasta CATÁLOGOS sincronizada · ':fromCatalogPath?'Origem: CATÁLOGOS importada para a biblioteca local · ':'Origem: biblioteca local · ')+(doc.path||doc.name||'');info.append(name,path);const type=document.createElement('span');type.className='omni-linked-type';type.textContent=(String(doc.name||'').split('.').pop()||'ARQ').toUpperCase();row.append(info,type);linkedList.appendChild(row)}}catch(error){console.error('Não foi possível listar os arquivos vinculados:',error);linkedSummary.textContent='Não foi possível ler a biblioteca local.';const empty=document.createElement('div');empty.className='omni-linked-empty';empty.textContent=error?.message||'Verifique se a biblioteca já foi inicializada pelo site.';linkedList.appendChild(empty)}}
+ async function refreshLinkedFiles(){if(!linkedSummary||!linkedOrigins||!linkedList)return;linkedSummary.textContent='Lendo a biblioteca armazenada neste navegador…';linkedOrigins.replaceChildren();linkedList.replaceChildren();try{const db=await openLocalDb();let docs=[],connections=[];try{[docs,connections]=await Promise.all([readStore(db,'manuals'),readStore(db,'folderConnections')])}finally{db.close()}const catalogDocs=docs.filter(d=>d.connectedFolder),catalogImported=docs.filter(d=>!d.connectedFolder&&String(d.path||'').replace(/\\/g,'/').toLocaleUpperCase('pt-BR').startsWith('CATÁLOGOS/')),siteDocs=docs.filter(d=>!d.connectedFolder&&!String(d.path||'').replace(/\\/g,'/').toLocaleUpperCase('pt-BR').startsWith('CATÁLOGOS/')),connection=connections.find(c=>c.id==='catalogos-root');let connectionText=connection?.serverManaged?`${connection.label||'Biblioteca local'}: vinculada ao OMINI neste computador`:'Pasta do computador: não vinculada';if(!connection?.serverManaged&&connection&&connection.handle){let permission='unknown';try{permission=await connection.handle.queryPermission({mode:'read'})}catch{}connectionText=permission==='granted'?'Pasta do computador: vinculada e autorizada para leitura':'Pasta do computador: vinculada; precisa autorizar a leitura'}const scan=connection?.lastScan;if(scan){const countLabel=connection?.serverManaged?'arquivo(s) pesquisáveis por nome':'indexado(s)';addOrigin(`${connectionText} · ${catalogDocs.length} ${countLabel} · ${scan.total||0} encontrado(s) na pasta · ${scan.compatible||0} compatível(is)${scan.failed?` · ${scan.failed} falha(s)`:''}`);if(connection?.serverManaged)addOrigin(`Pasta: ${connection.root||'CATÁLOGOS'} · conteúdo lido sob demanda para evitar copiar os arquivos grandes para o navegador`);if(scan.status==='erro')addOrigin(`Falha na leitura: ${scan.error||'erro desconhecido'}; use “Vincular pasta CATÁLOGOS” para selecionar novamente`);else if(scan.status==='indexando')addOrigin(`Varredura encontrou ${scan.total||0} arquivo(s), ${scan.compatible||0} compatível(is); indexação em andamento`);if(scan.inaccessible)addOrigin(`${scan.inaccessible} item(ns) não puderam ser lidos: ${(scan.inaccessibleExamples||[]).join(', ')}. Arquivos somente online no OneDrive podem precisar estar baixados no computador.`);if(scan.unsupported?.length)addOrigin(`Extensões ignoradas: ${scan.unsupported.join(', ')}`)}else addOrigin(`${connectionText} · ${catalogDocs.length} indexado(s) · nenhuma varredura registrada; use “Reindexar pasta”`);if(catalogImported.length)addOrigin(`CATÁLOGOS importada para a biblioteca local: ${catalogImported.length} arquivo(s), disponíveis para pesquisa; sincronização automática ${catalogDocs.length?'ativa':'não confirmada'}`);if(siteDocs.length||!catalogImported.length)addOrigin(`Outros arquivos importados para a biblioteca local: ${siteDocs.length}`);linkedSummary.textContent=`${docs.length} arquivo(s) disponíveis na pesquisa local.`;if(!docs.length){const empty=document.createElement('div');empty.className='omni-linked-empty';empty.textContent='Nenhum arquivo está disponível. Vincule uma pasta do computador para começar.';linkedList.appendChild(empty);return}docs.sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'pt-BR'));for(const doc of docs){const row=document.createElement('div');row.className='omni-linked-item';const info=document.createElement('div');info.style.minWidth='0';const name=document.createElement('div');name.className='omni-linked-name';name.textContent=doc.name||'Arquivo sem nome';const path=document.createElement('div');path.className='omni-linked-path';const fromCatalogPath=String(doc.path||'').replace(/\\/g,'/').toLocaleUpperCase('pt-BR').startsWith('CATÁLOGOS/');path.textContent=(doc.serverManaged?'Origem: biblioteca sincronizada · ':doc.connectedFolder?'Origem: pasta CATÁLOGOS sincronizada · ':fromCatalogPath?'Origem: CATÁLOGOS importada para a biblioteca local · ':'Origem: biblioteca local · ')+(doc.path||doc.name||'');info.append(name,path);const type=document.createElement('span');type.className='omni-linked-type';type.textContent=(String(doc.name||'').split('.').pop()||'ARQ').toUpperCase();row.append(info,type);linkedList.appendChild(row)}}catch(error){console.error('Não foi possível listar os arquivos vinculados:',error);linkedSummary.textContent='Não foi possível ler a biblioteca local.';const empty=document.createElement('div');empty.className='omni-linked-empty';empty.textContent=error?.message||'Verifique se a biblioteca já foi inicializada pelo site.';linkedList.appendChild(empty)}}
  function show(){modal.classList.add('is-open');modal.setAttribute('aria-hidden','false');refreshLinkedFiles();close.focus();}
  function hide(){modal.classList.remove('is-open');modal.setAttribute('aria-hidden','true');open.focus();}
  open?.addEventListener('click',show);
@@ -4791,7 +4742,7 @@ main{height:calc(100dvh - 56px)!important;min-height:0!important;margin-top:56px
 .omni-chat-sidebar-note{margin-top:auto;padding:12px 9px;border-top:1px solid var(--line);color:var(--muted);font-size:9px;line-height:1.5}
 .omni-chat-main{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0}.omni-chat-header{height:62px;flex:0 0 62px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;border-bottom:1px solid var(--line);background:var(--bg)}.omni-chat-title{font-size:14px;font-weight:760}.omni-chat-subtitle{margin-top:3px;color:var(--muted);font-size:10px}.omni-chat-local{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:10px}.omni-chat-local i{width:6px;height:6px;border-radius:50%;background:var(--green)}
 .omni-chat-transcript{flex:1;min-height:0;overflow:auto;scroll-behavior:smooth;padding:30px 22px 24px}.omni-chat-welcome{width:min(700px,100%);min-height:100%;margin:0 auto;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:20px 0 50px}.omni-chat-welcome[hidden]{display:none}.omni-chat-orb{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:var(--green);color:#fff;font-size:17px;font-weight:800}.omni-chat-eyebrow{margin-top:17px;color:var(--green);font-size:9px;font-weight:800;letter-spacing:.18em}.omni-chat-welcome h1{margin:13px 0 8px;font-size:clamp(24px,3.3vw,36px);font-weight:730;letter-spacing:-.055em}.omni-chat-welcome p{max-width:510px;margin:0;color:var(--muted);font-size:12px;line-height:1.7}
-.omni-chat-suggestions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;width:100%;margin-top:28px;text-align:left}.omni-chat-suggestions button{min-height:76px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--surface-solid);color:var(--ink);font:600 10px Bahnschrift,Inter,system-ui,sans-serif;line-height:1.45;text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}.omni-chat-suggestions button:hover{transform:translateY(-2px);border-color:var(--green);background:var(--surface-hover)}.omni-chat-suggestions button span{color:var(--green);font-size:13px}
+.omni-chat-suggestions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;width:100%;margin-top:28px;text-align:left}.omni-chat-suggestions button{min-height:76px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:13px;border:1px solid var(--line);border-radius:13px;background:var(--surface-solid);color:var(--ink);font:600 10px Bahnschrift,Inter,system-ui,sans-serif;line-height:1.45;text-align:left;cursor:pointer;transition:transform .2s,border-color .2s,background .2s}.omni-chat-suggestions button:hover{transform:translateY(-2px);border-color:var(--green);background:var(--surface-hover)}.omni-chat-suggestions button span{color:var(--green);font-size:13px}
 .omni-chat-message{width:min(760px,100%);margin:0 auto 24px;display:flex;gap:12px;align-items:flex-start}.omni-chat-user{justify-content:flex-end}.omni-chat-user .omni-chat-bubble{max-width:min(78%,570px);padding:12px 15px;border:1px solid var(--line);border-radius:17px 17px 4px 17px;background:var(--paper2);color:var(--ink);font-size:12px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
 .omni-chat-assistant{display:block!important;margin-top:0!important;border:0!important;border-radius:0!important;padding:0!important;background:transparent!important;box-shadow:none!important}.omni-chat-answer-head{display:flex!important;justify-content:flex-start!important;margin:0 0 7px!important}.omni-chat-answer-label{color:var(--green);font-size:11px;font-weight:800;letter-spacing:.1em}.omni-chat-answer-body{color:var(--ink);font-size:14px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}.omni-chat-assistant .omini-ai-sources{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:13px;padding-top:11px;border-top:1px solid var(--line);counter-reset:found-doc}.omni-chat-assistant .omini-ai-source{display:flex;align-items:center;gap:9px;width:100%;max-width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface-solid);color:var(--ink);font-size:11px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;transition:background .15s}.omni-chat-assistant .omini-ai-source::before{counter-increment:found-doc;content:counter(found-doc);display:grid;place-items:center;flex:0 0 20px;height:20px;border-radius:6px;background:var(--paper2);color:var(--green);font-size:10px;font-weight:800}.omni-chat-assistant .omini-ai-source:hover{background:var(--surface-hover)}
 .omni-chat-compose-wrap{width:min(800px,100%);margin:0 auto;padding:12px 20px 16px;background:var(--bg)}.omni-chat-composer{display:flex!important;flex-direction:column!important;gap:7px!important;padding:9px!important;border:1px solid var(--line2)!important;border-radius:17px!important;background:var(--surface-solid)!important;box-shadow:0 8px 30px rgba(0,0,0,.08)!important;backdrop-filter:none!important}.omni-chat-composer .omini-ai-input{min-height:48px;max-height:160px;resize:vertical;padding:9px 10px;font:500 13px/1.6 Bahnschrift,Inter,system-ui,sans-serif;color:var(--ink)}.omni-chat-composer .omini-ai-input::placeholder{color:var(--muted)}.omni-chat-composer .omini-ai-actions{justify-content:flex-end;gap:8px;padding:0 2px 1px}.omni-chat-composer .omini-ai-model{height:33px;max-width:175px;border-color:var(--line);background:var(--paper);color:var(--ink);font:500 10px Bahnschrift,Inter,system-ui,sans-serif}.omni-chat-composer .omini-ai-send{width:32px;height:32px;padding:0;border-radius:10px;background:var(--green)!important;color:#fff!important;font-size:18px;line-height:1}.omni-chat-composer .omini-ai-send:disabled{opacity:.55;cursor:wait}.omni-chat-composer .omini-ai-stop{width:32px;height:32px;padding:0;border:1px solid var(--line2);border-radius:10px;background:var(--paper2);color:var(--ink);font-size:13px;cursor:pointer}.omni-chat-composer .omini-ai-stop[hidden]{display:none}.omni-chat-compose-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 4px 0;color:var(--muted);font-size:9px}.omni-chat-compose-meta .omini-ai-status{display:flex;margin:0;font-size:9px;letter-spacing:.03em;text-transform:none;color:var(--muted)}.omni-chat-compose-meta .omini-ai-dot{width:6px;height:6px;box-shadow:none}.omni-chat-compose-meta .omini-ai-dot.online{background:var(--green)}.omni-chat-template{display:none!important}
@@ -4908,8 +4859,8 @@ const OLLAMA="http://127.0.0.1:11434",DB="OMINI_MANUAL_DATABASE_LOCAL",STORE="ma
 const $=s=>document.querySelector(s),input=$("#omniAIInput"),send=$("#omniAISend"),stop=$("#omniAIStop"),model=$("#omniAIModel"),status=$("#omniAIStatus"),dot=$("#omniAIDot"),chat=$("#omniAIConversation"),welcome=$("#omniChatWelcome"),template=$("#omniAIAnswer");
 let busy=false,controller=null,stopped=false,ocrWorkerPromise=null,docCache=null,docInvertedIndex=null,modelCache=null,modelCacheAt=0,modelCachePending=null;
 const norm=s=>String(s||"").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim(),stopWords=new Set(["como","qual","quais","quando","onde","para","sobre","com","uma","uns","das","dos","por","que","the","and","this","that","segundo","de","da","do","em","no","na","nos","nas","ao","aos","as","os","um","uma","e","ou","se","seu","sua","meu","minha","meus","minhas","quero","preciso","mostre","informe","indique","explique","procure","pesquise","encontre","arquivo","arquivos","documento","documentos","fale","diga"]),terms=q=>[...new Set(norm(q).split(/[^a-z0-9]+/).filter(x=>x.length>2&&!stopWords.has(x)))];
-const libraryCard=$("#omniLibraryLoading"),libraryTitle=$("#omniLibraryLoadingTitle"),libraryText=$("#omniLibraryLoadingText"),libraryPercent=$("#omniLibraryLoadingPercent"),libraryProgress=$("#omniLibraryProgress"),libraryBar=$("#omniLibraryProgressBar"),libraryCount=$("#omniLibraryFileCount"),libraryStage=$("#omniLibraryStage"),libraryFiles=$("#omniLibraryFiles"),startupOverlay=$("#omniStartupOverlay"),startupRing=$("#omniStartupRing");
-function updateLibraryProgress(state={}){if(!libraryCard)return;const percent=Math.max(0,Math.min(100,Number(state.percent)||0)),files=Array.isArray(state.files)?state.files:[],labels={opening:"INICIALIZAÇÃO",database:"ORGANIZAÇÃO",catalog:"BIBLIOTECA",preloading:"PRÉ-LEITURA",ready:"PRONTO",error:"ATENÇÃO"};libraryCard.dataset.state=state.stage||"opening";if(libraryTitle)libraryTitle.textContent=state.stage==="ready"?"Sua biblioteca está pronta":state.stage==="error"?"A biblioteca precisa de atenção":"Preparando sua biblioteca";if(libraryText)libraryText.textContent=state.text||"Abrindo o armazenamento local…";if(libraryPercent)libraryPercent.textContent=percent+"%";if(libraryProgress)libraryProgress.setAttribute("aria-valuenow",String(percent));if(libraryBar)libraryBar.style.width=percent+"%";if(startupRing)startupRing.style.setProperty("--startup-progress",percent+"%");if(startupOverlay){if(state.stage==="ready"||state.stage==="error"){startupOverlay.classList.add("is-complete");setTimeout(()=>{startupOverlay.hidden=true},480)}else{startupOverlay.hidden=false;startupOverlay.classList.remove("is-complete")}}if(libraryCount)libraryCount.textContent=files.length?`${files.length} arquivo${files.length===1?"":"s"} na biblioteca`:(state.stage==="ready"?"Adicione arquivos para começar":"Lendo arquivos locais");if(libraryStage)libraryStage.textContent=labels[state.stage]||"PREPARAÇÃO";if(libraryFiles){libraryFiles.replaceChildren();const shown=files.slice(0,3);for(const file of shown){const row=document.createElement("div"),icon=document.createElement("span"),name=document.createElement("span"),check=document.createElement("span");row.className="omni-library-file";icon.className="omni-library-file-icon";icon.textContent="▧";name.className="omni-library-file-name";name.textContent=file.name||file.path||"Documento local";name.title=name.textContent;check.className="omni-library-file-check";check.textContent=state.stage==="ready"?"✓":"…";row.append(icon,name,check);libraryFiles.appendChild(row)}if(files.length>shown.length){const more=document.createElement("div");more.className="omni-library-more";more.textContent=`e mais ${files.length-shown.length} arquivo${files.length-shown.length===1?"":"s"}`;libraryFiles.appendChild(more)}libraryFiles.hidden=!files.length}}
+const libraryCard=$("#omniLibraryLoading"),libraryTitle=$("#omniLibraryLoadingTitle"),libraryText=$("#omniLibraryLoadingText"),libraryPercent=$("#omniLibraryLoadingPercent"),libraryProgress=$("#omniLibraryProgress"),libraryBar=$("#omniLibraryProgressBar"),libraryCount=$("#omniLibraryFileCount"),libraryStage=$("#omniLibraryStage"),libraryFiles=$("#omniLibraryFiles"),startupOverlay=$("#omniStartupOverlay"),startupRing=$("#omniStartupRing"),startupHeading=$("#omniStartupHeading"),startupCaption=$("#omniStartupCaption");
+function updateLibraryProgress(state={}){if(!libraryCard)return;const percent=Math.max(0,Math.min(100,Number(state.percent)||0)),files=Array.isArray(state.files)?state.files:[],folder=window.OMINI_FOLDER_PROGRESS===true,labels={opening:"INICIALIZAÇÃO",database:"ORGANIZAÇÃO",catalog:"VARREDURA DA PASTA",preloading:"INDEXAÇÃO",ready:"PRONTO",error:"ATENÇÃO"};libraryCard.dataset.state=state.stage||"opening";if(startupHeading)startupHeading.textContent=folder?"Carregando arquivos da pasta":state.stage==="ready"?"Sua biblioteca está pronta":state.stage==="error"?"A biblioteca precisa de atenção":"Preparando sua biblioteca";if(startupCaption)startupCaption.textContent=folder?"O acesso à página de cálculos continua disponível enquanto os arquivos são preparados.":"Lendo e organizando seus arquivos para agilizar as pesquisas.";if(libraryTitle)libraryTitle.textContent=state.stage==="ready"?"Sua biblioteca está pronta":state.stage==="error"?"A biblioteca precisa de atenção":folder?"Varredura e indexação da pasta":"Preparando sua biblioteca";if(libraryText)libraryText.textContent=state.text||"Abrindo o armazenamento local…";if(libraryPercent)libraryPercent.textContent=percent+"%";if(libraryProgress)libraryProgress.setAttribute("aria-valuenow",String(percent));if(libraryBar)libraryBar.style.width=percent+"%";if(startupRing)startupRing.style.setProperty("--startup-progress",percent+"%");if(startupOverlay){if(state.stage==="ready"||state.stage==="error"){startupOverlay.classList.add("is-complete");setTimeout(()=>{startupOverlay.hidden=true},480)}else{startupOverlay.hidden=false;startupOverlay.classList.remove("is-complete")}}if(libraryCount)libraryCount.textContent=files.length?files.length+" arquivo(s) na pasta":(state.stage==="ready"?"Nenhum arquivo para preparar":"Aguardando leitura da pasta");if(libraryStage)libraryStage.textContent=labels[state.stage]||"PREPARAÇÃO";if(libraryFiles){libraryFiles.replaceChildren();const shown=files.slice(0,3);for(const file of shown){const row=document.createElement("div"),icon=document.createElement("span"),name=document.createElement("span"),check=document.createElement("span");row.className="omni-library-file";icon.className="omni-library-file-icon";icon.textContent="▧";name.className="omni-library-file-name";name.textContent=file.name||file.path||"Documento local";name.title=name.textContent;check.className="omni-library-file-check";check.textContent=state.stage==="ready"?"✓":"…";row.append(icon,name,check);libraryFiles.appendChild(row)}if(files.length>shown.length){const more=document.createElement("div");more.className="omni-library-more";more.textContent="e mais "+(files.length-shown.length)+" arquivo(s)";libraryFiles.appendChild(more)}libraryFiles.hidden=!files.length}}
 window.addEventListener("omni:startup-progress",event=>updateLibraryProgress(event.detail));updateLibraryProgress(window.OMINI_STARTUP_PROGRESS||{stage:"opening",text:"Abrindo o armazenamento local…",percent:8});
 function setStatus(t,online=""){if(status)status.textContent=t;if(dot)dot.className="omini-ai-dot"+(online?" "+online:"");if(window.OMINI_STARTUP_PRESEARCH_ACTIVE&&online==="busy"&&libraryText&&/Lendo (?:imagem|PDF)/i.test(t))libraryText.textContent=t}
 function isOllamaFetchFailure(error){const message=String(error?.message||error);return/failed to fetch|networkerror|load failed/i.test(message)||error?.name==="TypeError"&&/fetch|network/i.test(message)}
@@ -4929,7 +4880,7 @@ function foldedCode(value){return compactText(value).toUpperCase().replace(/O/g,
 function queryCodes(value){const text=norm(value),segmented=text.match(/[a-z0-9]+(?:[-_/][a-z0-9]+)+/g)||[];return codeList(text).map(compact=>{const raw=segmented.find(x=>compactText(x)===compact);return{compact,original:raw||compact,folded:foldedCode(compact),parts:raw?(raw.match(/[a-z0-9]+/g)||[]):[compact]}})}
 function buildDocumentInvertedIndex(docs){const index=new Map();docs.forEach((doc,docIndex)=>{const words=new Set([doc.nameTokens,doc.pathTokens,doc.contentTokens].join(" ").match(/[a-z0-9]{2,}/g)||[]);for(const word of words){let matches=index.get(word);if(!matches)index.set(word,matches=[]);matches.push(docIndex)}});return index}
  let searchWorker=null,searchWorkerReady=null,searchWorkerSeq=0;const searchWorkerPending=new Map();
- function startSearchWorker(docs){if(!window.Worker)return Promise.resolve(false);try{searchWorker=new Worker(new URL('search-index.worker.js',document.baseURI));searchWorker.onmessage=event=>{const data=event.data||{};if(data.type==='ready'){searchWorkerPending.get('ready')?.(true);searchWorkerPending.delete('ready')}else if(data.type==='results'){const pending=searchWorkerPending.get(data.id);if(pending){pending(data.indices||[]);searchWorkerPending.delete(data.id)}}};searchWorker.onerror=()=>{for(const resolve of searchWorkerPending.values())resolve(null);searchWorkerPending.clear();searchWorker.terminate();searchWorker=null;searchWorkerReady=null};searchWorkerReady=new Promise(resolve=>{searchWorkerPending.set('ready',resolve);setTimeout(()=>{if(searchWorkerPending.has('ready')){searchWorkerPending.delete('ready');resolve(false)}},15000)});const lists=docs.map(doc=>[...new Set((doc.nameTokens+' '+doc.pathTokens+' '+doc.contentTokens).match(/[a-z0-9]{2,}/g)||[])]);searchWorker.postMessage({type:'build',docs:lists});return searchWorkerReady}catch(error){console.warn('Web Worker indisponível; usando índice local:',error);searchWorker=null;return Promise.resolve(false)}}
+ function startSearchWorker(docs){if(!window.Worker)return Promise.resolve(false);if(searchWorker)searchWorker.terminate();searchWorker=null;searchWorkerReady=null;searchWorkerPending.clear();try{searchWorker=new Worker(new URL('search-index.worker.js',document.baseURI));searchWorker.onmessage=event=>{const data=event.data||{};if(data.type==='ready'){searchWorkerPending.get('ready')?.(true);searchWorkerPending.delete('ready')}else if(data.type==='results'){const pending=searchWorkerPending.get(data.id);if(pending){pending(data.indices||[]);searchWorkerPending.delete(data.id)}}};searchWorker.onerror=()=>{for(const resolve of searchWorkerPending.values())resolve(null);searchWorkerPending.clear();searchWorker.terminate();searchWorker=null;searchWorkerReady=null};searchWorkerReady=new Promise(resolve=>{searchWorkerPending.set('ready',resolve);setTimeout(()=>{if(searchWorkerPending.has('ready')){searchWorkerPending.delete('ready');resolve(false)}},15000)});const lists=docs.map(doc=>[...new Set((doc.nameTokens+' '+doc.pathTokens+' '+doc.contentTokens).match(/[a-z0-9]{2,}/g)||[])]);searchWorker.postMessage({type:'build',docs:lists});return searchWorkerReady}catch(error){console.warn('Web Worker indisponível; usando índice local:',error);searchWorker=null;return Promise.resolve(false)}}
  function workerSearch(terms){if(!searchWorker||!searchWorkerReady)return Promise.resolve(null);return searchWorkerReady.then(ready=>{if(!ready||!searchWorker)return null;const id=++searchWorkerSeq;return new Promise(resolve=>{const timer=setTimeout(()=>{searchWorkerPending.delete(id);resolve(null)},10000);searchWorkerPending.set(id,result=>{clearTimeout(timer);resolve(result)});searchWorker.postMessage({type:'search',id,terms})})})}
  function candidateDocsForTerms(docs,queryTerms){if(!docInvertedIndex)return docs;const lists=queryTerms.map(term=>docInvertedIndex.get(term));if(lists.some(list=>!list))return[];lists.sort((a,b)=>a.length-b.length);const has=(list,target)=>{let low=0,high=list.length-1;while(low<=high){const mid=(low+high)>>1,value=list[mid];if(value===target)return true;if(value<target)low=mid+1;else high=mid-1}return false};return lists[0].filter(index=>lists.slice(1).every(list=>has(list,index))).map(index=>docs[index])}
 async function allDocs(){
@@ -4942,7 +4893,7 @@ async function allDocs(){
    request.onsuccess=()=>{
     const cursor=request.result;
     if(!cursor){resolve(docs);return}
-    const item=cursor.value;
+     const item=cursor.value;if(!item.connectedFolder){cursor.continue();return}
     const ocr=String(item.ocrText||"")+" "+(item.learnedFacts||[]).filter(x=>String(x).startsWith("Texto OCR indexado:")).map(x=>String(x).replace(/^Texto OCR indexado:\s*/,"")).join(" ");
     const name=norm(item.name||""),path=norm(item.path||""),content=norm(String(item.normalizedText||item.text||"")+" "+ocr);
     const nameCodes=codeList(name),pathCodes=codeList(path),contentCodes=codeList(content);
@@ -4962,10 +4913,9 @@ async function allDocs(){
   return docCache;
  }finally{db.close()}
 }
-async function hydrateServerDocument(doc,db){if(!doc?.serverManaged||!doc.localServerPath||String(doc.text||"").trim())return doc;const response=await fetch("/api/catalogos/text?path="+encodeURIComponent(doc.localServerPath),{cache:"no-store"});let data={};try{data=await response.json()}catch{}if(!response.ok||!data.ok)throw Error(data.error||"Não foi possível ler o conteúdo de "+doc.name);doc.text=String(data.text||"");doc.normalizedText=norm(doc.text);doc.pages=Number(data.pages||0);doc.contentIndexedAt=Date.now();await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readwrite"),store=tx.objectStore(STORE),request=store.get(doc.id);request.onsuccess=()=>{const item=request.result;if(item){item.text=doc.text;item.normalizedText=doc.normalizedText;item.pages=doc.pages;item.contentIndexedAt=doc.contentIndexedAt;store.put(item)}};request.onerror=()=>reject(request.error);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error("Não foi possível guardar o texto extraído."))});docCache=null;docInvertedIndex=null;return doc}
-async function loadDocuments(items){if(!items.length)return[];if(items.every(item=>item._contentBuffered))return items;const db=await openDB();try{const docs=await new Promise((resolve,reject)=>{const docs=new Array(items.length),tx=db.transaction(STORE,"readonly"),store=tx.objectStore(STORE);items.forEach((item,i)=>{const request=store.get(item.id);request.onsuccess=()=>{const record=request.result;if(record){const{blob,...withoutBlob}=record;docs[i]=withoutBlob}else docs[i]=item};request.onerror=()=>reject(request.error)});tx.oncomplete=()=>resolve(docs.filter(Boolean));tx.onerror=()=>reject(tx.error)});for(const doc of docs)if(doc.serverManaged&&!String(doc.text||"").trim())await hydrateServerDocument(doc,db);return docs}finally{db.close()}}
+async function loadDocuments(items){if(!items.length)return[];if(items.every(item=>item._contentBuffered))return items;const db=await openDB();try{const docs=await new Promise((resolve,reject)=>{const docs=new Array(items.length),tx=db.transaction(STORE,"readonly"),store=tx.objectStore(STORE);items.forEach((item,i)=>{const request=store.get(item.id);request.onsuccess=()=>{const record=request.result;if(record){const{blob,...withoutBlob}=record;docs[i]=withoutBlob}else docs[i]=item};request.onerror=()=>reject(request.error)});tx.oncomplete=()=>resolve(docs.filter(Boolean));tx.onerror=()=>reject(tx.error)});return docs}finally{db.close()}}
 async function prepareSearchableDocs(docs){
- const startup=window.OMINI_STARTUP_PRESEARCH_ACTIVE===true,files=window.OMINI_STARTUP_FILES||[],pending=docs.filter(doc=>doc.serverManaged&&doc.contentSupported&&doc.localServerPath&&!doc.hasSearchContent&&!doc.contentIndexedAt);
+ const startup=window.OMINI_STARTUP_PRESEARCH_ACTIVE===true,files=window.OMINI_STARTUP_FILES||[],pending=[];
  const batchSize=4;
  for(let start=0;start<pending.length;start+=batchSize){
   if(stopped)throw Error("interrompida");
@@ -5330,7 +5280,7 @@ setSources(reply.sources,sources);reply.body.textContent=answer;saveHistory({id:
 finally{busy=false;window.OMINI_CHAT_BUSY=false;controller=null;send.disabled=false;send.hidden=false;stop.hidden=true;chat.scrollTop=0}}
 function onSend(e){e.preventDefault();e.stopImmediatePropagation();run()}send?.addEventListener("click",onSend,true);input?.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();run()}},true);stop?.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();stopped=true;controller?.abort("user");setStatus("Interrompendo pesquisa…","busy")},true);
 window.addEventListener("omni:manuals-updated",()=>{docCache=null;docInvertedIndex=null});
-async function presearchAllFiles(){if(!window.OMINI_PRESEARCH_PENDING||window.OMINI_STARTUP_PRESEARCH_ACTIVE)return;window.OMINI_PRESEARCH_PENDING=false;window.OMINI_STARTUP_PRESEARCH_ACTIVE=true;const files=window.OMINI_STARTUP_FILES||[];try{setStatus("Preparando a leitura completa dos arquivos locais…","busy");const docs=await allDocs();const indexed=await prepareSearchableDocs(docs);window.OMINI_UPDATE_STARTUP_PROGRESS?.("ready",indexed.length?`${indexed.length} arquivo(s) preparado(s) para pesquisa.`:"Biblioteca pronta · nenhum arquivo cadastrado",100,files);setStatus("Arquivos pré-lidos · pesquisa pronta","online")}catch(error){console.warn("A pré-leitura da biblioteca foi interrompida:",error);if(!window.OMINI_CANCEL_STARTUP_PRESEARCH)window.OMINI_UPDATE_STARTUP_PROGRESS?.("error","Pré-leitura parcial. Alguns arquivos serão preparados quando forem pesquisados.",100,files)}finally{window.OMINI_STARTUP_PRESEARCH_ACTIVE=false;window.dispatchEvent(new Event("omni:presearch-finished"));if(navigator.onLine&&!window.OMINI_CANCEL_STARTUP_PRESEARCH)setTimeout(()=>void warmupOminiModel(),2500)}}
+async function presearchAllFiles(){if(!window.OMINI_PRESEARCH_PENDING||window.OMINI_STARTUP_PRESEARCH_ACTIVE)return;window.OMINI_PRESEARCH_PENDING=false;window.OMINI_STARTUP_PRESEARCH_ACTIVE=true;const files=window.OMINI_STARTUP_FILES||[];try{setStatus("Preparando a leitura completa dos arquivos locais…","busy");window.OMINI_UPDATE_STARTUP_PROGRESS?.("preloading","Montando o índice de pesquisa em segundo plano…",88,files);const docs=await allDocs();window.OMINI_UPDATE_STARTUP_PROGRESS?.("preloading","Índice local preparado · pré-lendo conteúdo e imagens…",92,files);const indexed=await prepareSearchableDocs(docs);window.OMINI_FOLDER_PROGRESS=false;window.OMINI_UPDATE_STARTUP_PROGRESS?.("ready",indexed.length?`${indexed.length} arquivo(s) preparado(s) para pesquisa.`:"Biblioteca pronta · nenhum arquivo cadastrado",100,files);setStatus("Arquivos pré-lidos · pesquisa pronta","online")}catch(error){console.warn("A pré-leitura da biblioteca foi interrompida:",error);if(!window.OMINI_CANCEL_STARTUP_PRESEARCH)window.OMINI_UPDATE_STARTUP_PROGRESS?.("error","Pré-leitura parcial. Alguns arquivos serão preparados quando forem pesquisados.",100,files)}finally{window.OMINI_STARTUP_PRESEARCH_ACTIVE=false;window.dispatchEvent(new Event("omni:presearch-finished"));if(navigator.onLine&&!window.OMINI_CANCEL_STARTUP_PRESEARCH)setTimeout(()=>void warmupOminiModel(),2500)}}
 window.OMINI_CANCEL_STARTUP_PRESEARCH_WORK=()=>{window.OMINI_CANCEL_STARTUP_PRESEARCH=true;window.OMINI_PRESEARCH_PENDING=false;stopped=true};
 window.addEventListener("omni:presearch-request",()=>void presearchAllFiles());if(window.OMINI_PRESEARCH_PENDING&&!window.OMINI_CANCEL_STARTUP_PRESEARCH)void presearchAllFiles();
 // Mantém o modelo carregado por mais tempo e faz um aquecimento silencioso quando o navegador estiver ocioso.
