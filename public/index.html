@@ -4078,7 +4078,7 @@ for(const file of importedFiles){
  const relative=getRelativePath(file),pathKey=normalizePath(relative),nameKey=documentNameKey(file.name),samePath=existingByPath.get(pathKey),sameName=existingByName.get(nameKey),existing=samePath||sameName;
  if(seenNames.has(nameKey)){duplicateNames.push(relative);continue}
  seenNames.add(nameKey);
-  if(samePath&&samePath.size===file.size&&samePath.lastModified===file.lastModified){duplicateNames.push(relative);if(file.omniConnectedFolder){const stored=await dbGet(samePath.id);if(stored){stored.connectedFolder=true;stored.path=relative;stored.folder=getFolderFromPath(relative);await dbPut(stored)}}continue}
+   if(samePath&&samePath.size===file.size&&samePath.lastModified===file.lastModified){duplicateNames.push(relative);if(file.omniConnectedFolder){const stored=await dbGet(samePath.id);if(stored){stored.connectedFolder=true;stored.path=relative;stored.folder=getFolderFromPath(relative);stored.fileHandle=file.omniFileHandle||stored.fileHandle||null;stored.blob=null;await dbPut(stored)}}continue}
  if(sameName&&!file.omniConnectedFolder){duplicateNames.push(relative);continue}
  if(existing)file.omniReplaceId=existing.id;
  seenPaths.add(pathKey);uniqueFiles.push(file);
@@ -4157,7 +4157,10 @@ extracted.text||''
 ),
 
 blob:
-file,
+file.omniConnectedFolder?null:file,
+
+fileHandle:
+file.omniFileHandle||null,
 
 createdAt:
 Date.now(),
@@ -4208,7 +4211,7 @@ window.omniClearStoredFiles=async()=>{if(!db)await openDatabase();await waitForC
 window.omniDisconnectCatalogFolder=async()=>{if(!db)await openDatabase();await waitForCatalogScans();const all=await dbGetAllMetadata(),linked=all.filter(item=>item.connectedFolder||item.serverManaged);await new Promise((resolve,reject)=>{const tx=db.transaction([STORE,CONNECTION_STORE],'readwrite'),records=tx.objectStore(STORE),connections=tx.objectStore(CONNECTION_STORE);for(const item of linked)records.delete(item.id);connections.put({id:CATALOG_CONNECTION_ID,disconnected:true,updatedAt:Date.now()});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Não foi possível desvincular a pasta.'))});connectedCatalogHandle=null;localCatalogInventory=null;await refreshDatabase();if(folderSyncStatus)folderSyncStatus.textContent='Pasta desvinculada. Os arquivos originais continuam no computador.';window.dispatchEvent(new Event('omni:manuals-updated'));return linked.length};
 async function saveCatalogHandle(handle){await connectionTransaction('readwrite',store=>store.put({id:CATALOG_CONNECTION_ID,handle,updatedAt:Date.now()}));connectedCatalogHandle=handle}
 async function loadCatalogHandle(){return new Promise((resolve,reject)=>{const req=db.transaction(CONNECTION_STORE,'readonly').objectStore(CONNECTION_STORE).get(CATALOG_CONNECTION_ID);req.onsuccess=()=>resolve(req.result?.handle||null);req.onerror=()=>reject(req.error)})}
-async function scanCatalogFiles(dir,prefix='',out=[],issues=[]){let entries=[];try{for await(const item of dir.entries())entries.push(item)}catch(error){issues.push({path:'CATÁLOGOS/'+prefix.replace(/\/$/,''),error:error?.message||String(error)});Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}for(const [name,entry] of entries){if(entry.kind==='directory'){await scanCatalogFiles(entry,prefix+name+'/',out,issues)}else if(entry.kind==='file'){try{const file=await entry.getFile();Object.defineProperty(file,'relativePath',{value:'CATÁLOGOS/'+prefix+name});Object.defineProperty(file,'omniConnectedFolder',{value:true});out.push(file)}catch(error){issues.push({path:'CATÁLOGOS/'+prefix+name,error:error?.message||String(error)})}}}Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}
+ async function scanCatalogFiles(dir,prefix='',out=[],issues=[]){let entries=[];try{for await(const item of dir.entries())entries.push(item)}catch(error){issues.push({path:(connectedCatalogHandle?.name||dir.name||'Pasta')+'/'+prefix.replace(/\/$/,''),error:error?.message||String(error)});Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}for(const [name,entry] of entries){if(entry.kind==='directory'){await scanCatalogFiles(entry,prefix+name+'/',out,issues)}else if(entry.kind==='file'){try{const file=await entry.getFile();Object.defineProperty(file,'relativePath',{value:(connectedCatalogHandle?.name||'Pasta')+'/'+prefix+name});Object.defineProperty(file,'omniConnectedFolder',{value:true});Object.defineProperty(file,'omniFileHandle',{value:entry});out.push(file)}catch(error){issues.push({path:prefix+name,error:error?.message||String(error)})}}}Object.defineProperty(out,'scanIssues',{value:issues,configurable:true});return out}
 async function syncCatalogFolder(handle=connectedCatalogHandle,quiet=false){
  if(!handle)return{error:'Pasta CATÁLOGOS ainda não vinculada.'};
  if(catalogSyncBusy)return{busy:true};
@@ -4230,7 +4233,7 @@ async function syncCatalogFolder(handle=connectedCatalogHandle,quiet=false){
   window.dispatchEvent(new Event('omni:manuals-updated'));
   const seen=new Set(files.map(file=>String(file.relativePath).toLocaleLowerCase('pt-BR')));
    const before=await dbGetAllMetadata(),tracked=before.filter(doc=>doc.connectedFolder);
-  const result=await importFiles(files,{silent:true});
+   const result=await importFiles(files,{silent:true,folderOnly:true});
   let removed=0;
   for(const item of tracked){if(!seen.has(String(item.path||'').toLocaleLowerCase('pt-BR'))){await dbDelete(item.id);removed++}}
    const after=await dbGetAllMetadata(),indexed=after.filter(doc=>doc.connectedFolder).length;
@@ -4253,10 +4256,11 @@ async function syncCatalogFolder(handle=connectedCatalogHandle,quiet=false){
 async function findNamedDirectory(parent,name){const wanted=String(name).normalize('NFC').toLocaleLowerCase('pt-BR');for await(const [entryName,entry] of parent.entries()){if(entry.kind==='directory'&&String(entryName).normalize('NFC').toLocaleLowerCase('pt-BR')===wanted)return entry}return null}
 async function resolveCatalogsDirectory(root){if(String(root.name||'').normalize('NFC').toLocaleLowerCase('pt-BR')==='catálogos')return root;const paths=[['CATÁLOGOS'],['omini','CATÁLOGOS'],['OMINI-EK','omini','CATÁLOGOS'],['DOCS','OMINI-EK','omini','CATÁLOGOS'],['Documentos','DOCS','OMINI-EK','omini','CATÁLOGOS'],['OneDrive - SAT','Documentos','DOCS','OMINI-EK','omini','CATÁLOGOS'],['GERAIS','CATÁLOGOS'],['DOCS','GERAIS','CATÁLOGOS'],['Documentos','DOCS','GERAIS','CATÁLOGOS'],['OneDrive - SAT','Documentos','DOCS','GERAIS','CATÁLOGOS']];for(const parts of paths){let current=root;for(const part of parts){current=await findNamedDirectory(current,part);if(!current)break}if(current)return current}throw new Error('Não encontrei CATÁLOGOS. A pasta disponível está em Documentos\\DOCS\\GERAIS\\CATÁLOGOS; selecione Documentos, DOCS, GERAIS ou a própria CATÁLOGOS.')}
 async function syncLocalServerCatalog(quiet=true,force=false){if(localCatalogSyncBusy)return{busy:true};if(location.protocol!=='http:'||location.hostname!=='127.0.0.1')return{available:false};localCatalogSyncBusy=true;try{if(!force){const connection=await loadCatalogConnectionRecord();if(connection?.disconnected)return{available:false,disconnected:true}}if(folderSyncStatus)folderSyncStatus.textContent='Atualizando a lista de CATÁLOGOS neste computador…';const response=await fetch('/api/catalogos/list',{cache:'no-store'});if(!response.ok){let detail='';try{detail=(await response.json()).error||''}catch{}throw new Error(detail||'O serviço local não conseguiu ler CATÁLOGOS.');}const inventory=await response.json();if(!inventory.ok)throw new Error(inventory.error||'CATÁLOGOS não está disponível.');localCatalogInventory=inventory;const existing=await dbGetAllMetadata(),managed=existing.filter(item=>item.serverManaged),byId=new Map(managed.map(item=>[String(item.id),item])),seen=new Set(),put=[];for(const file of inventory.files||[]){const id=String(file.id),previous=byId.get(id),same=previous&&Number(previous.size)===Number(file.size)&&Number(previous.lastModified)===Number(file.lastModified);seen.add(id);put.push({...same?previous:{},id,name:file.name,path:file.path,folder:getFolderFromPath(file.path),size:Number(file.size||0),lastModified:Number(file.lastModified||0),type:file.type||'',mimeType:file.mimeType||'',serverManaged:true,localServerPath:file.relativePath,contentSupported:file.contentSupported!==false,connectedFolder:true,blob:null,text:same?String(previous.text||''):'',normalizedText:same?String(previous.normalizedText||''):'',pages:same?Number(previous.pages||0):0,learnedFacts:same&&Array.isArray(previous.learnedFacts)?previous.learnedFacts:[],createdAt:same?previous.createdAt:Date.now()});}const remove=managed.filter(item=>!seen.has(String(item.id)));await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite'),store=tx.objectStore(STORE);for(const item of put)store.put(item);for(const item of remove)store.delete(item.id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||new Error('Não foi possível atualizar o índice local.'))});const connection={id:CATALOG_CONNECTION_ID,serverManaged:true,label:inventory.label||'CATÁLOGOS',root:inventory.root,updatedAt:Date.now(),lastScan:{status:'concluída',total:Number(inventory.total||0),compatible:Number(inventory.extractable||0),indexed:(inventory.files||[]).length,inaccessible:Number(inventory.inaccessible||0),unsupported:Object.entries(inventory.unsupported||{}).map(([ext,count])=>`${ext}: ${count}`).slice(0,12),metadataOnly:Object.entries(inventory.metadataOnly||{}).map(([ext,count])=>`${ext}: ${count}`).slice(0,12),at:Date.now()}};await connectionTransaction('readwrite',store=>store.put(connection));await refreshDatabase();if(folderSyncStatus)folderSyncStatus.textContent=`${inventory.label||'Biblioteca local'}: ${(inventory.files||[]).length} arquivo(s) pesquisáveis por nome; conteúdo extraído sob demanda · ${inventory.root}`;if(!quiet)showToast(`${inventory.label||'Biblioteca local'} atualizada: ${(inventory.files||[]).length} arquivo(s) disponíveis. O conteúdo é lido apenas quando necessário.`);return{available:true,total:(inventory.files||[]).length,root:inventory.root}}catch(error){console.warn('Não foi possível atualizar CATÁLOGOS pelo serviço local:',error);if(folderSyncStatus)folderSyncStatus.textContent=`Serviço local de CATÁLOGOS indisponível: ${error?.message||String(error)}`;return{available:false,error:error?.message||String(error)}}finally{localCatalogSyncBusy=false}}
-async function connectCatalogs(){try{if(location.protocol==='http:'&&location.hostname==='127.0.0.1'){const result=await syncLocalServerCatalog(false,true);if(result.available)return;throw new Error(result.error||'O serviço local de arquivos não respondeu. Feche e abra pelo atalho “Iniciar OMINI”.')}if(!window.showDirectoryPicker)throw new Error('Este navegador não oferece seleção direta de pastas. Abra o site pelo atalho “Iniciar OMINI” para pesquisar CATÁLOGOS automaticamente.');const selected=await window.showDirectoryPicker({id:'omini-catalogos',mode:'read',startIn:'documents'}),handle=await resolveCatalogsDirectory(selected);const permission=await handle.queryPermission({mode:'read'});if(permission!=='granted'&&await handle.requestPermission({mode:'read'})!=='granted')throw new Error('A permissão de leitura não foi concedida.');connectedCatalogHandle=handle;await saveCatalogHandle(handle);if(folderSyncStatus)folderSyncStatus.textContent='Conectando e indexando CATÁLOGOS…';await syncCatalogFolder(handle,false)}catch(error){if(error?.name==='AbortError')return;console.error(error);showToast('Não foi possível conectar CATÁLOGOS: '+(error?.message||String(error)||'erro desconhecido'))}}
+async function connectCatalogs(){try{if(!window.isSecureContext||!window.showDirectoryPicker)throw new Error('A seleção direta de pasta exige Chrome ou Edge em localhost/HTTPS. Abra o site pelo atalho local do OMINI.');const handle=await window.showDirectoryPicker({id:'omini-user-folder',mode:'read',startIn:'documents'});const permission=await handle.queryPermission({mode:'read'});if(permission!=='granted'&&await handle.requestPermission({mode:'read'})!=='granted')throw new Error('A permissão de leitura não foi concedida.');connectedCatalogHandle=handle;await saveCatalogHandle(handle);if(folderSyncStatus)folderSyncStatus.textContent=`Lendo e indexando a pasta “${handle.name}”…`;await syncCatalogFolder(handle,false)}catch(error){if(error?.name==='AbortError')return;console.error(error);showToast('Não foi possível conectar a pasta: '+(error?.message||String(error)||'erro desconhecido'))}}
 async function restoreCatalogConnection(){try{connectedCatalogHandle=await loadCatalogHandle();if(!connectedCatalogHandle)return;const permission=await connectedCatalogHandle.queryPermission({mode:'read'});if(permission==='granted'){await syncCatalogFolder(connectedCatalogHandle,true)}else if(folderSyncStatus)folderSyncStatus.textContent='CATÁLOGOS vinculada. Clique em “Vincular pasta CATÁLOGOS” para autorizar a leitura novamente.'}catch(error){console.warn('Não foi possível restaurar a pasta CATÁLOGOS:',error)}}
 connectCatalogsBtn?.addEventListener('click',connectCatalogs);
-window.omniReindexCatalogs=async()=>{const local=await syncLocalServerCatalog(false,true);if(local.available)return local;if(!connectedCatalogHandle)connectedCatalogHandle=await loadCatalogHandle();return syncCatalogFolder(connectedCatalogHandle,false)};
+window.addEventListener('omni:connect-folder',connectCatalogs);
+window.omniReindexCatalogs=async()=>{if(!connectedCatalogHandle)connectedCatalogHandle=await loadCatalogHandle();return syncCatalogFolder(connectedCatalogHandle,false)};
 
 /* =========================================================
    ABERTURA DE PDF / FOTO
@@ -4293,24 +4297,12 @@ activeObjectUrl=null;
 
 }
 
-if(item.serverManaged&&item.localServerPath&&item.type!=='image'){
-const url='/api/catalogos/file?path='+encodeURIComponent(item.localServerPath);
-const tab=pdfTab||window.open('about:blank','_blank');
-if(tab){tab.location.href=url;tab.document.title=item.name||'Documento local';return}
-showToast('O navegador bloqueou a nova guia. Permita pop-ups para este arquivo.');
-return;
-}
-
-if(item.serverManaged&&item.localServerPath&&item.type==='image'&&!item.blob){
-const response=await fetch('/api/catalogos/file?path='+encodeURIComponent(item.localServerPath),{cache:'no-store'});
-if(!response.ok){showToast('Não foi possível abrir a imagem local.');return}
-item.blob=await response.blob();
-}
+ if(!item.blob&&item.fileHandle){try{let permission=await item.fileHandle.queryPermission({mode:'read'});if(permission!=='granted')permission=await item.fileHandle.requestPermission({mode:'read'});if(permission!=='granted')throw new Error('Autorize a leitura da pasta vinculada.');item.blob=await item.fileHandle.getFile()}catch(error){showToast(error?.message||'Não foi possível ler o arquivo da pasta vinculada.');return}}
 
 if(!item.blob){
 
 showToast(
-'Este arquivo original não está disponível. Importe novamente.'
+ 'O arquivo não está acessível. Vincule novamente a pasta do computador.'
 );
 
 return;
@@ -4564,7 +4556,7 @@ await refreshDatabase();
 const initialFiles=await dbGetAllMetadata();
 publishStartup('catalog','Verificando a biblioteca de arquivos…',68,initialFiles);
 let localCatalog={available:false};
-if(!window.OMINI_CANCEL_STARTUP_PRESEARCH){localCatalog=await syncLocalServerCatalog(true);if(!localCatalog.available&&!localCatalog.disconnected&&!window.OMINI_CANCEL_STARTUP_PRESEARCH)await restoreCatalogConnection();}
+if(!window.OMINI_CANCEL_STARTUP_PRESEARCH)await restoreCatalogConnection();
 const readyFiles=await dbGetAllMetadata();
 if(window.OMINI_CANCEL_STARTUP_PRESEARCH)publishStartup('preloading','Concluindo a limpeza solicitada…',96,readyFiles);
 else publishStartup(readyFiles.length?'preloading':'ready',readyFiles.length?'Pré-lendo documentos e imagens para agilizar sua primeira pesquisa…':'Biblioteca pronta · nenhum arquivo cadastrado',readyFiles.length?70:100,readyFiles);
@@ -4936,7 +4928,10 @@ function codeList(value){const text=String(value||"").toLowerCase(),found=[...(t
 function foldedCode(value){return compactText(value).toUpperCase().replace(/O/g,"0").replace(/[IL]/g,"1").replace(/S/g,"5").replace(/B/g,"8").replace(/Z/g,"2").toLowerCase()}
 function queryCodes(value){const text=norm(value),segmented=text.match(/[a-z0-9]+(?:[-_/][a-z0-9]+)+/g)||[];return codeList(text).map(compact=>{const raw=segmented.find(x=>compactText(x)===compact);return{compact,original:raw||compact,folded:foldedCode(compact),parts:raw?(raw.match(/[a-z0-9]+/g)||[]):[compact]}})}
 function buildDocumentInvertedIndex(docs){const index=new Map();docs.forEach((doc,docIndex)=>{const words=new Set([doc.nameTokens,doc.pathTokens,doc.contentTokens].join(" ").match(/[a-z0-9]{2,}/g)||[]);for(const word of words){let matches=index.get(word);if(!matches)index.set(word,matches=[]);matches.push(docIndex)}});return index}
-function candidateDocsForTerms(docs,queryTerms){if(!docInvertedIndex)return docs;const lists=queryTerms.map(term=>docInvertedIndex.get(term));if(lists.some(list=>!list))return[];lists.sort((a,b)=>a.length-b.length);const has=(list,target)=>{let low=0,high=list.length-1;while(low<=high){const mid=(low+high)>>1,value=list[mid];if(value===target)return true;if(value<target)low=mid+1;else high=mid-1}return false};return lists[0].filter(index=>lists.slice(1).every(list=>has(list,index))).map(index=>docs[index])}
+ let searchWorker=null,searchWorkerReady=null,searchWorkerSeq=0;const searchWorkerPending=new Map();
+ function startSearchWorker(docs){if(!window.Worker)return Promise.resolve(false);try{searchWorker=new Worker(new URL('search-index.worker.js',document.baseURI));searchWorker.onmessage=event=>{const data=event.data||{};if(data.type==='ready'){searchWorkerPending.get('ready')?.(true);searchWorkerPending.delete('ready')}else if(data.type==='results'){const pending=searchWorkerPending.get(data.id);if(pending){pending(data.indices||[]);searchWorkerPending.delete(data.id)}}};searchWorker.onerror=()=>{for(const resolve of searchWorkerPending.values())resolve(null);searchWorkerPending.clear();searchWorker.terminate();searchWorker=null;searchWorkerReady=null};searchWorkerReady=new Promise(resolve=>{searchWorkerPending.set('ready',resolve);setTimeout(()=>{if(searchWorkerPending.has('ready')){searchWorkerPending.delete('ready');resolve(false)}},15000)});const lists=docs.map(doc=>[...new Set((doc.nameTokens+' '+doc.pathTokens+' '+doc.contentTokens).match(/[a-z0-9]{2,}/g)||[])]);searchWorker.postMessage({type:'build',docs:lists});return searchWorkerReady}catch(error){console.warn('Web Worker indisponível; usando índice local:',error);searchWorker=null;return Promise.resolve(false)}}
+ function workerSearch(terms){if(!searchWorker||!searchWorkerReady)return Promise.resolve(null);return searchWorkerReady.then(ready=>{if(!ready||!searchWorker)return null;const id=++searchWorkerSeq;return new Promise(resolve=>{const timer=setTimeout(()=>{searchWorkerPending.delete(id);resolve(null)},10000);searchWorkerPending.set(id,result=>{clearTimeout(timer);resolve(result)});searchWorker.postMessage({type:'search',id,terms})})})}
+ function candidateDocsForTerms(docs,queryTerms){if(!docInvertedIndex)return docs;const lists=queryTerms.map(term=>docInvertedIndex.get(term));if(lists.some(list=>!list))return[];lists.sort((a,b)=>a.length-b.length);const has=(list,target)=>{let low=0,high=list.length-1;while(low<=high){const mid=(low+high)>>1,value=list[mid];if(value===target)return true;if(value<target)low=mid+1;else high=mid-1}return false};return lists[0].filter(index=>lists.slice(1).every(list=>has(list,index))).map(index=>docs[index])}
 async function allDocs(){
  if(docCache)return docCache;
  const db=await openDB();
@@ -4963,7 +4958,7 @@ async function allDocs(){
    };
    tx.onerror=()=>reject(tx.error);
   });
-  docInvertedIndex=buildDocumentInvertedIndex(docCache);
+   if(!(await startSearchWorker(docCache)))docInvertedIndex=buildDocumentInvertedIndex(docCache);
   return docCache;
  }finally{db.close()}
 }
@@ -5040,7 +5035,7 @@ async function indexPdfForSearch(doc){
   });
  }finally{db.close()}
  docCache=null;docInvertedIndex=null;
-}async function loadDocumentBlob(id){const db=await openDB();try{const record=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readonly"),request=tx.objectStore(STORE).get(id);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);tx.onerror=()=>reject(tx.error)});if(record?.blob)return record.blob;if(record?.serverManaged&&record.localServerPath){if(record.type==="pdf"&&Number(record.size)>40*1024*1024)return null;const response=await fetch("/api/catalogos/file?path="+encodeURIComponent(record.localServerPath),{cache:"no-store"});if(!response.ok)throw Error("Não foi possível abrir "+record.name);return response.blob()}return null}finally{db.close()}}
+}async function loadDocumentBlob(id){const db=await openDB();try{const record=await new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readonly"),request=tx.objectStore(STORE).get(id);request.onsuccess=()=>resolve(request.result||null);request.onerror=()=>reject(request.error);tx.onerror=()=>reject(tx.error)});if(record?.blob)return record.blob;if(record?.fileHandle){let permission=await record.fileHandle.queryPermission({mode:"read"});if(permission!=="granted")throw Error("A pasta precisa ser autorizada novamente. Clique em Vincular pasta do computador.");return await record.fileHandle.getFile()}return null}finally{db.close()}}
 function hasQueryContext(doc,phrase,queryTerms){
  const fields=[phraseKey(doc.name||""),phraseKey(doc.path||""),String(doc.contentPhrase||"")].map(value=>" "+value+" ");
  if(phrase&&fields.some(value=>value.includes(" "+phrase+" ")))return true;
@@ -5057,10 +5052,10 @@ function hasQueryContext(doc,phrase,queryTerms){
  }
  return false;
 }
-function retrieve(docs,q){
+ async function retrieve(docs,q){
  const query=norm(q),phrase=phraseKey(q),codes=queryCodes(query),ts=[...new Set([...terms(q),...query.split(/[^a-z0-9]+/).filter(t=>t.length>=2&&!stopWords.has(t))])].filter(t=>!/^\d+(?:ka|a|v|kv|hz|w|kw|mw|mm|cm)$/i.test(t)&&(!/^\d+$/.test(t)||t.length>=2));
  if(!ts.length)return[];
- const candidates=candidateDocsForTerms(docs,ts);
+  const workerIndices=await workerSearch(ts),candidates=workerIndices?workerIndices.map(index=>docs[index]).filter(Boolean):candidateDocsForTerms(docs,ts);
  if(!candidates.length)return[];
  const exactPhrase=candidates.filter(d=>[phraseKey(d.name||""),phraseKey(d.path||""),String(d.contentPhrase||"")].some(value=>phrase&&(" "+value+" ").includes(" "+phrase+" ")));
  if(exactPhrase.length)return exactPhrase;
@@ -5319,7 +5314,7 @@ function saveHistory(entry){try{const old=JSON.parse(localStorage.getItem(HISTOR
 async function run(){
 const q=input.value.trim();if(window.OMINI_STARTUP_PRESEARCH_ACTIVE){setStatus("Pré-leitura da biblioteca em andamento · aguarde…","busy");return}if(!q||busy)return;busy=true;window.OMINI_CHAT_BUSY=true;stopped=false;welcome.hidden=true;addUser(q);const reply=makeMessage();const latestAssistant=chat.lastElementChild,latestQuestion=latestAssistant?.previousElementSibling;if(latestQuestion?.classList.contains("omni-chat-user")){chat.insertBefore(latestAssistant,chat.firstElementChild);chat.insertBefore(latestQuestion,chat.firstElementChild)}reply.body.textContent="Pesquisando documentos…";input.value="";send.disabled=true;send.hidden=true;stop.hidden=false;setStatus("Pesquisando documentos locais","busy");chat.scrollTop=0;let sources=[],answer="",visual={notes:[],ocrText:""};
 try{
-let docs=await allDocs();docs=await prepareSearchableDocs(docs);const found=retrieve(docs,q),sites=favoriteSearches(q),learned=memoryMatch(q,docs),codeSearch=queryCodes(q).length>0;if(stopped)throw Error("interrompida");
+let docs=await allDocs();docs=await prepareSearchableDocs(docs);const found=await retrieve(docs,q),sites=favoriteSearches(q),learned=memoryMatch(q,docs),codeSearch=queryCodes(q).length>0;if(stopped)throw Error("interrompida");
 const cachedAnswer=String(learned?.entry?.answer||"");
 // Respostas negativas antigas não são evidência: não reutilizá-las como se fossem conclusivas.
 // Isso força uma nova leitura dos documentos quando uma busca anterior respondeu que não encontrou dados.
