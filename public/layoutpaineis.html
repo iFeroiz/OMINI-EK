@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMINI-EK | Painel Elétrico 3D Pro (Fusion Style)</title>
+    <!-- Three.js e Controlos de Câmera/Transformação -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+    <!-- Leitor STEP via WebAssembly (Open CASCADE) -->
+    <script src="https://cdn.jsdelivr.net/npm/occt-import-js@0.0.15/dist/occt-import-js.js"></script>
+    <style>
+        :root {
+            --fusion-bg: #1e1e1e;
+            --fusion-toolbar: #2d2d2d;
+            --fusion-border: #444444;
+            --fusion-accent: #3498db;
+            --fusion-hover: #3a3a3a;
+            --fusion-text: #cccccc;
+            --fusion-text-bright: #ffffff;
+            --fusion-panel: #252525;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--fusion-bg); color: var(--fusion-text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; user-select: none; }
+        
+        /* Top Ribbon (Barra de Ferramentas Estilo Fusion) */
+        header { height: 42px; background: var(--fusion-toolbar); border-bottom: 1px solid var(--fusion-border); display: flex; align-items: center; padding: 0 10px; justify-content: space-between; }
+        .ribbon-tabs { display: flex; gap: 2px; height: 100%; align-items: flex-end; }
+        .tab { padding: 6px 16px; font-size: 0.8rem; font-weight: 600; color: var(--fusion-text-bright); background: var(--fusion-bg); border-top: 3px solid var(--fusion-accent); border-left: 1px solid var(--fusion-border); border-right: 1px solid var(--fusion-border); }
+        .ribbon-toolbar { height: 64px; background: var(--fusion-bg); border-bottom: 1px solid var(--fusion-border); display: flex; align-items: center; padding: 0 15px; gap: 15px; }
+        .tool-group { display: flex; align-items: center; gap: 8px; border-right: 1px solid var(--fusion-border); padding-right: 15px; height: 45px; }
+        .tool-btn { background: transparent; border: 1px solid transparent; color: var(--fusion-text); padding: 6px 10px; border-radius: 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; min-width: 60px; transition: all 0.2s; }
+        .tool-btn:hover { background: var(--fusion-hover); border-color: var(--fusion-border); color: var(--fusion-text-bright); }
+        .tool-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+        /* Main Workspace */
+        .main-container { display: flex; flex: 1; height: calc(100vh - 106px); position: relative; overflow: hidden; }
+        
+        /* Navegador Esquerda (Árvore de Projeto) */
+        sidebar { width: 280px; background: var(--fusion-panel); border-right: 1px solid var(--fusion-border); display: flex; flex-direction: column; }
+        .browser-header { background: #333333; padding: 8px 12px; font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid var(--fusion-border); display: flex; justify-content: space-between; align-items: center; }
+        .browser-tree { flex: 1; overflow-y: auto; padding: 8px; font-size: 0.8rem; }
+        .tree-folder { margin-bottom: 4px; }
+        .tree-item { padding: 4px 8px; border-radius: 3px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--fusion-text); }
+        .tree-item:hover { background: var(--fusion-hover); }
+        .tree-item.selected { background: #264f78; color: white; }
+
+        /* Viewport 3D */
+        #canvas-container { flex: 1; position: relative; background: radial-gradient(circle at center, #3a3f4b 0%, #1a1d24 100%); outline: none; }
+        
+        /* ViewCube Padrão Fusion (160px) */
+        #viewcube-container { position: absolute; top: 15px; right: 15px; width: 160px; height: 160px; z-index: 10; pointer-events: auto; cursor: pointer; }
+
+        /* Painel Flutuante Mover/Copiar (Estilo Fusion) */
+        .floating-panel { position: absolute; top: 15px; right: 190px; width: 260px; background: rgba(37, 37, 37, 0.95); border: 1px solid var(--fusion-border); border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 20; display: none; backdrop-filter: blur(5px); }
+        .floating-header { background: #333; padding: 8px 12px; font-size: 0.75rem; font-weight: bold; border-bottom: 1px solid var(--fusion-border); display: flex; justify-content: space-between; align-items: center; }
+        .floating-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 0.75rem; }
+        .input-row { display: flex; justify-content: space-between; align-items: center; }
+        .input-row input { width: 100px; background: #1a1a1a; border: 1px solid var(--fusion-border); color: white; padding: 3px 6px; border-radius: 2px; text-align: right; }
+        .floating-footer { padding: 8px 12px; background: #222; border-top: 1px solid var(--fusion-border); display: flex; justify-content: flex-end; gap: 6px; }
+        .fusion-btn { background: #333; border: 1px solid var(--fusion-border); color: white; padding: 4px 12px; border-radius: 2px; cursor: pointer; font-size: 0.75rem; }
+        .fusion-btn.primary { background: var(--fusion-accent); border-color: #2980b9; }
+        .fusion-btn:hover { background: #444; }
+
+        /* Rodapé de Status */
+        footer { height: 24px; background: var(--fusion-toolbar); border-top: 1px solid var(--fusion-border); display: flex; align-items: center; padding: 0 10px; font-size: 0.7rem; justify-content: space-between; color: #999; }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-weight: bold; color: #3498db; font-size: 0.85rem;">⚡ OMINI-EK CAD Pro</div>
+            <div class="ribbon-tabs">
+                <div class="tab">SÓLIDO</div>
+            </div>
+        </div>
+        <div style="font-size: 0.75rem; background: #c0392b; padding: 2px 8px; border-radius: 3px; color: white;">Somente Leitura</div>
+    </header>
+
+    <div class="ribbon-toolbar">
+        <div class="tool-group">
+            <label class="tool-btn" style="cursor: pointer;">
+                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Importar STEP
+                <input type="file" id="stepFile" accept=".step,.stp" style="display:none;" onchange="loadStepFile(event)">
+            </label>
+            <button class="tool-btn" onclick="toggleMovePanel()">
+                <svg viewBox="0 0 24 24"><path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm10 2h-3v4h3v3l5-5-5-5v3z"/></svg>
+                Mover / Girar
+            </button>
+        </div>
+        <div class="tool-group">
+            <button class="tool-btn" onclick="clearScene()">
+                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                Limpar Cena
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <sidebar>
+            <div class="browser-header">
+                <span>NAVEGADOR DE PROJETO</span>
+                <span id="componentCount">0 itens</span>
+            </div>
+            <div class="browser-tree" id="componentTree">
+                <div class="tree-folder">
+                    <div class="tree-item" style="font-weight: bold; color: #fff;">📦 Documento Principal</div>
+                    <div id="treeItemsList" style="padding-left: 12px;"></div>
+                </div>
+            </div>
+        </sidebar>
+
+        <div id="canvas-container">
+            <div id="viewcube-container"></div>
+            
+            <!-- Painel Flutuante Mover/Copiar -->
+            <div class="floating-panel" id="movePanel">
+                <div class="floating-header">
+                    <span>MOVER / COPIAR</span>
+                    <span style="cursor: pointer;" onclick="toggleMovePanel()">✕</span>
+                </div>
+                <div class="floating-body">
+                    <div class="input-row"><span>Distância X (mm):</span><input type="number" id="dx" value="0.00" oninput="applyTransformFromInputs()"></div>
+                    <div class="input-row"><span>Distância Y (mm):</span><input type="number" id="dy" value="0.00" oninput="applyTransformFromInputs()"></div>
+                    <div class="input-row"><span>Distância Z (mm):</span><input type="number" id="dz" value="0.00" oninput="applyTransformFromInputs()"></div>
+                    <div class="input-row"><span>Ângulo X (°):</span><input type="number" id="rax" value="0.0" oninput="applyTransformFromInputs()"></div>
+                    <div class="input-row"><span>Ângulo Y (°):</span><input type="number" id="ray" value="0.0" oninput="applyTransformFromInputs()"></div>
+                    <div class="input-row"><span>Ângulo Z (°):</span><input type="number" id="raz" value="0.0" oninput="applyTransformFromInputs()"></div>
+                </div>
+                <div class="floating-footer">
+                    <button class="fusion-btn" onclick="toggleMovePanel()">Fechar</button>
+                    <button class="fusion-btn primary" onclick="toggleMovePanel()">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div id="statusText">Motor OCCT (WASM): Pronto para Importação STEP</div>
+        <div>Unidade: mm | Órbita: Botão Direito | Pan: Botão Central | Ctrl+Z: Desfazer | Ctrl+C/V: Copiar/Colar</div>
+    </footer>
+
+    <script>
+        let scene, camera, renderer, controls, transformControls;
+        let vcScene, vcCamera, vcRenderer, cubeMesh;
+        let occt = null;
+        let components = [];
+        let selectedObject = null;
+        let copiedObjectData = null;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let isDraggingFree = false;
+        let plane = new THREE.Plane();
+        let intersectionPoint = new THREE.Vector3();
+        let planeIntersect = new THREE.Vector3();
+
+        let historyStack = [];
+        let redoStack = [];
+
+        function saveState() {
+            if (!selectedObject) return;
+            const state = {
+                object: selectedObject,
+                position: selectedObject.position.clone(),
+                rotation: selectedObject.rotation.clone()
+            };
+            historyStack.push(state);
+            if (historyStack.length > 50) historyStack.shift();
+            redoStack = [];
+        }
+
+        async function init() {
+            try {
+                occt = await occtimportjs();
+                document.getElementById('statusText').innerText = "Motor OCCT (WASM): Ativo e Inicializado";
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao carregar motor WASM STEP.");
+            }
+
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x22262d);
+
+            const aspect = container.clientWidth / container.clientHeight;
+            const d = 1500;
+            camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, -50000, 50000);
+            camera.position.set(1500, 1500, 1500);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI;
+            controls.minPolarAngle = 0;
+            controls.mouseButtons = {
+                LEFT: THREE.MOUSE.NONE,
+                MIDDLE: THREE.MOUSE.PAN,
+                RIGHT: THREE.MOUSE.ROTATE
+            };
+
+            transformControls = new THREE.TransformControls(camera, renderer.domElement);
+            transformControls.addEventListener('dragging-changed', (event) => {
+                controls.enabled = !event.value;
+                if (event.value) {
+                    saveState();
+                }
+            });
+            transformControls.addEventListener('change', () => {
+                if (selectedObject) updateInputsFromObject(selectedObject);
+            });
+            scene.add(transformControls);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+            const dir1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dir1.position.set(1000, 2000, 1000);
+            scene.add(dir1);
+            const dir2 = new THREE.DirectionalLight(0x94a3b8, 0.4);
+            dir2.position.set(-1000, -1000, -1000);
+            scene.add(dir2);
+
+            const grid = new THREE.GridHelper(3000, 30, 0x3498db, 0x444444);
+            grid.position.y = -500;
+            scene.add(grid);
+
+            initViewCube();
+
+            window.addEventListener('resize', onWindowResize);
+            container.addEventListener('pointerdown', onPointerDown);
+            container.addEventListener('pointermove', onPointerMove);
+            container.addEventListener('pointerup', onPointerUp);
+
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    deselectObject();
+                }
+
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+                    if (historyStack.length > 0) {
+                        const currentState = {
+                            object: selectedObject,
+                            position: selectedObject ? selectedObject.position.clone() : null,
+                            rotation: selectedObject ? selectedObject.rotation.clone() : null
+                        };
+                        redoStack.push(currentState);
+
+                        const prevState = historyStack.pop();
+                        if (prevState && prevState.object) {
+                            selectObject(prevState.object);
+                            prevState.object.position.copy(prevState.position);
+                            prevState.object.rotation.copy(prevState.rotation);
+                            transformControls.update();
+                            updateInputsFromObject(prevState.object);
+                            document.getElementById('statusText').innerText = "Ação desfeita (Ctrl+Z).";
+                        }
+                    }
+                    e.preventDefault();
+                }
+
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+                    if (redoStack.length > 0) {
+                        const nextState = redoStack.pop();
+                        if (nextState && nextState.object) {
+                            saveState();
+                            selectObject(nextState.object);
+                            nextState.object.position.copy(nextState.position);
+                            nextState.object.rotation.copy(nextState.rotation);
+                            transformControls.update();
+                            updateInputsFromObject(nextState.object);
+                            document.getElementById('statusText').innerText = "Ação refeita (Ctrl+Y).";
+                        }
+                    }
+                    e.preventDefault();
+                }
+                
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+                    if (selectedObject) {
+                        copiedObjectData = selectedObject;
+                        document.getElementById('statusText').innerText = `Componente "${selectedObject.name}" copiado.`;
+                        e.preventDefault();
+                    }
+                }
+
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                    if (copiedObjectData) {
+                        pasteCopiedObject(copiedObjectData);
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            animate();
+        }
+
+        // Gerador de textura exato no estilo Fusion (Fundo claro, borda fina escura, texto em maiúsculas legível)
+        function createTextTexture(text, rotAngle = 0) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1024;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#e6e6e6';
+            ctx.fillRect(0, 0, 1024, 1024);
+            ctx.strokeStyle = '#333333';
+            ctx.lineWidth = 16;
+            ctx.strokeRect(0, 0, 1024, 1024);
+
+            ctx.save();
+            ctx.translate(512, 512);
+            ctx.rotate(rotAngle);
+            ctx.fillStyle = '#111111';
+            ctx.font = 'bold 120px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, 0, 0);
+            ctx.restore();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function initViewCube() {
+            const vcContainer = document.getElementById('viewcube-container');
+            vcScene = new THREE.Scene();
+            vcCamera = new THREE.PerspectiveCamera(50, 1, 1, 100);
+            vcCamera.position.set(0, 0, 3.5);
+
+            vcRenderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            vcRenderer.setSize(160, 160);
+            vcContainer.appendChild(vcRenderer.domElement);
+
+            const boxGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+            // Nomenclatura exata do Fusion: 0: Direita, 1: Esquerda, 2: Superior, 3: Base, 4: Frontal, 5: Verso
+            const materials = [
+                new THREE.MeshBasicMaterial({ map: createTextTexture('DIREITA', Math.PI / 2) }), 
+                new THREE.MeshBasicMaterial({ map: createTextTexture('ESQUERDA', -Math.PI / 2) }), 
+                new THREE.MeshBasicMaterial({ map: createTextTexture('SUPERIOR', 0) }), 
+                new THREE.MeshBasicMaterial({ map: createTextTexture('BASE', Math.PI) }), 
+                new THREE.MeshBasicMaterial({ map: createTextTexture('FRONTAL', 0) }), 
+                new THREE.MeshBasicMaterial({ map: createTextTexture('VERSO', Math.PI) })  
+            ];
+            
+            cubeMesh = new THREE.Mesh(boxGeo, materials);
+            vcScene.add(cubeMesh);
+
+            const edges = new THREE.EdgesGeometry(boxGeo);
+            const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x333333, linewidth: 2 }));
+            vcScene.add(line);
+
+            // Adição dos eixos coloridos (X em Vermelho, Y em Verde, Z em Azul) idênticos ao Fusion
+            const axesHelper = new THREE.AxesHelper(1.2);
+            axesHelper.position.set(-0.6, -0.6, -0.6);
+            vcScene.add(axesHelper);
+
+            vcContainer.addEventListener('click', (event) => {
+                const rect = vcContainer.getBoundingClientRect();
+                const x = ((event.clientX - rect.left) / vcContainer.clientWidth) * 2 - 1;
+                const y = -((event.clientY - rect.top) / vcContainer.clientHeight) * 2 + 1;
+
+                const vcRay = new THREE.Raycaster();
+                vcRay.setFromCamera(new THREE.Vector2(x, y), vcCamera);
+                const hits = vcRay.intersectObject(cubeMesh);
+
+                if (hits.length > 0) {
+                    const faceIndex = Math.floor(hits[0].faceIndex / 2);
+                    const targetDist = controls.target.distanceTo(camera.position) || 1500;
+                    
+                    const targetPos = controls.target.clone();
+                    switch(faceIndex) {
+                        case 0: targetPos.x += targetDist; break; // Direita
+                        case 1: targetPos.x -= targetDist; break; // Esquerda
+                        case 2: targetPos.y += targetDist; break; // Superior
+                        case 3: targetPos.y -= targetDist; break; // Base
+                        case 4: targetPos.z += targetDist; break; // Frontal
+                        case 5: targetPos.z -= targetDist; break; // Verso
+                    }
+                    camera.position.copy(targetPos);
+                    controls.update();
+                }
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+
+            if (cubeMesh && camera) {
+                cubeMesh.quaternion.copy(camera.quaternion).invert();
+                vcRenderer.render(vcScene, vcCamera);
+            }
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            const aspect = container.clientWidth / container.clientHeight;
+            const d = 1500;
+            camera.left = -d * aspect;
+            camera.right = d * aspect;
+            camera.top = d;
+            camera.bottom = -d;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        async function loadStepFile(event) {
+            const file = event.target.files[0];
+            if (!file || !occt) return;
+
+            document.getElementById('statusText').innerText = `A carregar ${file.name}...`;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const buffer = e.target.result;
+                    const fileBytes = new Uint8Array(buffer);
+                    const result = occt.ReadStepFile(fileBytes, null);
+
+                    if (!result || !result.meshes || result.meshes.length === 0) {
+                        throw new Error("O ficheiro STEP não contém malhas válidas.");
+                    }
+
+                    const componentGroup = new THREE.Group();
+                    componentGroup.name = file.name;
+
+                    result.meshes.forEach(meshData => {
+                        const geometry = new THREE.BufferGeometry();
+                        geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.attributes.position.array, 3));
+                        if (meshData.attributes.normal) {
+                            geometry.setAttribute('normal', new THREE.Float32BufferAttribute(meshData.attributes.normal.array, 3));
+                        }
+                        if (meshData.index) {
+                            geometry.setIndex(meshData.index.array);
+                        }
+
+                        let colorHex = 0x555555;
+                        if (meshData.color && meshData.color.length >= 3) {
+                            const r = Math.floor(meshData.color[0] * 255);
+                            const g = Math.floor(meshData.color[1] * 255);
+                            const b = Math.floor(meshData.color[2] * 255);
+                            colorHex = (r << 16) | (g << 8) | b;
+                        }
+
+                        const material = new THREE.MeshStandardMaterial({
+                            color: colorHex,
+                            roughness: 0.4,
+                            metalness: 0.2,
+                            side: THREE.DoubleSide,
+                            polygonOffset: true,
+                            polygonOffsetFactor: 1,
+                            polygonOffsetUnits: 1
+                        });
+                        const mesh = new THREE.Mesh(geometry, material);
+                        componentGroup.add(mesh);
+                    });
+
+                    scene.add(componentGroup);
+                    components.push({ name: file.name, object: componentGroup });
+                    updateTreeUI();
+                    selectObject(componentGroup);
+
+                    const box = new THREE.Box3().setFromObject(componentGroup);
+                    const center = box.getCenter(new THREE.Vector3());
+                    controls.target.copy(center);
+                    camera.position.set(center.x + 1500, center.y + 1500, center.z + 1500);
+                    controls.update();
+
+                    document.getElementById('statusText').innerText = `Ficheiro ${file.name} carregado com sucesso.`;
+                } catch (err) {
+                    alert("Erro ao processar arquivo STEP: " + err.message);
+                    document.getElementById('statusText').innerText = "Erro na importação.";
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function pasteCopiedObject(sourceObj) {
+            const cloneGroup = sourceObj.clone(true);
+            cloneGroup.name = sourceObj.name + " (Cópia)";
+            cloneGroup.position.add(new THREE.Vector3(150, 0, 150));
+
+            scene.add(cloneGroup);
+            components.push({ name: cloneGroup.name, object: cloneGroup });
+            updateTreeUI();
+            selectObject(cloneGroup);
+            document.getElementById('statusText').innerText = `Componente colado: ${cloneGroup.name}`;
+        }
+
+        function onPointerDown(event) {
+            if (event.button !== 0) return;
+            const container = document.getElementById('canvas-container');
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const groupObjects = components.map(c => c.object);
+            const intersects = raycaster.intersectObjects(groupObjects, true);
+
+            if (intersects.length > 0) {
+                let rootObj = intersects[0].object;
+                while (rootObj.parent && rootObj.parent !== scene) {
+                    rootObj = rootObj.parent;
+                }
+                selectObject(rootObj);
+                saveState();
+                isDraggingFree = true;
+                controls.enabled = false;
+
+                plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(plane.normal).negate(), intersects[0].point);
+            }
+        }
+
+        function onPointerMove(event) {
+            if (!isDraggingFree || !selectedObject) return;
+            const container = document.getElementById('canvas-container');
+            const rect = container.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            if (raycaster.ray.intersectPlane(plane, planeIntersect)) {
+                selectedObject.position.copy(planeIntersect);
+                updateInputsFromObject(selectedObject);
+                transformControls.update();
+            }
+        }
+
+        function onPointerUp() {
+            if (isDraggingFree) {
+                isDraggingFree = false;
+                controls.enabled = true;
+            }
+        }
+
+        function selectObject(obj) {
+            selectedObject = obj;
+            transformControls.attach(obj);
+            updateTreeUI();
+            
+            components.forEach(c => {
+                c.object.traverse(child => {
+                    if (child.isMesh) {
+                        if (c.object === obj) {
+                            child.material.emissive = new THREE.Color(0x1a3b5c);
+                        } else {
+                            child.material.emissive = new THREE.Color(0x000000);
+                        }
+                    }
+                });
+            });
+        }
+
+        function deselectObject() {
+            selectedObject = null;
+            transformControls.detach();
+            updateTreeUI();
+            
+            components.forEach(c => {
+                c.object.traverse(child => {
+                    if (child.isMesh) {
+                        child.material.emissive = new THREE.Color(0x000000);
+                    }
+                });
+            });
+
+            document.getElementById('movePanel').style.display = 'none';
+        }
+
+        function toggleMovePanel() {
+            const panel = document.getElementById('movePanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            if (selectedObject) updateInputsFromObject(selectedObject);
+        }
+
+        function updateInputsFromObject(obj) {
+            document.getElementById('dx').value = obj.position.x.toFixed(2);
+            document.getElementById('dy').value = obj.position.y.toFixed(2);
+            document.getElementById('dz').value = obj.position.z.toFixed(2);
+            document.getElementById('rax').value = THREE.MathUtils.radToDeg(obj.rotation.x).toFixed(1);
+            document.getElementById('ray').value = THREE.MathUtils.radToDeg(obj.rotation.y).toFixed(1);
+            document.getElementById('raz').value = THREE.MathUtils.radToDeg(obj.rotation.z).toFixed(1);
+        }
+
+        function applyTransformFromInputs() {
+            if (!selectedObject) return;
+            saveState();
+            selectedObject.position.x = parseFloat(document.getElementById('dx').value) || 0;
+            selectedObject.position.y = parseFloat(document.getElementById('dy').value) || 0;
+            selectedObject.position.z = parseFloat(document.getElementById('dz').value) || 0;
+            selectedObject.rotation.x = THREE.MathUtils.degToRad(parseFloat(document.getElementById('rax').value) || 0);
+            selectedObject.rotation.y = THREE.MathUtils.degToRad(parseFloat(document.getElementById('ray').value) || 0);
+            selectedObject.rotation.z = THREE.MathUtils.degToRad(parseFloat(document.getElementById('raz').value) || 0);
+            transformControls.update();
+        }
+
+        function updateTreeUI() {
+            const list = document.getElementById('treeItemsList');
+            list.innerHTML = '';
+            components.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = `tree-item ${item.object === selectedObject ? 'selected' : ''}`;
+                div.innerHTML = `<span>⚡</span> <span>${item.name}</span>`;
+                div.onclick = () => selectObject(item.object);
+                list.appendChild(div);
+            });
+            document.getElementById('componentCount').innerText = `${components.length} itens`;
+        }
+
+        function clearScene() {
+            components.forEach(c => scene.remove(c.object));
+            components = [];
+            selectedObject = null;
+            transformControls.detach();
+            updateTreeUI();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
