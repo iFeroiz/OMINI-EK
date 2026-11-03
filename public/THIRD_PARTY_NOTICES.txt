@@ -1,0 +1,8 @@
+Third-party component: @mlightcad/libredwg-web 0.7.13
+Purpose: in-browser DWG-to-DXF import.
+License: GNU General Public License version 3 (GPL-3.0).
+Source: https://github.com/mlightcad/libredwg-web
+Loaded at runtime from https://cdn.jsdelivr.net/npm/@mlightcad/libredwg-web@0.7.13/
+License text: https://www.gnu.org/licenses/gpl-3.0.txt
+
+This import path uses LibreDWG to convert the selected DWG drawing to DXF in the browser. The CAD editor operates on that converted DXF content and exports DXF; it does not write native DWG files. Distribution of the application with this dependency may trigger GPL-3.0 compliance obligations, including corresponding-source obligations.
