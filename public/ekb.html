@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMINI - Busca Inteligente</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0B0F12',
+                            800: '#121820',
+                            700: '#1A232F',
+                            600: '#253244',
+                        },
+                        emerald: {
+                            400: '#34D399',
+                            500: '#10B981',
+                            600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0F12; }
+        ::-webkit-scrollbar-thumb { background: #253244; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #10B981; }
+    </style>
+</head>
+<body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col antialiased">
+
+    <!-- Header / Navbar -->
+    <header class="border-b border-dark-700 bg-dark-800/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <svg class="w-6 h-6 text-dark-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <span class="text-xl font-bold tracking-wider bg-gradient-to-r from-emerald-400 to-teal-200 bg-clip-text text-transparent">OMINI</span>
+                    <span class="text-xs block text-gray-400 font-medium">Engenharia & Automação</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="hidden sm:flex items-center space-x-2 text-xs text-gray-400 bg-dark-700/50 px-3 py-1.5 rounded-full border border-dark-600">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="doc-count-badge">4 arquivos catalogados</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col items-center">
+        
+        <!-- Hero Title -->
+        <div class="text-center mb-10 w-full">
+            <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white mb-3">
+                Busca Inteligente
+            </h1>
+            <p class="text-gray-400 text-sm sm:text-base max-w-xl mx-auto">
+                Pesquisa instantânea em manuais, catálogos e arquivos técnicos armazenados localmente.
+            </p>
+        </div>
+
+        <!-- Search Bar Section -->
+        <div class="w-full max-w-3xl mb-8">
+            <div class="relative flex items-center">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-emerald-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    placeholder="Digite termos, códigos exatos (ex: 5SL1, 3RV2), normas ou componentes..." 
+                    class="w-full pl-12 pr-12 py-4 bg-dark-800 border-2 border-dark-600 rounded-2xl text-gray-100 placeholder-gray-500 text-sm sm:text-base focus:outline-none focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 transition-all shadow-xl"
+                    autocomplete="off"
+                >
+                <button id="clear-btn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-white hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Filter Pills & Action -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mt-4">
+                <div class="flex flex-wrap gap-2" id="filter-pills">
+                    <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 transition-all">Todos os arquivos</button>
+                    <button data-filter="pdf" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Manuais PDF</button>
+                    <button data-filter="docx" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Planilhas & Dados</button>
+                    <button data-filter="img" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Esquemas & Imagens</button>
+                </div>
+
+                <button id="link-folder-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-dark-900 transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Vincular Pasta</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Status / Stats -->
+        <div id="search-stats" class="w-full max-w-3xl mb-4 text-xs text-gray-400 hidden flex items-center justify-between px-1">
+            <span id="stats-text">Encontrados 0 resultados (em 0.04s)</span>
+        </div>
+
+        <!-- Results Container -->
+        <div id="results-container" class="w-full max-w-3xl space-y-3">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="w-full max-w-3xl py-16 text-center hidden">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-dark-800 border border-dark-600 flex items-center justify-center text-gray-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-300 mb-1">Nenhum documento encontrado</h3>
+            <p class="text-sm text-gray-500">Nenhum resultado corresponde à sua pesquisa exata nos arquivos cadastrados. Tente outros termos.</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-dark-700 bg-dark-800/40 py-6 text-center text-xs text-gray-500">
+        OMINI Engineering Suite &bull; Motor de Busca Local Otimizado
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let documentsDB = [
+            {
+                id: 1,
+                name: "Catalogo_Disjuntores_Siemens_5SL1.pdf",
+                type: "pdf",
+                category: "Manuais/Siemens/Protecao",
+                content: "Catálogo técnico oficial da linha Siemens. Disjuntores miniatura 5SL1, 5SL6 e 5SY para proteção de instalações elétricas residenciais e industriais. Corrente nominal de 0.3 A até 63 A, curva C, capacidade de interrupção até 6kA. Especificações para CCM e QGBT.",
+                fileHandle: null
+            },
+            {
+                id: 2,
+                name: "Especificacao_Tecnica_Reles_3RV2.docx",
+                type: "docx",
+                category: "Engenharia/Projetos",
+                content: "Especificação técnica para painéis elétricos CCM e QGBT. Utilização obrigatória de disjuntores termomagnéticos 5SL1 para circuitos de comando auxiliares e chaves disjuntores 3RV2 para proteção de motores elétricos trifásicos. Tabela de ajuste de sobrecarga e correntes nominais.",
+                fileHandle: null
+            },
+            {
+                id: 3,
+                name: "Manual_Inversor_ABB_ACS580.pdf",
+                type: "pdf",
+                category: "Manuais/ABB/Drives",
+                content: "Manual do usuário e guia de instalação rápida para Inversores ABB ACS580. Parâmetros de controle vetorial, diagramas de fiação, entradas digitais e analógicas, comunicação Modbus RTU integrada. Compatível com motores de indução e imãs permanentes.",
+                fileHandle: null
+            },
+            {
+                id: 4,
+                name: "Tabela_Precos_Schneider_2026.xlsx",
+                type: "xlsx",
+                category: "Comercial/Schneider",
+                content: "Tabela de preços atualizada Schneider Electric. Itens inclusos: disjuntores Acti9 iC60N, relés térmicos, contatores TeSys D, inversores de frequência Altivar ATV320 e softstarters ATS48. Códigos referência e descontos corporativos aplicáveis para integradores.",
+                fileHandle: null
+            }
+        ];
+
+        let currentFilter = 'all';
+
+        const searchInput = document.getElementById('search-input');
+        const clearBtn = document.getElementById('clear-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const emptyState = document.getElementById('empty-state');
+        const searchStats = document.getElementById('search-stats');
+        const statsText = document.getElementById('stats-text');
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const linkFolderBtn = document.getElementById('link-folder-btn');
+        const docCountBadge = document.getElementById('doc-count-badge');
+
+        docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            try {
+                const escaped = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                const regex = new RegExp(`(${escaped})`, 'gi');
+                return text.replace(regex, '<mark class="bg-emerald-500/30 text-emerald-300 rounded px-0.5">$1</mark>');
+            } catch (e) {
+                return text;
+            }
+        }
+
+        function performSearch() {
+            const startTime = performance.now();
+            const query = searchInput.value.trim().toLowerCase();
+
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            let filtered = documentsDB.filter(doc => {
+                if (currentFilter === 'pdf' && doc.type !== 'pdf') return false;
+                if (currentFilter === 'docx' && doc.type !== 'docx' && doc.type !== 'xlsx') return false;
+                if (currentFilter === 'img' && doc.type !== 'png' && doc.type !== 'jpg' && doc.type !== 'jpeg') return false;
+                return true;
+            });
+
+            if (query) {
+                const terms = query.split(/\s+/).filter(t => t.length > 0);
+                filtered = filtered.filter(doc => {
+                    const nameLower = doc.name.toLowerCase();
+                    const contentLower = doc.content.toLowerCase();
+                    const categoryLower = doc.category.toLowerCase();
+                    
+                    return terms.every(term => 
+                        nameLower.includes(term) || contentLower.includes(term) || categoryLower.includes(term)
+                    );
+                });
+            }
+
+            const endTime = performance.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(3);
+
+            renderResults(filtered, query, duration);
+        }
+
+        function renderResults(results, query, duration) {
+            resultsContainer.innerHTML = '';
+
+            if (results.length === 0) {
+                emptyState.classList.remove('hidden');
+                searchStats.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            searchStats.classList.remove('hidden');
+            statsText.textContent = `Encontrados ${results.length} resultado(s) em ${duration}s`;
+
+            results.forEach((doc, idx) => {
+                const card = document.createElement('div');
+                card.className = "bg-dark-800 border border-dark-600 hover:border-emerald-500/50 rounded-2xl p-4 sm:p-5 transition-all flex items-start justify-between gap-4 group shadow-md";
+
+                let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+                if (doc.type === 'docx') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/30";
+                if (doc.type === 'xlsx') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+                if (doc.type === 'png' || doc.type === 'jpg' || doc.type === 'jpeg') badgeColor = "bg-purple-500/10 text-purple-400 border-purple-500/30";
+
+                const highlightedName = highlightText(doc.name, query);
+                const highlightedContent = highlightText(doc.content, query);
+
+                card.innerHTML = `
+                    <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center font-bold text-xs uppercase ${badgeColor}">
+                            ${doc.type}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <span class="text-xs font-medium text-gray-400">${doc.category}</span>
+                            </div>
+                            <h3 class="text-base font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">
+                                ${highlightedName}
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                                ${highlightedContent}
+                            </p>
+                        </div>
+                    </div>
+                    <button id="open-btn-${idx}" class="flex-shrink-0 w-10 h-10 rounded-xl bg-dark-700 hover:bg-emerald-600 hover:text-dark-900 text-gray-300 flex items-center justify-center transition-all border border-dark-600 cursor-pointer" title="Abrir arquivo">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </button>
+                `;
+                
+                resultsContainer.appendChild(card);
+
+                document.getElementById(`open-btn-${idx}`).addEventListener('click', async () => {
+                    try {
+                        if (doc.fileHandle) {
+                            const file = await doc.fileHandle.getFile();
+                            const url = URL.createObjectURL(file);
+                            window.open(url, '_blank');
+                        } else {
+                            alert(`Arquivo padrão do sistema: ${doc.name}`);
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        alert("Não foi possível abrir o arquivo diretamente: " + err.message);
+                    }
+                });
+            });
+        }
+
+        // Recursive Folder Scanner with Fault Tolerance
+        async function scanDirectoryRecursive(dirHandle, path = "") {
+            let files = [];
+            try {
+                for await (const entry of dirHandle.values()) {
+                    const currentPath = path ? `${path}/${entry.name}` : entry.name;
+                    if (entry.kind === 'file') {
+                        files.push({ entry, path: currentPath });
+                    } else if (entry.kind === 'directory') {
+                        try {
+                            const subFiles = await scanDirectoryRecursive(entry, currentPath);
+                            files = files.concat(subFiles);
+                        } catch (subErr) {
+                            console.warn("Subdiretório ignorado por restrição de acesso:", currentPath);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Erro ao ler diretório:", path, err);
+            }
+            return files;
+        }
+
+        async function linkLocalFolder() {
+            if (!window.showDirectoryPicker) {
+                alert("Seu navegador não suporta a seleção direta de pastas. Utilize o Google Chrome ou Microsoft Edge.");
+                return;
+            }
+
+            try {
+                const dirHandle = await window.showDirectoryPicker();
+                const allScannedFiles = await scanDirectoryRecursive(dirHandle);
+                let loadedCount = 0;
+
+                for (const item of allScannedFiles) {
+                    try {
+                        const file = await item.entry.getFile();
+                        const fileName = file.name;
+                        const fileExt = fileName.split('.').pop().toLowerCase();
+                        
+                        let textSample = "";
+                        if (['txt', 'md', 'csv', 'json', 'html', 'xml', 'log'].includes(fileExt)) {
+                            textSample = await file.text();
+                        } else {
+                            textSample = `Arquivo técnico localizado em: ${item.path}. Extensão .${fileExt}.`;
+                        }
+
+                        const existingIdx = documentsDB.findIndex(d => d.name === fileName && d.category.includes(dirHandle.name));
+                        const docObj = {
+                            id: documentsDB.length + 1,
+                            name: fileName,
+                            type: fileExt,
+                            category: `Pasta / ${dirHandle.name}/${item.path.substring(0, item.path.lastIndexOf('/') + 1)}`.replace(/\/$/, ''),
+                            content: textSample.slice(0, 1000),
+                            fileHandle: item.entry
+                        };
+
+                        if (existingIdx >= 0) {
+                            documentsDB[existingIdx] = docObj;
+                        } else {
+                            documentsDB.push(docObj);
+                        }
+                        loadedCount++;
+                    } catch (fileErr) {
+                        // Ignora arquivos individuais bloqueados pelo SO sem quebrar a execução
+                        console.warn("Arquivo ignorado por restrição de leitura:", item.path);
+                    }
+                }
+
+                docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
+                performSearch();
+                alert(`Sucesso! ${loadedCount} arquivos da pasta "${dirHandle.name}" foram indexados com segurança.`);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    alert("Erro ao acessar a pasta selecionada. Verifique as permissões do sistema.");
+                }
+            }
+        }
+
+        // Event Listeners
+        searchInput.addEventListener('input', performSearch);
+
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            performSearch();
+            searchInput.focus();
+        });
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                filterBtns.forEach(b => {
+                    b.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/50');
+                    b.classList.add('bg-dark-800', 'text-gray-400', 'border-dark-600');
+                });
+                e.target.classList.remove('bg-dark-800', 'text-gray-400', 'border-dark-600');
+                e.target.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/50');
+                
+                currentFilter = e.target.getAttribute('data-filter');
+                performSearch();
+            });
+        });
+
+        linkFolderBtn.addEventListener('click', linkLocalFolder);
+
+        // Initial render
+        performSearch();
+    </script>
+</body>
+</html>

@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M38 3 13 36h17l-4 25L52 25H35z' fill='%2300c58b'/%3E%3C/svg%3E">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Gerenciador de Projetos e Painéis</title>
+    
+    <script>
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: "rgb(var(--rgb-bg-dark) / <alpha-value>)",
+                            aside: "rgb(var(--rgb-bg-aside) / <alpha-value>)",
+                            card: "rgb(var(--rgb-bg-card) / <alpha-value>)",
+                            border: "rgb(var(--rgb-border) / <alpha-value>)",
+                            input: "rgb(var(--rgb-bg-input) / <alpha-value>)",
+                            accent: "rgb(var(--rgb-accent) / <alpha-value>)",
+                            text: "rgb(var(--rgb-text) / <alpha-value>)",
+                            muted: "rgb(var(--rgb-muted) / <alpha-value>)"
+                        }
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["Fira Code", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rgb-bg-dark: 241 245 249;   
+            --rgb-bg-aside: 255 255 255;  
+            --rgb-bg-card: 255 255 255;   
+            --rgb-bg-input: 248 250 252;  
+            --rgb-border: 226 232 240;    
+            --rgb-text: 15 23 42;         
+            --rgb-muted: 100 116 139;     
+            --rgb-accent: 16 185 129;     
+        }
+        .dark {
+            --rgb-bg-dark: 18 19 21;      
+            --rgb-bg-aside: 23 24 28;     
+            --rgb-bg-card: 30 32 35;      
+            --rgb-bg-input: 24 26 29;     
+            --rgb-border: 42 45 50;       
+            --rgb-text: 255 255 255;      
+            --rgb-muted: 148 163 184;     
+        }
+        
+        body { font-family: Inter, sans-serif; background-color: rgb(var(--rgb-bg-dark)); color: rgb(var(--rgb-text)); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgb(var(--rgb-bg-dark)); }
+        ::-webkit-scrollbar-thumb { background: rgb(var(--rgb-border)); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgb(var(--rgb-accent)); }
+        .dragging { opacity: 0.4; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row bg-brand-dark text-brand-text overflow-x-hidden">
+
+    <!-- BARRA LATERAL (PADRÃO OMINI / SAT) -->
+    <aside class="w-full lg:w-72 bg-brand-aside border-r lg:border-r border-b lg:border-b-0 border-brand-border p-4 flex flex-col justify-between shrink-0 z-20">
+        <div>
+            <!-- Workspace Header idêntico ao OMINI (cálculos) com o logotipo correto -->
+            <div class="flex items-center gap-3 px-2 py-3 mb-6 border-b border-brand-border/60">
+                <a href="calculostablet.html" aria-label="Voltar para a página de cálculos" title="Voltar" class="w-9 h-9 rounded-lg bg-brand-accent/20 border border-brand-accent flex items-center justify-center text-brand-accent font-bold text-xl">
+                    <i class="fa-solid fa-bolt"></i>
+                </a>
+                <div>
+                    <h1 class="font-bold tracking-wider text-brand-text text-base">OMINI</h1>
+                    <p class="text-[10px] text-brand-accent tracking-widest font-mono uppercase">Electrical Lab</p>
+                </div>
+            </div>
+
+            <!-- Menu de Navegação -->
+            <nav class="flex flex-row lg:flex-col gap-2 lg:gap-0 lg:space-y-1 overflow-x-auto pb-2 lg:pb-0">
+                <a href="#" class="nav-btn w-auto lg:w-full shrink-0 whitespace-nowrap flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-brand-accent/15 text-brand-accent border border-brand-accent/30">
+                    <i class="fa-solid fa-table-columns w-5 text-center"></i>
+                    <span>Projetos & Painéis</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Rodapé da Sidebar -->
+        <div class="mt-8 pt-4 border-t border-brand-border/60 px-2 hidden lg:block">
+            <div class="flex items-center gap-2 text-xs text-brand-muted">
+                <span class="w-2 h-2 rounded-full bg-brand-accent"></span>
+                <span>Gerenciador Ativo</span>
+            </div>
+            <p class="text-[10px] text-brand-muted mt-1">SAT Sistemas - v2.6</p>
+        </div>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL (KANBAN DE PROJETOS) -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        
+        <!-- HEADER SUPERIOR -->
+        <header class="h-16 border-b border-brand-border bg-brand-aside px-4 sm:px-6 flex items-center justify-between sticky top-0 z-10 shrink-0">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0 mr-2">
+                <span class="text-brand-accent text-lg shrink-0"><i class="fa-solid fa-folder-open"></i></span>
+                <h2 class="font-semibold text-brand-text text-sm sm:text-base truncate">Gerenciamento de Projetos</h2>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
+                <!-- Barra de Pesquisa -->
+                <div class="relative hidden sm:block">
+                    <i class="fa-solid fa-search absolute left-3 top-2.5 text-xs text-brand-muted"></i>
+                    <input type="text" id="input-busca" placeholder="Buscar projeto ou tag..." oninput="app.filtrarProjetos(this.value)" class="bg-brand-input border border-brand-border text-xs rounded-lg pl-8 pr-3 py-2 w-64 text-brand-text focus:outline-none focus:border-brand-accent transition">
+                </div>
+
+                <!-- Botão Gerenciar Tags Global -->
+                <button onclick="app.abrirModalGerenciarTags()" class="bg-brand-card hover:bg-brand-border text-brand-muted hover:text-brand-text text-xs font-semibold px-3 py-2 rounded-lg flex items-center space-x-2 transition border border-brand-border">
+                    <i class="fa-solid fa-tags text-brand-accent"></i>
+                    <span class="hidden sm:inline">Gerenciar Tags</span>
+                </button>
+
+                <button onclick="app.abrirModalNovoProjeto()" class="bg-brand-accent hover:opacity-90 text-brand-dark text-xs font-bold px-3.5 py-2 rounded-lg flex items-center space-x-2 transition shadow-lg">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Novo Projeto</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- SUB-FAIXA DE AVISOS -->
+        <div class="bg-brand-card/50 border-b border-brand-border px-6 py-2 flex items-center justify-between text-xs text-brand-muted">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-circle-info text-brand-accent"></i>
+                <span>Adicione ou remova tags com facilidade. As tags criadas ficam salvas globalmente.</span>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="app.exportarDados()" class="hover:text-brand-text transition"><i class="fa-solid fa-download mr-1"></i> Exportar JSON</button>
+            </div>
+        </div>
+
+        <!-- KANBAN BOARD DE PROJETOS -->
+        <div class="flex-1 overflow-x-auto p-4 md:p-8">
+            <div id="kanban-columns" class="flex space-x-4 h-full min-w-max pb-4">
+                <!-- Renderizado via JavaScript -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL DE GERENCIAMENTO DE PAINÉIS DO PROJETO -->
+    <div id="modal-projeto" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-5xl h-[88vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Header do Modal de Projeto -->
+            <div class="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-brand-aside">
+                <div class="flex items-center space-x-3">
+                    <div id="mp-tags-container" class="flex flex-wrap gap-1.5 items-center"></div>
+                    <div>
+                        <h2 id="mp-titulo" class="font-bold text-base text-brand-text">Nome do Projeto</h2>
+                        <p class="text-xs text-brand-muted">Gerencie os painéis e equipamentos deste projeto</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="app.abrirModalNovoPainel()" class="bg-brand-accent hover:opacity-90 text-brand-dark text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 transition">
+                        <i class="fa-solid fa-plus"></i><span>Adicionar Painel</span>
+                    </button>
+                    <button onclick="app.fecharModalProjeto()" class="text-brand-muted hover:text-brand-text p-2 rounded-lg hover:bg-brand-border transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista de Painéis do Projeto -->
+            <div class="flex-1 overflow-y-auto p-6 bg-brand-dark space-y-3">
+                <div class="text-xs font-semibold text-brand-muted uppercase tracking-wider mb-2">Painéis Vinculados a este Projeto:</div>
+                <div id="mp-paineis-list" class="space-y-2">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3 border-t border-brand-border bg-brand-aside flex items-center justify-between">
+                <span class="text-xs text-brand-muted"><i class="fa-solid fa-list-check text-brand-accent mr-1"></i> Clique em qualquer painel para abrir o checklist técnico detalhado.</span>
+                <button onclick="app.fecharModalProjeto()" class="bg-brand-card hover:bg-brand-border text-brand-text text-xs font-semibold px-4 py-2 rounded-lg transition border border-brand-border">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CHECKLIST TÉCNICO -->
+    <div id="modal-checklist" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-[96vw] h-[94vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-brand-border flex items-center justify-between bg-brand-aside">
+                <div class="flex items-center space-x-3">
+                    <div id="modal-tags-container" class="flex flex-wrap gap-1.5"></div>
+                    <div>
+                        <h2 id="modal-painel-titulo" class="font-bold text-base text-brand-text">Nome do Painel</h2>
+                        <p class="text-xs text-brand-muted" id="modal-painel-sub">Projeto correspondente</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="app.fecharModalChecklistParaPainel()" class="text-brand-muted hover:text-brand-text px-3 py-1.5 rounded-lg bg-brand-card hover:bg-brand-border text-xs font-semibold transition flex items-center space-x-1.5 border border-brand-border">
+                        <i class="fa-solid fa-arrow-left"></i><span>Voltar aos Painéis</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body - As 5 Colunas do Checklist -->
+            <div class="flex-1 overflow-x-auto overflow-y-auto p-6 bg-brand-dark">
+                <div class="inline-flex space-x-5 h-full min-h-[520px] pb-2 min-w-full">
+                    
+                    <!-- COLUNA 1: Característica -->
+                    <div class="w-80 flex-shrink-0 bg-brand-card text-brand-text rounded-xl p-4 flex flex-col shadow-xl border border-brand-border relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-brand-accent"></div>
+                        <div class="pb-3 border-b border-brand-border/60 mb-3 flex items-center justify-between">
+                            <h3 class="font-semibold text-xs tracking-wider uppercase text-brand-text flex items-center space-x-2">
+                                <i class="fa-solid fa-sliders text-brand-accent"></i><span>Característica</span>
+                            </h3>
+                            <span id="prog-val-caracteristica" class="font-mono text-xs font-bold text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded border border-brand-accent/30">0%</span>
+                        </div>
+                        <div class="w-full bg-brand-input rounded-full h-1.5 mb-3">
+                            <div id="prog-bar-caracteristica" class="bg-brand-accent h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="list-items-caracteristica" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- COLUNA 2: Observações -->
+                    <div class="w-80 flex-shrink-0 bg-brand-card text-brand-text rounded-xl p-4 flex flex-col shadow-xl border border-brand-border relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-amber-500"></div>
+                        <div class="pb-3 border-b border-brand-border/60 mb-3 flex items-center justify-between">
+                            <h3 class="font-semibold text-xs tracking-wider uppercase text-brand-text flex items-center space-x-2">
+                                <i class="fa-solid fa-note-sticky text-amber-400"></i><span>Observações</span>
+                            </h3>
+                            <span id="prog-val-observacoes" class="font-mono text-xs font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">0%</span>
+                        </div>
+                        <div class="w-full bg-brand-input rounded-full h-1.5 mb-3">
+                            <div id="prog-bar-observacoes" class="bg-amber-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="list-items-observacoes" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- COLUNA 3: Materiais -->
+                    <div class="w-80 flex-shrink-0 bg-brand-card text-brand-text rounded-xl p-4 flex flex-col shadow-xl border border-brand-border relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500"></div>
+                        <div class="pb-3 border-b border-brand-border/60 mb-3 flex items-center justify-between">
+                            <h3 class="font-semibold text-xs tracking-wider uppercase text-brand-text flex items-center space-x-2">
+                                <i class="fa-solid fa-boxes-stacked text-emerald-400"></i><span>Materiais</span>
+                            </h3>
+                            <span id="prog-val-materiais" class="font-mono text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">0%</span>
+                        </div>
+                        <div class="w-full bg-brand-input rounded-full h-1.5 mb-3">
+                            <div id="prog-bar-materiais" class="bg-emerald-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="list-items-materiais" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- COLUNA 4: Serviços -->
+                    <div class="w-80 flex-shrink-0 bg-brand-card text-brand-text rounded-xl p-4 flex flex-col shadow-xl border border-brand-border relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-sky-500"></div>
+                        <div class="pb-3 border-b border-brand-border/60 mb-3 flex items-center justify-between">
+                            <h3 class="font-semibold text-xs tracking-wider uppercase text-brand-text flex items-center space-x-2">
+                                <i class="fa-solid fa-screwdriver-wrench text-sky-400"></i><span>Serviços</span>
+                            </h3>
+                            <span id="prog-val-servicos" class="font-mono text-xs font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/30">0%</span>
+                        </div>
+                        <div class="w-full bg-brand-input rounded-full h-1.5 mb-3">
+                            <div id="prog-bar-servicos" class="bg-sky-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="list-items-servicos" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- COLUNA 5: Custo -->
+                    <div class="w-80 flex-shrink-0 bg-brand-card text-brand-text rounded-xl p-4 flex flex-col shadow-xl border border-brand-border relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-purple-500"></div>
+                        <div class="pb-3 border-b border-brand-border/60 mb-3 flex items-center justify-between">
+                            <h3 class="font-semibold text-xs tracking-wider uppercase text-brand-text flex items-center space-x-2">
+                                <i class="fa-solid fa-file-invoice-dollar text-purple-400"></i><span>Custo</span>
+                            </h3>
+                            <span id="prog-val-custo" class="font-mono text-xs font-bold text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/30">0%</span>
+                        </div>
+                        <div class="w-full bg-brand-input rounded-full h-1.5 mb-3">
+                            <div id="prog-bar-custo" class="bg-purple-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div id="list-items-custo" class="flex-1 overflow-y-auto space-y-2 pr-1"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3 border-t border-brand-border bg-brand-aside flex items-center justify-between">
+                <span class="text-xs text-brand-muted">Progresso salvo de forma síncrona.</span>
+                <button onclick="app.fecharModalChecklistParaPainel()" class="bg-brand-accent hover:opacity-90 text-brand-dark text-xs font-semibold px-5 py-2 rounded-lg transition">Salvar e Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO PROJETO -->
+    <div id="modal-novo-projeto" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-base font-bold text-brand-text mb-4"><i class="fa-solid fa-folder-plus text-brand-accent mr-2"></i> Criar Novo Projeto</h3>
+            <form onsubmit="app.salvarNovoProjeto(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-brand-muted mb-1">Título / Descrição do Projeto</label>
+                    <input type="text" id="nproj-titulo" required placeholder="Ex: 10.26.062(FainTr...)" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-brand-muted mb-1">Tags Iniciais (separadas por vírgula)</label>
+                    <input type="text" id="nproj-tags" placeholder="Ex: 10.26.062, Argentina" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-brand-muted mb-1">Status Inicial</label>
+                        <select id="nproj-status" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                            <option value="nao_iniciado">Não iniciado</option>
+                            <option value="pausado">Pausado</option>
+                            <option value="em_execucao">Em Execução</option>
+                            <option value="finalizado">Finalizado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-brand-muted mb-1">Data / Prazo</label>
+                        <input type="text" id="nproj-data" placeholder="nov 13" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="app.fecharModalNovoProjeto()" class="px-4 py-2 bg-brand-card hover:bg-brand-border text-xs rounded-lg text-brand-muted font-medium transition border border-brand-border">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-accent hover:opacity-90 text-brand-dark text-xs rounded-lg font-bold transition">Criar Projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE GERENCIAR TAGS GLOBAL -->
+    <div id="modal-gerenciar-tags" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-bold text-brand-text"><i class="fa-solid fa-tags text-brand-accent mr-2"></i> Gerenciador de Tags Globais</h3>
+                <button onclick="app.fecharModalGerenciarTags()" class="text-brand-muted hover:text-brand-text"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-brand-muted mb-4">Aqui você pode ver todas as tags criadas no sistema. Ao excluir uma tag aqui, ela será removida de todos os projetos.</p>
+            <div id="global-tags-list" class="space-y-2 max-h-64 overflow-y-auto mb-4 pr-1">
+                <!-- Preenchido via JS -->
+            </div>
+            <div class="flex justify-end">
+                <button onclick="app.fecharModalGerenciarTags()" class="px-4 py-2 bg-brand-accent hover:opacity-90 text-brand-dark text-xs rounded-lg font-bold transition">Concluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ADICIONAR TAG AO PROJETO -->
+    <div id="modal-adicionar-tag" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-base font-bold text-brand-text mb-3"><i class="fa-solid fa-tag text-brand-accent mr-2"></i> Adicionar Tag ao Projeto</h3>
+            <p class="text-xs text-brand-muted mb-3">Selecione uma tag existente ou crie uma nova digitando abaixo:</p>
+            
+            <div class="space-y-3">
+                <input type="text" id="input-nova-tag" placeholder="Digite o nome da nova tag..." class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                
+                <div>
+                    <span class="text-[11px] font-semibold text-brand-muted uppercase tracking-wider block mb-1.5">Tags já cadastradas:</span>
+                    <div id="tags-existentes-list" class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1 bg-brand-dark rounded-lg border border-brand-border"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-4">
+                <button type="button" onclick="app.fecharModalAdicionarTag()" class="px-3 py-1.5 bg-brand-card hover:bg-brand-border text-xs rounded-lg text-brand-muted font-medium transition border border-brand-border">Cancelar</button>
+                <button type="button" onclick="app.confirmarAdicionarTag()" class="px-3 py-1.5 bg-brand-accent hover:opacity-90 text-brand-dark text-xs rounded-lg font-bold transition">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOVO PAINEL -->
+    <div id="modal-novo-painel" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-brand-border w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-base font-bold text-brand-text mb-4"><i class="fa-solid fa-plus-circle text-brand-accent mr-2"></i> Adicionar Painel ao Projeto</h3>
+            <form onsubmit="app.salvarNovoPainel(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-brand-muted mb-1">Nome / Descrição do Painel</label>
+                    <input type="text" id="np-titulo" required placeholder="Ex: Painel Geral de Distribuição (QGBT)" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-brand-muted mb-1">Tag / Código do Painel</label>
+                    <input type="text" id="np-tag" placeholder="QGBT-01" class="w-full bg-brand-input border border-brand-border rounded-lg px-3 py-2 text-xs text-brand-text focus:outline-none focus:border-brand-accent">
+                </div>
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="app.fecharModalNovoPainel()" class="px-4 py-2 bg-brand-card hover:bg-brand-border text-xs rounded-lg text-brand-muted font-medium transition border border-brand-border">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-brand-accent hover:opacity-90 text-brand-dark text-xs rounded-lg font-bold transition">Salvar Painel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LÓGICA DA APLICAÇÃO -->
+    <script>
+        const CHECKLIST_ITEMS_TEMPLATE = {
+            caracteristica: [
+                "Chaparia", "Barramento / Distribuição", "Entrada alimentação", 
+                "Normas Técnicas", "Comando AC", "Comando DC", "Auxiliares", 
+                "Alimentadores", "Inversor", "Partida Direta", "Softstarter", "Outros"
+            ],
+            observacoes: [
+                "Chaparia", "Materiais", "Cor", "Hardware", "Documentação", "Outros"
+            ],
+            materiais: [
+                "Chaparia", "Barramento/Distribuição", "Entrada alimentação", "Medição", 
+                "Proteção", "Comando AC", "Comando DC", "Iluminação", "Tomadas", 
+                "Climatização", "Inversores", "Softstarters", "Partida Direta/Reversão", 
+                "Alimentadores", "Outros"
+            ],
+            servicos: [
+                "Projeto", "Montagem", "Desenvolvimento", "Startup", 
+                "Interligação", "Taff", "Fat", "Outros"
+            ],
+            custo: [
+                "Miscelâneas", "Chaparia", "Materiais", "Outros"
+            ]
+        };
+
+        const STATUS_COLUMNS = [
+            { id: 'nao_iniciado', titulo: 'Não iniciado', corTag: 'bg-brand-card text-brand-muted border border-brand-border' },
+            { id: 'pausado', titulo: 'Pausado', corTag: 'bg-amber-950/80 text-amber-300 border border-amber-800/60' },
+            { id: 'em_execucao', titulo: 'Em Execução', corTag: 'bg-blue-950/80 text-blue-300 border border-blue-800/60' },
+            { id: 'finalizado', titulo: 'Finalizado', corTag: 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/60' }
+        ];
+
+        const COLOR_PALETTES = [
+            'bg-indigo-950/80 text-indigo-300 border-indigo-800/60',
+            'bg-blue-950/80 text-blue-300 border-blue-800/60',
+            'bg-emerald-950/80 text-emerald-300 border-emerald-800/60',
+            'bg-purple-950/80 text-purple-300 border-purple-800/60',
+            'bg-amber-950/80 text-amber-300 border-amber-800/60',
+            'bg-rose-950/80 text-rose-300 border-rose-800/60',
+            'bg-cyan-950/80 text-cyan-300 border-cyan-800/60',
+            'bg-fuchsia-950/80 text-fuchsia-300 border-fuchsia-800/60'
+        ];
+
+        class GerenciadorProjetosPaineis {
+            constructor() {
+                this.dados = this.carregarDados();
+                this.projetoSelecionadoId = null;
+                this.painelSelecionadoId = null;
+                this.projetoParaAdicionarTagId = null;
+                this.init();
+            }
+
+            carregarDados() {
+                const salvo = localStorage.getItem('sat_hierarquia_projetos_v3');
+                if (salvo) {
+                    try { return JSON.parse(salvo); } catch(e) {}
+                }
+                return {
+                    tagsGlobais: ["10.26.062", "Argentina", "Urgente", "10.26.065", "Veolia", "Alta"],
+                    projetos: [
+                        {
+                            id: "proj_1",
+                            titulo: "10.26.062(FainTr - OP-261026-171947- Argentina)",
+                            tags: ["10.26.062", "Argentina", "Urgente"],
+                            status: "nao_iniciado",
+                            data: "nov 13",
+                            paineis: [
+                                {
+                                    id: "painel_1",
+                                    titulo: "Painel Principal de Comando (CCM-01)",
+                                    tag: "CCM-01",
+                                    checklist: this.gerarChecklistVazio()
+                                },
+                                {
+                                    id: "painel_2",
+                                    titulo: "Painel Remoto de Automação (PLC-02)",
+                                    tag: "PLC-02",
+                                    checklist: this.gerarChecklistVazio()
+                                }
+                            ]
+                        },
+                        {
+                            id: "proj_2",
+                            titulo: "10.26.065 (VEOLIA - CAIXAS SECCIONALADORAS LOTO)",
+                            tags: ["10.26.065", "Veolia", "Alta"],
+                            status: "em_execucao",
+                            data: "out 9",
+                            paineis: [
+                                {
+                                    id: "painel_3",
+                                    titulo: "Caixa Seccionaladora Setor A",
+                                    tag: "CS-01",
+                                    checklist: this.gerarChecklistVazio()
+                                }
+                            ]
+                        }
+                    ]
+                };
+            }
+
+            salvarDadosLocal() {
+                localStorage.setItem('sat_hierarquia_projetos_v3', JSON.stringify(this.dados));
+            }
+
+            adicionarTagGlobal(novaTag) {
+                let limpa = novaTag.trim();
+                if (limpa && !this.dados.tagsGlobais.includes(limpa)) {
+                    this.dados.tagsGlobais.push(limpa);
+                    this.salvarDadosLocal();
+                }
+            }
+
+            getTagColor(tagName) {
+                let hash = 0;
+                for (let i = 0; i < tagName.length; i++) {
+                    hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                let colorIndex = Math.abs(hash) % COLOR_PALETTES.length;
+                return COLOR_PALETTES[colorIndex];
+            }
+
+            gerarChecklistVazio() {
+                let obj = {};
+                for (let cat in CHECKLIST_ITEMS_TEMPLATE) {
+                    obj[cat] = {};
+                    CHECKLIST_ITEMS_TEMPLATE[cat].forEach(item => {
+                        obj[cat][item] = null;
+                    });
+                }
+                return obj;
+            }
+
+            init() {
+                this.renderizarKanbanProjetos();
+            }
+
+            renderizarKanbanProjetos(filtroTexto = '') {
+                const container = document.getElementById('kanban-columns');
+                container.innerHTML = '';
+
+                STATUS_COLUMNS.forEach(col => {
+                    let projetosDaColuna = this.dados.projetos.filter(p => {
+                        let matchStatus = p.status === col.id;
+                        let matchBusca = filtroTexto === '' || p.titulo.toLowerCase().includes(filtroTexto.toLowerCase()) || p.tags.some(t => t.toLowerCase().includes(filtroTexto.toLowerCase()));
+                        return matchStatus && matchBusca;
+                    });
+
+                    let colunaDiv = document.createElement('div');
+                    colunaDiv.className = 'w-80 flex-shrink-0 flex flex-col bg-brand-card rounded-xl border border-brand-border max-h-full shadow-md';
+                    
+                    colunaDiv.ondragover = (e) => e.preventDefault();
+                    colunaDiv.ondrop = (e) => {
+                        e.preventDefault();
+                        let projetoId = e.dataTransfer.getData('text/plain');
+                        this.moverProjetoParaStatus(projetoId, col.id);
+                    };
+
+                    let cabecalhoCol = `
+                        <div class="p-3.5 border-b border-brand-border flex items-center justify-between bg-brand-aside rounded-t-xl">
+                            <div class="flex items-center space-x-2">
+                                <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${col.corTag}">${col.titulo}</span>
+                                <span class="text-xs text-brand-muted font-mono">${projetosDaColuna.length}</span>
+                            </div>
+                            <button onclick="app.abrirModalNovoProjeto()" class="text-brand-muted hover:text-brand-text text-xs transition"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    `;
+
+                    let cardsContainer = document.createElement('div');
+                    cardsContainer.className = 'p-2 flex-1 overflow-y-auto space-y-2.5 min-h-[220px]';
+
+                    if (projetosDaColuna.length === 0) {
+                        cardsContainer.innerHTML = `<div class="text-center py-8 text-xs text-brand-muted italic">Nenhum projeto (Arraste aqui)</div>`;
+                    } else {
+                        projetosDaColuna.forEach(proj => {
+                            let tagsHtml = proj.tags.map(tag => `
+                                <span class="inline-flex items-center font-mono text-[10px] px-2 py-0.5 rounded border ${this.getTagColor(tag)}">
+                                    ${tag}
+                                    <button onclick="event.stopPropagation(); app.removerTagDoProjeto('${proj.id}', '${tag}')" class="ml-1.5 text-brand-muted hover:text-brand-text"><i class="fa-solid fa-xmark text-[9px]"></i></button>
+                                </span>
+                            `).join('');
+
+                            let card = document.createElement('div');
+                            card.className = 'bg-brand-input hover:bg-brand-border/40 border border-brand-border rounded-xl p-3.5 cursor-grab active:cursor-grabbing transition shadow group relative';
+                            card.draggable = true;
+                            
+                            card.ondragstart = (e) => {
+                                e.dataTransfer.setData('text/plain', proj.id);
+                                card.classList.add('dragging');
+                            };
+                            card.ondragend = () => card.classList.remove('dragging');
+                            card.onclick = () => app.abrirModalProjeto(proj.id);
+                            
+                            card.innerHTML = `
+                                <div class="flex items-start justify-between mb-2 gap-1.5">
+                                    <div class="flex flex-wrap gap-1 items-center">
+                                        ${tagsHtml}
+                                        <button onclick="event.stopPropagation(); app.abrirModalAdicionarTag('${proj.id}')" title="Adicionar tag" class="w-5 h-5 rounded bg-brand-card hover:bg-brand-accent text-brand-muted hover:text-brand-dark flex items-center justify-center text-[10px] transition border border-brand-border"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                    <button onclick="event.stopPropagation(); app.deletarProjeto('${proj.id}')" class="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                                </div>
+                                <p class="text-xs text-brand-text font-medium mb-3 leading-relaxed">${proj.titulo}</p>
+                                <div class="flex items-center justify-between text-[11px] text-brand-muted pt-2.5 border-t border-brand-border/60">
+                                    <span class="flex items-center space-x-1"><i class="fa-regular fa-calendar text-brand-muted"></i><span>${proj.data || 'Prazo'}</span></span>
+                                    <span class="text-brand-accent font-medium flex items-center space-x-1 bg-brand-accent/10 px-2 py-0.5 rounded border border-brand-accent/30"><i class="fa-solid fa-boxes-stacked text-[10px]"></i><span>${proj.paineis.length} painéis</span></span>
+                                </div>
+                            `;
+                            cardsContainer.appendChild(card);
+                        });
+                    }
+
+                    colunaDiv.innerHTML = cabecalhoCol;
+                    colunaDiv.appendChild(cardsContainer);
+                    container.appendChild(colunaDiv);
+                });
+            }
+
+            moverProjetoParaStatus(projetoId, novoStatus) {
+                let proj = this.dados.projetos.find(p => p.id === projetoId);
+                if (proj) {
+                    proj.status = novoStatus;
+                    this.salvarDadosLocal();
+                    this.renderizarKanbanProjetos();
+                }
+            }
+
+            filtrarProjetos(termo) {
+                this.renderizarKanbanProjetos(termo);
+            }
+
+            abrirModalNovoProjeto() {
+                document.getElementById('nproj-titulo').value = '';
+                document.getElementById('nproj-tags').value = '';
+                document.getElementById('modal-novo-projeto').classList.remove('hidden');
+            }
+
+            fecharModalNovoProjeto() {
+                document.getElementById('modal-novo-projeto').classList.add('hidden');
+            }
+
+            salvarNovoProjeto(event) {
+                event.preventDefault();
+                let titulo = document.getElementById('nproj-titulo').value;
+                let tagsInput = document.getElementById('nproj-tags').value;
+                let tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0) : ['Projeto'];
+                
+                tags.forEach(t => this.adicionarTagGlobal(t));
+
+                let status = document.getElementById('nproj-status').value;
+                let data = document.getElementById('nproj-data').value || 'hoje';
+
+                let novoProj = {
+                    id: 'proj_' + Date.now(),
+                    titulo, tags, status, data,
+                    paineis: []
+                };
+
+                this.dados.projetos.push(novoProj);
+                this.salvarDadosLocal();
+                this.fecharModalNovoProjeto();
+                this.renderizarKanbanProjetos();
+            }
+
+            deletarProjeto(id) {
+                if (!confirm("Deseja realmente excluir este projeto e todos os seus painéis?")) return;
+                this.dados.projetos = this.dados.projetos.filter(p => p.id !== id);
+                this.salvarDadosLocal();
+                this.renderizarKanbanProjetos();
+            }
+
+            removerTagDoProjeto(projId, tagNome) {
+                let proj = this.dados.projetos.find(p => p.id === projId);
+                if (proj) {
+                    proj.tags = proj.tags.filter(t => t !== tagNome);
+                    this.salvarDadosLocal();
+                    this.renderizarKanbanProjetos();
+                    if (this.projetoSelecionadoId === projId) {
+                        this.abrirModalProjeto(projId);
+                    }
+                }
+            }
+
+            abrirModalAdicionarTag(projId) {
+                this.projetoParaAdicionarTagId = projId;
+                document.getElementById('input-nova-tag').value = '';
+                
+                const container = document.getElementById('tags-existentes-list');
+                container.innerHTML = '';
+
+                let proj = this.dados.projetos.find(p => p.id === projId);
+
+                if (this.dados.tagsGlobais.length === 0) {
+                    container.innerHTML = `<span class="text-[11px] text-brand-muted italic p-1">Nenhuma tag cadastrada ainda.</span>`;
+                } else {
+                    this.dados.tagsGlobais.forEach(tag => {
+                        let jaTem = proj.tags.includes(tag);
+                        if (!jaTem) {
+                            let btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.className = `font-mono text-[10px] px-2 py-0.5 rounded border ${this.getTagColor(tag)} hover:opacity-80 transition cursor-pointer`;
+                            btn.innerText = `+ ${tag}`;
+                            btn.onclick = () => {
+                                proj.tags.push(tag);
+                                this.salvarDadosLocal();
+                                this.fecharModalAdicionarTag();
+                                this.renderizarKanbanProjetos();
+                                if (this.projetoSelecionadoId === projId) this.abrirModalProjeto(projId);
+                            };
+                            container.appendChild(btn);
+                        }
+                    });
+                }
+
+                document.getElementById('modal-adicionar-tag').classList.remove('hidden');
+            }
+
+            fecharModalAdicionarTag() {
+                document.getElementById('modal-adicionar-tag').classList.add('hidden');
+            }
+
+            confirmarAdicionarTag() {
+                let val = document.getElementById('input-nova-tag').value.trim();
+                if (!val) return;
+
+                let proj = this.dados.projetos.find(p => p.id === this.projetoParaAdicionarTagId);
+                if (proj && !proj.tags.includes(val)) {
+                    proj.tags.push(val);
+                    this.adicionarTagGlobal(val);
+                    this.salvarDadosLocal();
+                    this.renderizarKanbanProjetos();
+                    if (this.projetoSelecionadoId === proj.id) this.abrirModalProjeto(proj.id);
+                }
+                this.fecharModalAdicionarTag();
+            }
+
+            abrirModalGerenciarTags() {
+                const container = document.getElementById('global-tags-list');
+                container.innerHTML = '';
+
+                if (this.dados.tagsGlobais.length === 0) {
+                    container.innerHTML = `<div class="text-center py-4 text-xs text-brand-muted italic">Nenhuma tag global cadastrada.</div>`;
+                } else {
+                    this.dados.tagsGlobais.forEach(tag => {
+                        let div = document.createElement('div');
+                        div.className = 'flex items-center justify-between bg-brand-input border border-brand-border rounded-lg px-3 py-2';
+                        div.innerHTML = `
+                            <span class="font-mono text-xs px-2 py-0.5 rounded border ${this.getTagColor(tag)}">${tag}</span>
+                            <button onclick="app.excluirTagGlobal('${tag}')" class="text-brand-muted hover:text-red-400 text-xs transition" title="Excluir tag de todo o sistema"><i class="fa-solid fa-trash"></i></button>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+
+                document.getElementById('modal-gerenciar-tags').classList.remove('hidden');
+            }
+
+            fecharModalGerenciarTags() {
+                document.getElementById('modal-gerenciar-tags').classList.add('hidden');
+                this.renderizarKanbanProjetos();
+            }
+
+            excluirTagGlobal(tagNome) {
+                if (!confirm(`Deseja excluir a tag "${tagNome}" globalmente? Ela será removida de todos os projetos.`)) return;
+                
+                this.dados.tagsGlobais = this.dados.tagsGlobais.filter(t => t !== tagNome);
+                this.dados.projetos.forEach(p => {
+                    p.tags = p.tags.filter(t => t !== tagNome);
+                });
+
+                this.salvarDadosLocal();
+                this.abrirModalGerenciarTags();
+                this.renderizarKanbanProjetos();
+            }
+
+            abrirModalProjeto(projetoId) {
+                this.projetoSelecionadoId = projetoId;
+                let proj = this.dados.projetos.find(p => p.id === projetoId);
+                if (!proj) return;
+
+                let tagsHtml = proj.tags.map(tag => `
+                    <span class="inline-flex items-center font-mono text-xs px-2.5 py-1 rounded border ${this.getTagColor(tag)}">
+                        ${tag}
+                        <button onclick="event.stopPropagation(); app.removerTagDoProjeto('${proj.id}', '${tag}')" class="ml-1.5 text-brand-muted hover:text-brand-text"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                    </span>
+                `).join('');
+
+                document.getElementById('mp-tags-container').innerHTML = tagsHtml + `
+                    <button onclick="app.abrirModalAdicionarTag('${proj.id}')" class="w-6 h-6 rounded bg-brand-card hover:bg-brand-accent text-brand-muted hover:text-brand-dark flex items-center justify-center text-xs transition border border-brand-border"><i class="fa-solid fa-plus"></i></button>
+                `;
+                document.getElementById('mp-titulo').innerText = proj.titulo;
+                
+                this.renderizarListaPaineisDoProjeto(proj);
+                document.getElementById('modal-projeto').classList.remove('hidden');
+            }
+
+            fecharModalProjeto() {
+                document.getElementById('modal-projeto').classList.add('hidden');
+                this.renderizarKanbanProjetos();
+            }
+
+            renderizarListaPaineisDoProjeto(proj) {
+                const container = document.getElementById('mp-paineis-list');
+                container.innerHTML = '';
+
+                if (proj.paineis.length === 0) {
+                    container.innerHTML = `<div class="text-center py-6 text-xs text-brand-muted italic bg-brand-card rounded-xl border border-brand-border">Nenhum painel cadastrado neste projeto. Clique em "Adicionar Painel" acima.</div>`;
+                    return;
+                }
+
+                proj.paineis.forEach(painel => {
+                    let totalCheck = 0;
+                    let concluidosCheck = 0;
+                    for(let cat in painel.checklist) {
+                        for(let item in painel.checklist[cat]) {
+                            totalCheck++;
+                            if(painel.checklist[cat][item] === 'ok' || painel.checklist[cat][item] === 'na') concluidosCheck++;
+                        }
+                    }
+                    let progresso = totalCheck > 0 ? Math.round((concluidosCheck / totalCheck) * 100) : 0;
+
+                    let div = document.createElement('div');
+                    div.className = 'bg-brand-card hover:bg-brand-border/40 border border-brand-border rounded-xl p-3.5 flex items-center justify-between transition cursor-pointer group';
+                    div.onclick = () => app.abrirModalChecklist(painel.id);
+
+                    div.innerHTML = `
+                        <div class="flex items-center space-x-3 truncate">
+                            <span class="font-mono text-[11px] text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded border border-brand-accent/30">${painel.tag || 'PAINEL'}</span>
+                            <span class="text-xs text-brand-text font-medium truncate">${painel.titulo}</span>
+                        </div>
+                        <div class="flex items-center space-x-3 flex-shrink-0">
+                            <span class="text-emerald-400 font-medium text-xs bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-800/30 flex items-center space-x-1.5">
+                                <i class="fa-solid fa-list-check text-[10px]"></i><span>${progresso}% concluído</span>
+                            </span>
+                            <button onclick="event.stopPropagation(); app.deletarPainel('${painel.id}')" class="text-brand-muted hover:text-red-400 p-1.5 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            abrirModalNovoPainel() {
+                document.getElementById('np-titulo').value = '';
+                document.getElementById('np-tag').value = '';
+                document.getElementById('modal-novo-painel').classList.remove('hidden');
+            }
+
+            fecharModalNovoPainel() {
+                document.getElementById('modal-novo-painel').classList.add('hidden');
+            }
+
+            salvarNovoPainel(event) {
+                event.preventDefault();
+                let titulo = document.getElementById('np-titulo').value;
+                let tag = document.getElementById('np-tag').value || 'PAINEL';
+
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                if (!proj) return;
+
+                let novoPainel = {
+                    id: 'painel_' + Date.now(),
+                    titulo, tag,
+                    checklist: this.gerarChecklistVazio()
+                };
+
+                proj.paineis.push(novoPainel);
+                this.salvarDadosLocal();
+                this.fecharModalNovoPainel();
+                this.renderizarListaPaineisDoProjeto(proj);
+            }
+
+            deletarPainel(painelId) {
+                if (!confirm("Deseja excluir este painel?")) return;
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                if (!proj) return;
+
+                proj.paineis = proj.paineis.filter(p => p.id !== painelId);
+                this.salvarDadosLocal();
+                this.renderizarListaPaineisDoProjeto(proj);
+            }
+
+            abrirModalChecklist(painelId) {
+                this.painelSelecionadoId = painelId;
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                let painel = proj.paineis.find(p => p.id === painelId);
+                if (!painel) return;
+
+                let tagsHtml = proj.tags.map(tag => `
+                    <span class="font-mono text-xs px-2.5 py-1 rounded border ${this.getTagColor(tag)}">${tag}</span>
+                `).join('');
+                document.getElementById('modal-tags-container').innerHTML = tagsHtml;
+                document.getElementById('modal-painel-titulo').innerText = painel.titulo;
+                document.getElementById('modal-painel-sub').innerText = `Projeto: ${proj.titulo}`;
+
+                this.renderizarConteudoChecklist(painel);
+                document.getElementById('modal-checklist').classList.remove('hidden');
+            }
+
+            fecharModalChecklistParaPainel() {
+                document.getElementById('modal-checklist').classList.add('hidden');
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                if (proj) this.renderizarListaPaineisDoProjeto(proj);
+            }
+
+            renderizarConteudoChecklist(painel) {
+                for (let cat in CHECKLIST_ITEMS_TEMPLATE) {
+                    const container = document.getElementById(`list-items-${cat}`);
+                    container.innerHTML = '';
+
+                    let totalItens = CHECKLIST_ITEMS_TEMPLATE[cat].length;
+                    let itensConcluidos = 0;
+
+                    CHECKLIST_ITEMS_TEMPLATE[cat].forEach(itemNome => {
+                        let statusAtual = painel.checklist[cat][itemNome];
+                        if (statusAtual === 'ok' || statusAtual === 'na') itensConcluidos++;
+
+                        let isOk = statusAtual === 'ok';
+                        let isNa = statusAtual === 'na';
+
+                        let itemDiv = document.createElement('div');
+                        itemDiv.className = 'bg-brand-input border border-brand-border rounded-xl p-3 flex items-center justify-between text-xs shadow-sm hover:border-brand-accent/50 transition';
+                        
+                        itemDiv.innerHTML = `
+                            <span class="font-medium text-brand-text pr-2 leading-snug">${itemNome}</span>
+                            <div class="flex items-center space-x-1.5 flex-shrink-0">
+                                <button onclick="app.mudarStatusCheckItem('${cat}', '${itemNome}', 'ok')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isOk ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'bg-brand-card text-brand-muted hover:bg-brand-border hover:text-brand-text border border-brand-border'}">OK</button>
+                                <button onclick="app.mudarStatusCheckItem('${cat}', '${itemNome}', 'na')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isNa ? 'bg-zinc-600 text-white shadow-md shadow-zinc-600/30' : 'bg-brand-card text-brand-muted hover:bg-brand-border hover:text-brand-text border border-brand-border'}">N/A</button>
+                            </div>
+                        `;
+                        container.appendChild(itemDiv);
+                    });
+
+                    let percentual = Math.round((itensConcluidos / totalItens) * 100);
+                    document.getElementById(`prog-val-${cat}`).innerText = `${percentual}%`;
+                    document.getElementById(`prog-bar-${cat}`).style.width = `${percentual}%`;
+                }
+            }
+
+            mudarStatusCheckItem(categoria, itemNome, novoValor) {
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                let painel = proj.paineis.find(p => p.id === this.painelSelecionadoId);
+                if (!painel) return;
+
+                if (painel.checklist[categoria][itemNome] === novoValor) {
+                    painel.checklist[categoria][itemNome] = null;
+                } else {
+                    painel.checklist[categoria][itemNome] = novoValor;
+                }
+
+                this.salvarDadosLocal();
+                this.renderizarConteudoChecklist(painel);
+            }
+
+            exportarDados() {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.dados, null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", "sat_hierarquia_projetos_backup.json");
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+            }
+        }
+
+        let app = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new GerenciadorProjetosPaineis();
+        });
+    </script>
+</body>
+</html>
