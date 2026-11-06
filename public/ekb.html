@@ -96,21 +96,33 @@
                 </button>
             </div>
 
-            <!-- Filter Pills & Action -->
-            <div class="flex flex-wrap items-center justify-between gap-4 mt-4">
-                <div class="flex flex-wrap gap-2" id="filter-pills">
-                    <button data-filter="all" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 transition-all">Todos os arquivos</button>
-                    <button data-filter="pdf" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Manuais PDF</button>
-                    <button data-filter="docx" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Planilhas & Dados</button>
-                    <button data-filter="img" class="filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Esquemas & Imagens</button>
-                </div>
-
+            <!-- Botão de Vincular Pasta -->
+            <div class="flex justify-end mt-4">
                 <button id="link-folder-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-dark-900 transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
                     </svg>
                     <span>Vincular Pasta</span>
                 </button>
+            </div>
+
+            <!-- Filter Pills / Formatos -->
+            <div class="mt-4">
+                <span class="text-xs font-medium text-gray-400 block mb-2">Tipos de arquivo:</span>
+                <div class="flex flex-wrap gap-2" id="filter-pills">
+                    <button data-filter="all" class="filter-btn px-4 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 transition-all">Todos os formatos</button>
+                    <button data-filter="pdf" class="filter-btn px-4 py-1.5 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Manuais PDF</button>
+                    <button data-filter="docx" class="filter-btn px-4 py-1.5 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Planilhas & Dados</button>
+                    <button data-filter="img" class="filter-btn px-4 py-1.5 rounded-xl text-xs font-semibold bg-dark-800 text-gray-400 border border-dark-600 hover:border-gray-500 transition-all">Esquemas & Imagens</button>
+                </div>
+            </div>
+
+            <!-- Filtros Dinâmicos por Fabricante -->
+            <div id="manufacturer-filter-container" class="mt-4 hidden">
+                <span class="text-xs font-medium text-emerald-400 block mb-2">Filtrar por Fabricante na pesquisa atual:</span>
+                <div class="flex flex-wrap gap-2" id="manufacturer-pills">
+                    <!-- Gerado Dinamicamente -->
+                </div>
             </div>
         </div>
 
@@ -121,7 +133,7 @@
 
         <!-- Results Container -->
         <div id="results-container" class="w-full max-w-3xl space-y-3">
-            <!-- Dynamically populated -->
+            <!-- Populado Dinamicamente -->
         </div>
 
         <!-- Empty State -->
@@ -144,11 +156,48 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+        // 1. IndexedDB para persistir referência de diretório local
+        const DB_NAME = 'OMINI_FilesDB';
+        const STORE_NAME = 'handles';
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function saveDirectoryHandle(handle) {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            tx.objectStore(STORE_NAME).put(handle, 'linkedFolder');
+            return tx.complete;
+        }
+
+        async function getDirectoryHandle() {
+            const db = await openDB();
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            return new Promise((resolve) => {
+                const req = tx.objectStore(STORE_NAME).get('linkedFolder');
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => resolve(null);
+            });
+        }
+
+        // Base de Dados Inicial
         let documentsDB = [
             {
                 id: 1,
                 name: "Catalogo_Disjuntores_Siemens_5SL1.pdf",
                 type: "pdf",
+                manufacturer: "Siemens",
                 category: "Manuais/Siemens/Protecao",
                 content: "Catálogo técnico oficial da linha Siemens. Disjuntores miniatura 5SL1, 5SL6 e 5SY para proteção de instalações elétricas residenciais e industriais. Corrente nominal de 0.3 A até 63 A, curva C, capacidade de interrupção até 6kA. Especificações para CCM e QGBT.",
                 fileHandle: null
@@ -157,7 +206,8 @@
                 id: 2,
                 name: "Especificacao_Tecnica_Reles_3RV2.docx",
                 type: "docx",
-                category: "Engenharia/Projetos",
+                manufacturer: "Siemens",
+                category: "Engenharia/Projetos/Siemens",
                 content: "Especificação técnica para painéis elétricos CCM e QGBT. Utilização obrigatória de disjuntores termomagnéticos 5SL1 para circuitos de comando auxiliares e chaves disjuntores 3RV2 para proteção de motores elétricos trifásicos. Tabela de ajuste de sobrecarga e correntes nominais.",
                 fileHandle: null
             },
@@ -165,6 +215,7 @@
                 id: 3,
                 name: "Manual_Inversor_ABB_ACS580.pdf",
                 type: "pdf",
+                manufacturer: "ABB",
                 category: "Manuais/ABB/Drives",
                 content: "Manual do usuário e guia de instalação rápida para Inversores ABB ACS580. Parâmetros de controle vetorial, diagramas de fiação, entradas digitais e analógicas, comunicação Modbus RTU integrada. Compatível com motores de indução e imãs permanentes.",
                 fileHandle: null
@@ -173,6 +224,7 @@
                 id: 4,
                 name: "Tabela_Precos_Schneider_2026.xlsx",
                 type: "xlsx",
+                manufacturer: "Schneider",
                 category: "Comercial/Schneider",
                 content: "Tabela de preços atualizada Schneider Electric. Itens inclusos: disjuntores Acti9 iC60N, relés térmicos, contatores TeSys D, inversores de frequência Altivar ATV320 e softstarters ATS48. Códigos referência e descontos corporativos aplicáveis para integradores.",
                 fileHandle: null
@@ -180,6 +232,7 @@
         ];
 
         let currentFilter = 'all';
+        let currentManufacturerFilter = 'all';
 
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-btn');
@@ -190,6 +243,8 @@
         const filterBtns = document.querySelectorAll('.filter-btn');
         const linkFolderBtn = document.getElementById('link-folder-btn');
         const docCountBadge = document.getElementById('doc-count-badge');
+        const manufacturerFilterContainer = document.getElementById('manufacturer-filter-container');
+        const manufacturerPills = document.getElementById('manufacturer-pills');
 
         docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
 
@@ -214,30 +269,85 @@
                 clearBtn.classList.add('hidden');
             }
 
-            let filtered = documentsDB.filter(doc => {
+            // 1. Filtro por tipo de arquivo
+            let queryMatchedDocs = documentsDB.filter(doc => {
                 if (currentFilter === 'pdf' && doc.type !== 'pdf') return false;
                 if (currentFilter === 'docx' && doc.type !== 'docx' && doc.type !== 'xlsx') return false;
-                if (currentFilter === 'img' && doc.type !== 'png' && doc.type !== 'jpg' && doc.type !== 'jpeg') return false;
+                if (currentFilter === 'img' && !['png', 'jpg', 'jpeg'].includes(doc.type)) return false;
                 return true;
             });
 
+            // 2. Filtro por termos digitados na busca
             if (query) {
                 const terms = query.split(/\s+/).filter(t => t.length > 0);
-                filtered = filtered.filter(doc => {
+                queryMatchedDocs = queryMatchedDocs.filter(doc => {
                     const nameLower = doc.name.toLowerCase();
                     const contentLower = doc.content.toLowerCase();
                     const categoryLower = doc.category.toLowerCase();
+                    const mfgLower = (doc.manufacturer || '').toLowerCase();
                     
                     return terms.every(term => 
-                        nameLower.includes(term) || contentLower.includes(term) || categoryLower.includes(term)
+                        nameLower.includes(term) || contentLower.includes(term) || categoryLower.includes(term) || mfgLower.includes(term)
                     );
                 });
+            }
+
+            // 3. Extrair lista única de Fabricantes presentes na pesquisa atual
+            updateManufacturerFilters(queryMatchedDocs);
+
+            // 4. Filtrar pelos fabricantes selecionados
+            let finalResults = queryMatchedDocs;
+            if (currentManufacturerFilter !== 'all') {
+                finalResults = queryMatchedDocs.filter(doc => doc.manufacturer === currentManufacturerFilter);
             }
 
             const endTime = performance.now();
             const duration = ((endTime - startTime) / 1000).toFixed(3);
 
-            renderResults(filtered, query, duration);
+            renderResults(finalResults, query, duration);
+        }
+
+        function updateManufacturerFilters(matchedDocs) {
+            const manufacturers = [...new Set(matchedDocs.map(d => d.manufacturer).filter(Boolean))];
+
+            if (manufacturers.length <= 1) {
+                manufacturerFilterContainer.classList.add('hidden');
+                currentManufacturerFilter = 'all';
+                return;
+            }
+
+            manufacturerFilterContainer.classList.remove('hidden');
+            manufacturerPills.innerHTML = '';
+
+            // Botão "Todos os fabricantes"
+            const allBtn = document.createElement('button');
+            allBtn.className = `mfg-btn px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                currentManufacturerFilter === 'all' 
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
+                : 'bg-dark-800 text-gray-400 border-dark-600 hover:border-gray-500'
+            }`;
+            allBtn.textContent = 'Todos os fabricantes';
+            allBtn.addEventListener('click', () => {
+                currentManufacturerFilter = 'all';
+                performSearch();
+            });
+            manufacturerPills.appendChild(allBtn);
+
+            // Botão por fabricante
+            manufacturers.forEach(mfg => {
+                const btn = document.createElement('button');
+                btn.className = `mfg-btn px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                    currentManufacturerFilter === mfg 
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
+                    : 'bg-dark-800 text-gray-400 border-dark-600 hover:border-gray-500'
+                }`;
+                btn.textContent = mfg;
+                btn.addEventListener('click', () => {
+                    currentManufacturerFilter = mfg;
+                    performSearch();
+                });
+                manufacturerPills.appendChild(btn);
+            });
         }
 
         function renderResults(results, query, duration) {
@@ -260,7 +370,7 @@
                 let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
                 if (doc.type === 'docx') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/30";
                 if (doc.type === 'xlsx') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/30";
-                if (doc.type === 'png' || doc.type === 'jpg' || doc.type === 'jpeg') badgeColor = "bg-purple-500/10 text-purple-400 border-purple-500/30";
+                if (['png', 'jpg', 'jpeg'].includes(doc.type)) badgeColor = "bg-purple-500/10 text-purple-400 border-purple-500/30";
 
                 const highlightedName = highlightText(doc.name, query);
                 const highlightedContent = highlightText(doc.content, query);
@@ -272,7 +382,8 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center space-x-2 mb-1">
-                                <span class="text-xs font-medium text-gray-400">${doc.category}</span>
+                                ${doc.manufacturer ? `<span class="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/30">${doc.manufacturer}</span>` : ''}
+                                <span class="text-xs font-medium text-gray-400 truncate">${doc.category}</span>
                             </div>
                             <h3 class="text-base font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">
                                 ${highlightedName}
@@ -308,7 +419,6 @@
             });
         }
 
-        // Recursive Folder Scanner with Fault Tolerance
         async function scanDirectoryRecursive(dirHandle, path = "") {
             let files = [];
             try {
@@ -331,6 +441,57 @@
             return files;
         }
 
+        async function indexDirectoryHandle(dirHandle) {
+            const allScannedFiles = await scanDirectoryRecursive(dirHandle);
+            let loadedCount = 0;
+
+            for (const item of allScannedFiles) {
+                try {
+                    const file = await item.entry.getFile();
+                    const fileName = file.name;
+                    const fileExt = fileName.split('.').pop().toLowerCase();
+                    
+                    // Extração do Fabricante a partir do caminho da pasta
+                    const pathParts = item.path.split('/');
+                    let manufacturer = "";
+                    if (pathParts.length > 1) {
+                        manufacturer = pathParts[0]; // Primeira pasta dentro do diretório raiz vinculado
+                    }
+
+                    let textSample = "";
+                    if (['txt', 'md', 'csv', 'json', 'html', 'xml', 'log'].includes(fileExt)) {
+                        textSample = await file.text();
+                    } else {
+                        textSample = `Arquivo técnico localizado em: ${item.path}. Extensão .${fileExt}.`;
+                    }
+
+                    const existingIdx = documentsDB.findIndex(d => d.name === fileName && d.category.includes(dirHandle.name));
+                    const docObj = {
+                        id: documentsDB.length + 1,
+                        name: fileName,
+                        type: fileExt,
+                        manufacturer: manufacturer,
+                        category: `Pasta / ${dirHandle.name}/${item.path.substring(0, item.path.lastIndexOf('/') + 1)}`.replace(/\/$/, ''),
+                        content: textSample.slice(0, 1000),
+                        fileHandle: item.entry
+                    };
+
+                    if (existingIdx >= 0) {
+                        documentsDB[existingIdx] = docObj;
+                    } else {
+                        documentsDB.push(docObj);
+                    }
+                    loadedCount++;
+                } catch (fileErr) {
+                    console.warn("Arquivo ignorado por restrição de leitura:", item.path);
+                }
+            }
+
+            docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
+            performSearch();
+            return loadedCount;
+        }
+
         async function linkLocalFolder() {
             if (!window.showDirectoryPicker) {
                 alert("Seu navegador não suporta a seleção direta de pastas. Utilize o Google Chrome ou Microsoft Edge.");
@@ -339,60 +500,44 @@
 
             try {
                 const dirHandle = await window.showDirectoryPicker();
-                const allScannedFiles = await scanDirectoryRecursive(dirHandle);
-                let loadedCount = 0;
-
-                for (const item of allScannedFiles) {
-                    try {
-                        const file = await item.entry.getFile();
-                        const fileName = file.name;
-                        const fileExt = fileName.split('.').pop().toLowerCase();
-                        
-                        let textSample = "";
-                        if (['txt', 'md', 'csv', 'json', 'html', 'xml', 'log'].includes(fileExt)) {
-                            textSample = await file.text();
-                        } else {
-                            textSample = `Arquivo técnico localizado em: ${item.path}. Extensão .${fileExt}.`;
-                        }
-
-                        const existingIdx = documentsDB.findIndex(d => d.name === fileName && d.category.includes(dirHandle.name));
-                        const docObj = {
-                            id: documentsDB.length + 1,
-                            name: fileName,
-                            type: fileExt,
-                            category: `Pasta / ${dirHandle.name}/${item.path.substring(0, item.path.lastIndexOf('/') + 1)}`.replace(/\/$/, ''),
-                            content: textSample.slice(0, 1000),
-                            fileHandle: item.entry
-                        };
-
-                        if (existingIdx >= 0) {
-                            documentsDB[existingIdx] = docObj;
-                        } else {
-                            documentsDB.push(docObj);
-                        }
-                        loadedCount++;
-                    } catch (fileErr) {
-                        // Ignora arquivos individuais bloqueados pelo SO sem quebrar a execução
-                        console.warn("Arquivo ignorado por restrição de leitura:", item.path);
-                    }
-                }
-
-                docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
-                performSearch();
-                alert(`Sucesso! ${loadedCount} arquivos da pasta "${dirHandle.name}" foram indexados com segurança.`);
+                await saveDirectoryHandle(dirHandle);
+                const loadedCount = await indexDirectoryHandle(dirHandle);
+                alert(`Sucesso! ${loadedCount} arquivos da pasta "${dirHandle.name}" foram vinculados.`);
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error(err);
-                    alert("Erro ao acessar a pasta selecionada. Verifique as permissões do sistema.");
+                    alert("Erro ao acessar a pasta selecionada.");
                 }
             }
         }
 
+        async function loadSavedFolderIfExists() {
+            try {
+                const savedHandle = await getDirectoryHandle();
+                if (!savedHandle) return;
+
+                let permission = await savedHandle.queryPermission({ mode: 'read' });
+                if (permission !== 'granted') {
+                    permission = await savedHandle.requestPermission({ mode: 'read' });
+                }
+
+                if (permission === 'granted') {
+                    await indexDirectoryHandle(savedHandle);
+                }
+            } catch (err) {
+                console.warn("Não foi possível restaurar a pasta automaticamente:", err);
+            }
+        }
+
         // Event Listeners
-        searchInput.addEventListener('input', performSearch);
+        searchInput.addEventListener('input', () => {
+            currentManufacturerFilter = 'all';
+            performSearch();
+        });
 
         clearBtn.addEventListener('click', () => {
             searchInput.value = '';
+            currentManufacturerFilter = 'all';
             performSearch();
             searchInput.focus();
         });
@@ -413,8 +558,9 @@
 
         linkFolderBtn.addEventListener('click', linkLocalFolder);
 
-        // Initial render
+        // Inicialização
         performSearch();
+        window.addEventListener('DOMContentLoaded', loadSavedFolderIfExists);
     </script>
 </body>
 </html>
