@@ -1,0 +1,1908 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OMINI | CAD 2D de Painéis (Rittal Limpo & Altura x Largura x Profundidade)</title>
+<meta name="theme-color" content="#111315">
+<!-- Script para Leitura e Importação de Arquivos Excel (.xlsx / .xls) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#111315;--panel:#191c1f;--panel2:#202428;--line:#30363b;--muted:#91a0a9;--text:#e9f0f3;--accent:#08c997;--accent2:#087d63;--blue:#79b9ed;--danger:#ff6b6b}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font:13px/1.4 Inter,Segoe UI,Arial,sans-serif}button,input,select{font:inherit;color:inherit}button{cursor:pointer}.app{height:100dvh;display:grid;grid-template-rows:48px 54px minmax(0,1fr) 28px 26px}.top{display:flex;align-items:center;gap:14px;padding:0 16px;background:#17191b;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:9px;min-width:170px}.bolt{width:29px;height:29px;border:1px solid var(--accent2);border-radius:8px;display:grid;place-items:center;color:var(--accent);font-size:19px}.brand b{font-size:13px;letter-spacing:.08em}.brand small{display:block;color:var(--accent);font-size:8px;letter-spacing:.2em}.docname{padding-left:14px;border-left:1px solid var(--line);color:#d7e0e4}.docname span{color:var(--muted)}.spacer{flex:1}.top button,.ribbon button,.panel button{border:1px solid var(--line);background:#202428;border-radius:6px;padding:7px 10px}.top button:hover,.ribbon button:hover,.panel button:hover{border-color:var(--accent2);background:#202b29}.primary{background:#063e33!important;border-color:#087d63!important;color:#43e2b9!important;font-weight:700}.ribbon{display:flex;align-items:center;gap:5px;padding:5px 12px;background:#151719;border-bottom:1px solid var(--line);overflow:auto}.group{display:flex;align-items:center;gap:4px;padding:0 9px;border-right:1px solid var(--line);height:42px;white-space:nowrap}.group:last-child{border:0}.group label{font-size:10px;color:var(--muted);margin-right:4px}.tool{min-width:39px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:1px solid transparent!important;background:transparent!important;border-radius:5px;padding:3px 7px!important;color:#c4d0d5}.tool .ico{font-size:17px;line-height:18px}.tool small{font-size:9px;color:var(--muted)}.tool.active{background:#12372f!important;border-color:#087d63!important;color:#4ce2bb}.tool.active small{color:#7de6c9}.work{min-height:0;display:grid;grid-template-columns:245px minmax(0,1fr) 250px}.panel{background:var(--panel);min-height:0;overflow:auto}.left{border-right:1px solid var(--line)}.right{border-left:1px solid var(--line)}.section{border-bottom:1px solid var(--line)}.section-title{padding:11px 12px 8px;color:#adbac0;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}.section-content{padding:0 12px 12px}.file-drop{border:1px dashed #46524f;border-radius:8px;padding:12px;text-align:center;color:var(--muted);line-height:1.6}.file-drop b{display:block;color:#dae4e8}.file-drop button{margin-top:6px}.entity-row{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:5px;cursor:pointer}.entity-row:hover{background:#242a2e}.entity-row.selected{background:#12372f;color:#79e6ca}.entity-row span:nth-child(2){flex:1}.entity-row small{color:var(--muted)}.stage{position:relative;min-width:0;min-height:0;background:#101214}.viewport{width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}.viewport.selecting{cursor:default}.canvas-toolbar{position:absolute;left:14px;top:14px;display:flex;gap:5px;background:#191c1fe8;border:1px solid var(--line);border-radius:7px;padding:4px}.canvas-toolbar button{width:31px;height:30px;border:0;background:none;border-radius:4px}.canvas-toolbar button:hover{background:#30373b}.coords{position:absolute;bottom:10px;left:13px;color:#b3c0c6;background:#191c1fe8;padding:5px 8px;border-radius:4px;font:11px Consolas,monospace}.zoom-controls{position:absolute;right:13px;bottom:12px;display:flex;gap:4px}.zoom-controls button{width:32px;height:30px;background:#1b1f22;border:1px solid var(--line);border-radius:5px}.empty-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;color:#78878e;pointer-events:none}.empty-hint strong{display:block;color:#bbc7cc;font-size:15px;margin:7px}.field{display:grid;grid-template-columns:1fr 110px;align-items:center;gap:8px;margin:8px 0;color:var(--muted);font-size:11px}.field input,.field select{width:100%;min-width:0;background:#111416;border:1px solid var(--line);border-radius:5px;padding:6px 7px;color:var(--text)}.check{display:flex;align-items:center;gap:7px;color:#bbc6cb;font-size:11px;margin:8px 0}.check input{accent-color:var(--accent)}.cmd-line{display:flex;align-items:center;background:#141618;border-top:1px solid var(--line);padding:0 12px;gap:8px;font:12px Consolas,monospace}.cmd-input{flex:1;background:transparent;border:0;color:var(--accent);outline:none;font:inherit}.status{display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#17191b;border-top:1px solid var(--line);color:#9aa7ad;font-size:10px}.status strong{color:var(--accent);font-weight:500}.hidden{display:none!important}.help{font-size:10px;color:#819097;line-height:1.65}.selection-empty{color:#748188;padding:4px 0;font-size:11px}.selection-title{color:#e3ecef;font-weight:600;padding-bottom:7px;border-bottom:1px solid var(--line)}.notice{margin:10px 12px;padding:9px;border-radius:6px;border:1px solid #5d4821;background:#2a2418;color:#e4c77d;font-size:10px;line-height:1.5}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:grid;place-items:center;z-index:99;cursor:pointer}.modal{width:min(520px,calc(100% - 30px));max-height:88vh;padding:20px;background:#1b1f22;border:1px solid var(--line);border-radius:12px;box-shadow:0 20px 70px #000;cursor:default;display:flex;flex-direction:column;overflow:hidden}.modal h2{font-size:17px;margin:0 0 8px;color:var(--text)}.modal p{color:#adb9be;line-height:1.6;margin-bottom:15px}.modal button{padding:8px 16px;border-radius:6px;background:#12372f;border:1px solid #087d63;color:#7de6c9;font-weight:bold;cursor:pointer}.modal button:hover{background:#085244}.modal-actions{text-align:right;margin-top:15px}
+.dyn-input {
+    position: absolute; z-index: 10; display: flex; align-items: center; gap: 6px;
+    background: #191c1fe8; border: 1px solid var(--accent); border-radius: 6px;
+    padding: 6px 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.6); pointer-events: auto;
+}
+.dyn-input input {
+    width: 90px; background: #111416; border: 1px solid var(--line);
+    color: var(--text); padding: 4px 6px; font-size: 11px; border-radius: 4px;
+    outline: none; font-family: Consolas, monospace;
+}
+.dyn-input input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px #08c99733; }
+.dyn-input span { font-size: 11px; color: var(--accent); font-weight: bold; letter-spacing: 0.05em; }
+.lib-box { background: #111416; border: 1px solid var(--line); border-radius: 6px; padding: 10px; text-align: left; color: var(--text); font-size: 11px; margin-top: 8px; }
+.lib-box b { display: block; color: var(--accent); margin-bottom: 4px; }
+.btn-insert-piece { width: 100%; margin-top: 8px; background: #063e33; border: 1px solid #087d63; color: #43e2b9; padding: 7px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+.btn-insert-piece:hover { background: #085244; }
+.btn-import-lib { width: 100%; margin-top: 6px; background: #202428; border: 1px dashed var(--accent2); color: var(--accent); padding: 6px; border-radius: 5px; font-size: 11px; cursor: pointer; }
+.btn-import-lib:hover { background: #12372f; }
+.btn-manage-lib { width: 100%; margin-top: 8px; background: #12372f; border: 1px solid #087d63; color: #79e6ca; padding: 7px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer; }
+.btn-manage-lib:hover { background: #085244; }
+.prop-badge { background: #12372f; color: var(--accent); border: 1px solid var(--accent2); padding: 2px 6px; border-radius: 4px; font-size: 10px; margin-bottom: 8px; display: inline-block; }
+.align-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 8px; }
+.align-grid button { background: #202428; border: 1px solid var(--line); border-radius: 4px; padding: 6px; font-size: 11px; color: var(--text); text-align: center; }
+.align-grid button:hover { background: #12372f; border-color: var(--accent2); color: var(--accent); }
+
+.lib-mgr-modal { width: min(840px, calc(100% - 30px))!important; }
+.lib-mgr-form { background: #141719; border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.lib-mgr-grid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 75px 75px 85px 85px; gap: 8px; align-items: center; }
+.lib-mgr-grid input { background: #0d0f10; border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; color: var(--text); font-size: 11px; }
+.lib-mgr-grid label { font-size: 10px; color: var(--muted); display: flex; flex-direction: column; gap: 3px; }
+.lib-table-container { flex: 1; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: #111416; max-height: 280px; }
+.lib-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 11px; }
+.lib-table th { background: #171a1d; color: var(--muted); padding: 8px 10px; font-weight: 600; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 2; }
+.lib-table td { padding: 6px 10px; border-bottom: 1px solid #1f2428; color: var(--text); }
+.lib-table tr:hover td { background: #192022; }
+.btn-tb-act { padding: 3px 7px; border-radius: 4px; font-size: 10px; border: 0; margin-right: 4px; cursor: pointer; }
+.btn-tb-edit { background: #12372f; color: #79e6ca; border: 1px solid #087d63; }
+.btn-tb-edit:hover { background: #085244; }
+.btn-tb-del { background: #3e1212; color: #ff9292; border: 1px solid #8d2828; }
+.btn-tb-del:hover { background: #5c1818; }
+@media(max-width:900px){.work{grid-template-columns:200px minmax(0,1fr)}.right{display:none}.brand{min-width:auto}.docname{display:none}}@media(max-width:600px){.app{grid-template-rows:44px 55px minmax(0,1fr) 28px 25px}.work{grid-template-columns:1fr}.left{display:none}.brand b{font-size:11px}.group{padding:0 5px}.ribbon{padding:4px}}
+</style></head>
+<body>
+    <div class="app">
+<header class="top">
+    
+<div class="brand"><div class="bolt">ϟ</div><div><b>OMINI</b><small>ELECTRICAL LAB</small></div></div>
+<div class="docname" id="docLabel">Novo desenho <span>· sem salvar</span></div>
+<div class="spacer"></div>
+<button id="newProjectBtn" title="Criar novo projeto">Novo Projeto</button>
+<button id="openBtn">Abrir CAD</button>
+<button id="saveBtn" class="primary" title="Exportar para formato DWG">Exportar DWG</button>
+<button id="homeBtn" title="Voltar">⌂</button>
+<input id="fileInput" type="file" accept=".dxf,.dwg" style="display:none">
+<input id="libFileInput" type="file" accept=".xlsx,.xls,.json,.csv" style="display:none">
+</header>
+<nav class="ribbon" aria-label="Ferramentas CAD">
+<div class="group"><label>DESENHAR</label><button class="tool active" data-tool="select" title="Atalho: ESC"><span class="ico">↖</span><small>Selecionar</small></button><button class="tool" data-tool="line" title="Atalho: Q"><span class="ico">╱</span><small>Linha (Q)</small></button><button class="tool" data-tool="rect" title="Atalho: W"><span class="ico">▱</span><small>Retângulo (W)</small></button><button class="tool" data-tool="circle"><span class="ico">◯</span><small>Círculo</small></button><button class="tool" data-tool="text" title="Atalho: E"><span class="ico">T</span><small>Texto (E)</small></button><button class="tool" data-tool="dim" title="Atalho: R" style="background:#12372f!important;border-color:#087d63!important;color:#4ce2bb"><span class="ico">⤧</span><small>Distância (R)</small></button></div>
+<div class="group"><label>MODIFICAR</label><button class="tool" id="copyBtn" title="Copiar (Ctrl+C)"><span class="ico">📋</span><small>Copiar</small></button><button class="tool" id="pasteBtn" title="Colar (Ctrl+V)"><span class="ico">📄</span><small>Colar</small></button><button class="tool" id="mirrorBtn" title="Espelhar Horizontal"><span class="ico">🪞</span><small>Espelhar</small></button><button class="tool" id="scaleBtn" title="Redimensionar Escala"><span class="ico">📐</span><small>Escala</small></button><button class="tool" id="deleteBtn" title="Apagar Seleção"><span class="ico">⌫</span><small>Apagar</small></button><button class="tool" id="clearCanvasBtn" title="Apagar Todos os Objetos da Tela"><span class="ico">🗑️</span><small>Limpar Tudo</small></button><button class="tool" id="undoBtn"><span class="ico">↶</span><small>Desfazer</small></button><button class="tool" id="redoBtn"><span class="ico">↷</span><small>Refazer</small></button></div>
+<div class="group"><label>VISUALIZAR</label><button class="tool" id="fitBtn"><span class="ico">⛶</span><small>Enquadrar</small></button><button class="tool" id="gridBtn"><span class="ico">▦</span><small>Grade</small></button><button class="tool active" id="snapBtn"><span class="ico">⌗</span><small>Snap</small></button><button class="tool active" id="orthoBtn"><span class="ico">⟂</span><small>Ortho</small></button><button class="tool active" id="snapeBtn" title="OSNAP (Ponto Final / Meio / Centro)"><span class="ico">🎯</span><small>Snape</small></button><button class="tool active" id="etrackBtn" title="Object Snap Tracking (ETRACK)"><span class="ico">📐</span><small>Etrack</small></button><button class="tool active" id="toggleDescBtn" title="Mostrar/Esconder Descrições das Peças"><span class="ico">🏷️</span><small>Descrições</small></button></div>
+</nav>
+<main class="work">
+<aside class="panel left">
+<div class="section"><div class="section-title">Desenho</div><div class="section-content"><div class="file-drop"><b>Importação DXF/DWG</b><button id="importBtn">Importar arquivo</button><div style="margin-top:5px;font-size:9px">DXF · DWG (Engine OMINI)</div></div></div></div>
+
+<div class="section">
+    <div class="section-title">Biblioteca de Peças</div>
+    <div class="section-content">
+        <label class="field"><span>Fabricante</span><select id="libMfr"><option value="">Selecione...</option></select></label>
+        <label class="field"><span>Tipo de Peça</span><select id="libType" disabled><option value="">Selecione...</option></select></label>
+        <label class="field"><span>Modelo</span><select id="libModel" disabled><option value="">Selecione...</option></select></label>
+        
+        <button id="btnOpenLibManager" class="btn-manage-lib">⚙ Gerenciar / Cadastrar Peças</button>
+        <button id="btnTriggerImportLib" class="btn-import-lib">＋ Importar Peças (.xlsx / .json)</button>
+
+        <div id="libPreview" class="lib-box hidden">
+            <b id="prevTitle">Sem Seleção</b>
+            <div>Altura (H): <span id="prevH">0</span> mm</div>
+            <div>Largura (L): <span id="prevW">0</span> mm</div>
+            <div>Profundidade (P): <span id="prevP">0</span> mm</div>
+            <div id="prevPlacaBox" style="color:#ffc107;margin-top:3px;display:block">
+                Placa de Montagem: <span id="prevPlacaH">0</span> × <span id="prevPlacaW">0</span> mm
+            </div>
+            <button id="insertComponentBtn" class="btn-insert-piece">Inserir no Projeto</button>
+        </div>
+    </div>
+</div>
+
+<div class="section"><div class="section-title">Objetos <span id="entityCount">0</span></div><div id="entityList" class="section-content"></div></div>
+<div class="section"><div class="section-title">Atalhos</div><div class="section-content help"><b>Q:</b> Linha | <b>W:</b> Retângulo | <b>E:</b> Texto | <b>R:</b> Distância Ponto a Ponto<br><b>ESC:</b> Voltar para Selecionar<br><b>Enter:</b> Confirma valor digitado<br>Botão Meio: Pan (Mover tela sem travar peça)<br>Delete: Apagar</div></div>
+</aside>
+<section class="stage">
+<canvas id="cad" class="viewport selecting"></canvas>
+<div class="canvas-toolbar"><button id="zoomIn" title="Aproximar">＋</button><button id="zoomOut" title="Afastar">−</button><button id="fitMini" title="Enquadrar">⌗</button></div>
+<div class="coords" id="coords">X 0.00 · Y 0.00 mm</div>
+<div id="dynInput" class="dyn-input hidden">
+    <span id="dynLbl1">Distância ao próximo ponto:</span> <input type="text" id="dynVal1" autocomplete="off">
+</div>
+<div id="emptyHint" class="empty-hint"><div style="font-size:31px;color:#08c997">▱</div><strong>Área de desenho 2D</strong>Importe um DXF/DWG ou utilize as ferramentas de criação.</div><div class="zoom-controls"><button id="zoomMinus">−</button><button id="zoomPlus">＋</button></div>
+</section>
+<aside class="panel right"><div class="section"><div class="section-title">Propriedades</div><div class="section-content" id="properties"><div class="selection-empty">Selecione um objeto para editar suas propriedades.</div></div></div><div class="section"><div class="section-title">Configuração</div><div class="section-content"><label class="field"><span>Unidade</span><select id="units"><option value="mm">Milímetros</option><option value="cm">Centímetros</option><option value="m">Metros</option><option value="in">Polegadas</option></select></label><label class="field"><span>Passo da grade</span><input id="gridStep" type="number" min="0.1" value="10"></label><label class="check"><input type="checkbox" id="snapCheck" checked> Encaixar na grade</label><label class="check"><input type="checkbox" id="gridCheck" checked> Mostrar grade</label><label class="check"><input type="checkbox" id="orthoCheck" checked> Modo Orto</label><label class="check"><input type="checkbox" id="snapeCheck" checked> Snape (OSNAP)</label><label class="check"><input type="checkbox" id="etrackCheck" checked> Etrack (Tracking)</label></div></div><div class="notice"><b>OMINI CAD Studio</b><br>Suporte a placas de montagem Rittal e ordenação estrita (Altura → Largura → Profundidade).</div></aside>
+</main>
+<div class="cmd-line"><span id="cmdPrompt" style="color:var(--muted)">Command:</span><input id="cmdInput" class="cmd-input" type="text" placeholder="Digite um comando (ex: LINE, C, COPY, PASTE, MOVE)..." autocomplete="off"></div>
+<footer class="status"><span id="statusText">Pronto · Engine CAD OMINI</span><span><strong id="toolStatus">SELEÇÃO</strong> · <span id="zoomReadout">100%</span> · <em id="dirty">Sem alterações</em></span></footer></div>
+
+<!-- Rodapé OMINI com Botões de Sincronização por PostMessage -->
+<div id="ominitools-footer-bar" style="position:fixed; bottom:0; left:0; right:0; padding:10px 16px; background:#17191b; border-top:1px solid #30363b; display:flex; align-items:center; justify-content:space-between; z-index:9999; box-shadow:0 -5px 20px rgba(0,0,0,0.5);">
+    <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#91a0a9;">
+        <span style="color:#08c997; font-size:14px;">📐</span>
+        <span>Sincronização CAD OMINI (PostMessage Ativo).</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <button onclick="fecharFerramentaSemSalvar()" style="padding:7px 14px; background:#202428; border:1px solid #30363b; border-radius:6px; color:#91a0a9; font-size:11px; font-weight:500; cursor:pointer;">Cancelar</button>
+        <button onclick="salvarEFecharFerramenta()" style="background:#08c997; color:#111315; font-size:11px; font-weight:bold; padding:8px 18px; border-radius:6px; border:0; cursor:pointer; box-shadow:0 4px 12px rgba(8,201,151,0.3); display:flex; align-items:center; gap:6px;">
+            <span>✓</span>
+            <span>Salvar e Fechar</span>
+        </button>
+    </div>
+</div>
+
+<!-- Modal Informativo Genérico -->
+<div id="modal" class="modal-backdrop hidden"><div class="modal"><h2 id="modalTitle">Informação</h2><p id="modalText"></p><div class="modal-actions"><button id="modalOk">Entendi</button></div></div></div>
+
+<!-- Modal de Gerenciamento e Cadastro de Peças -->
+<div id="libMgrModal" class="modal-backdrop hidden">
+    <div class="modal lib-mgr-modal">
+        <h2>Gerenciamento & Cadastro de Peças</h2>
+        <p style="margin-bottom:10px;font-size:11px">Cadastre, edite ou exclua componentes da biblioteca (com Altura, Largura e Profundidade). Ordenação automática do maior para o menor.</p>
+        
+        <!-- Formulário de Cadastro / Edição -->
+        <div class="lib-mgr-form">
+            <input type="hidden" id="editItemIdx" value="-1">
+            <div class="lib-mgr-grid">
+                <label>Fabricante <input type="text" id="regMfr" placeholder="Ex: Rittal"></label>
+                <label>Linha de Produto <input type="text" id="regLinha" placeholder="Ex: VX25 / AX"></label>
+                <label>Modelo / Carcaça <input type="text" id="regModelo" placeholder="Ex: 8880.500"></label>
+                <label>Altura H (mm) <input type="number" id="regH" step="any" placeholder="2200"></label>
+                <label>Largura L (mm) <input type="number" id="regW" step="any" placeholder="800"></label>
+                <label>Profundidade P (mm) <input type="number" id="regP" step="any" placeholder="500"></label>
+                <label style="color:#ffc107">Larg. Placa (mm) <input type="number" id="regPlacaW" step="any" placeholder="700"></label>
+                <label style="color:#ffc107">Alt. Placa (mm) <input type="number" id="regPlacaH" step="any" placeholder="2000"></label>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+                <button type="button" id="btnCancelEdit" class="hidden" style="background:#202428;border-color:var(--line);color:var(--text)">Cancelar Edição</button>
+                <button type="button" id="btnSaveRegPiece">Salvar / Cadastrar Peça</button>
+            </div>
+        </div>
+
+        <!-- Busca e Tabela -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <input type="text" id="libSearchInput" placeholder="🔍 Pesquisar por fabricante, linha ou modelo..." style="width:50%;background:#111416;border:1px solid var(--line);border-radius:5px;padding:6px 9px;color:var(--text);font-size:11px">
+            <div style="display:flex;gap:6px">
+                <button id="btnResetDefaultLib" style="background:#2a2015;border:1px solid #6b4d1b;color:#e4c77d;font-size:10px;padding:5px 9px">Restaurar Padrão</button>
+                <button id="btnClearAllLib" style="background:#3e1212;border:1px solid #8d2828;color:#ff9292;font-size:10px;padding:5px 9px;font-weight:bold">🗑️ Apagar Todas as Peças</button>
+            </div>
+        </div>
+
+        <div class="lib-table-container">
+            <table class="lib-table">
+                <thead>
+                    <tr>
+                        <th>Fabricante</th>
+                        <th>Linha</th>
+                        <th>Modelo</th>
+                        <th>Dimensões (H × L × P)</th>
+                        <th>Placa de Montagem (Larg × Alt)</th>
+                        <th style="width:90px;text-align:right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="libTableBody">
+                    <!-- Preenchido Dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="modal-actions">
+            <button id="btnCloseLibMgr" style="background:#202428;border-color:var(--line);color:var(--text)">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('cad'),ctx=canvas.getContext('2d'),$=id=>document.getElementById(id);
+let entities=[],selectedIndices=new Set(),tool='select',layer='0',showGrid=true,snap=true,ortho=true,snape=true,etrack=true,showDescriptions=true,gridStep=10,zoom=1,panX=0,panY=0,dpr=1,drag=null,dirty=false,undoStack=[],redoStack=[],fileName='Novo desenho';
+let clipboard = [], dynTyping = false, userInteractedWithInput = false;
+let dimState={step:1,p1:null,p2:null}, selectionBox=null;
+let etrackMarkers = []; 
+let activeSnapMarker = null; 
+let lineChainStart = null; 
+let activeDrawState = null; 
+
+const STORAGE_KEY_LIB = 'omini_cad_component_library_v9';
+
+const cmdProc = {
+    cmds: {},
+    register(name, alias, fn) {
+        this.cmds[name.toUpperCase()] = fn;
+        if (alias) this.cmds[alias.toUpperCase()] = fn;
+    },
+    execute(str) {
+        const cmd = str.trim().toUpperCase();
+        if (this.cmds[cmd]) this.cmds[cmd]();
+        else setStatus(`Comando não reconhecido: ${str}`);
+    }
+};
+
+const DEFAULT_COMPONENT_LIBRARY = [
+    {fabricante:"Rittal", linha:"VX25", modelo:"8880.500", altura:2200.0, largura:800.0, profundidade:500.0, larguraPlaca:700.0, alturaPlaca:2000.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8860.500", altura:2200.0, largura:800.0, profundidade:600.0, larguraPlaca:700.0, alturaPlaca:2000.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8800.500", altura:2200.0, largura:800.0, profundidade:400.0, larguraPlaca:700.0, alturaPlaca:2000.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8680.500", altura:2200.0, largura:600.0, profundidade:500.0, larguraPlaca:500.0, alturaPlaca:2000.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8660.500", altura:2200.0, largura:600.0, profundidade:600.0, larguraPlaca:500.0, alturaPlaca:2000.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8480.500", altura:2000.0, largura:800.0, profundidade:500.0, larguraPlaca:700.0, alturaPlaca:1800.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8460.500", altura:2000.0, largura:800.0, profundidade:600.0, larguraPlaca:700.0, alturaPlaca:1800.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8400.500", altura:2000.0, largura:600.0, profundidade:500.0, larguraPlaca:500.0, alturaPlaca:1800.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8280.500", altura:1800.0, largura:800.0, profundidade:500.0, larguraPlaca:700.0, alturaPlaca:1600.0},
+    {fabricante:"Rittal", linha:"VX25", modelo:"8260.500", altura:1800.0, largura:600.0, profundidade:500.0, larguraPlaca:500.0, alturaPlaca:1600.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1038.000", altura:600.0, largura:380.0, profundidade:210.0, larguraPlaca:330.0, alturaPlaca:575.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1338.000", altura:600.0, largura:380.0, profundidade:150.0, larguraPlaca:330.0, alturaPlaca:575.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1045.000", altura:500.0, largura:400.0, profundidade:210.0, larguraPlaca:350.0, alturaPlaca:475.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1034.000", altura:400.0, largura:300.0, profundidade:210.0, larguraPlaca:250.0, alturaPlaca:375.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1380.000", altura:380.0, largura:380.0, profundidade:210.0, larguraPlaca:330.0, alturaPlaca:355.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1033.000", altura:300.0, largura:300.0, profundidade:210.0, larguraPlaca:250.0, alturaPlaca:275.0},
+    {fabricante:"Rittal", linha:"AX", modelo:"1031.000", altura:300.0, largura:380.0, profundidade:210.0, larguraPlaca:330.0, alturaPlaca:275.0}
+];
+
+let COMPONENT_LIBRARY = [];
+let selectedComponent = null;
+
+function loadLibraryFromStorage() {
+    const saved = localStorage.getItem(STORAGE_KEY_LIB);
+    if(saved) {
+        try { COMPONENT_LIBRARY = JSON.parse(saved); } catch(e) { COMPONENT_LIBRARY = [...DEFAULT_COMPONENT_LIBRARY]; }
+    } else {
+        COMPONENT_LIBRARY = [...DEFAULT_COMPONENT_LIBRARY];
+        saveLibraryToStorage();
+    }
+    sortLibrary();
+}
+
+function saveLibraryToStorage() {
+    sortLibrary();
+    localStorage.setItem(STORAGE_KEY_LIB, JSON.stringify(COMPONENT_LIBRARY));
+}
+
+function sortLibrary() {
+    COMPONENT_LIBRARY.sort((a, b) => {
+        if (b.altura !== a.altura) return b.altura - a.altura;
+        if (b.largura !== a.largura) return b.largura - a.largura;
+        return (b.profundidade || 0) - (a.profundidade || 0);
+    });
+}
+
+function addOrUpdateLibraryPiece(piece) {
+    const fab = String(piece.fabricante || 'Outros').trim();
+    const lin = String(piece.linha || 'Peça').trim();
+    const mod = String(piece.modelo || 'Padrão').trim();
+    const h = parseFloat(piece.altura) || 50;
+    const w = parseFloat(piece.largura) || 50;
+    const p = parseFloat(piece.profundidade) || 200;
+    const pw = (piece.larguraPlaca !== undefined && piece.larguraPlaca !== '' && !isNaN(parseFloat(piece.larguraPlaca))) ? parseFloat(piece.larguraPlaca) : w;
+    const ph = (piece.alturaPlaca !== undefined && piece.alturaPlaca !== '' && !isNaN(parseFloat(piece.alturaPlaca))) ? parseFloat(piece.alturaPlaca) : h;
+
+    const idx = COMPONENT_LIBRARY.findIndex(c => 
+        c.fabricante.toLowerCase() === fab.toLowerCase() &&
+        c.linha.toLowerCase() === lin.toLowerCase() &&
+        c.modelo.toLowerCase() === mod.toLowerCase()
+    );
+
+    const itemObj = { fabricante: fab, linha: lin, modelo: mod, altura: h, largura: w, profundidade: p, larguraPlaca: pw, alturaPlaca: ph };
+
+    if(idx >= 0) {
+        COMPONENT_LIBRARY[idx] = itemObj;
+        sortLibrary();
+        return { updated: true, index: COMPONENT_LIBRARY.indexOf(itemObj) };
+    } else {
+        COMPONENT_LIBRARY.push(itemObj);
+        sortLibrary();
+        return { updated: false, index: COMPONENT_LIBRARY.indexOf(itemObj) };
+    }
+}
+
+function showModal(title, text) {
+    $('modalTitle').textContent = title;
+    $('modalText').textContent = text;
+    $('modal').classList.remove('hidden');
+    setTimeout(() => { if($('modalOk')) $('modalOk').focus(); }, 50);
+}
+
+function hideModal() {
+    $('modal').classList.add('hidden');
+}
+
+$('modalOk').onclick = hideModal;
+$('modal').onclick = e => { if(e.target === $('modal')) hideModal(); };
+
+function initLibrary(selectMfrVal = null) {
+    const mfrSelect = $('libMfr');
+    const typeSelect = $('libType');
+    const modelSelect = $('libModel');
+    
+    sortLibrary();
+    const mfrs = [...new Set(COMPONENT_LIBRARY.map(c => c.fabricante))].sort();
+    mfrSelect.innerHTML = '<option value="">Selecione...</option>' + mfrs.map(m => `<option value="${m}">${m}</option>`).join('');
+
+    if(selectMfrVal && mfrs.includes(selectMfrVal)) {
+        mfrSelect.value = selectMfrVal;
+    }
+
+    mfrSelect.onchange = () => {
+        const mfr = mfrSelect.value;
+        if(!mfr) {
+            typeSelect.innerHTML = '<option value="">Selecione...</option>'; typeSelect.disabled = true;
+            modelSelect.innerHTML = '<option value="">Selecione...</option>'; modelSelect.disabled = true;
+            updateLibPreview(null);
+            return;
+        }
+        const lines = [...new Set(COMPONENT_LIBRARY.filter(c => c.fabricante === mfr).map(c => c.linha))].sort();
+        typeSelect.innerHTML = '<option value="">Selecione...</option>' + lines.map(l => `<option value="${l}">${l}</option>`).join('');
+        typeSelect.disabled = false;
+        modelSelect.innerHTML = '<option value="">Selecione...</option>'; modelSelect.disabled = true;
+        updateLibPreview(null);
+    };
+
+    typeSelect.onchange = () => {
+        const mfr = mfrSelect.value;
+        const line = typeSelect.value;
+        if(!line) {
+            modelSelect.innerHTML = '<option value="">Selecione...</option>'; modelSelect.disabled = true;
+            updateLibPreview(null);
+            return;
+        }
+        const models = COMPONENT_LIBRARY.filter(c => c.fabricante === mfr && c.linha === line);
+        modelSelect.innerHTML = '<option value="">Selecione...</option>' + models.map(m => `<option value="${m.modelo}">${m.modelo} (${m.altura}x${m.largura}x${m.profundidade||0}mm)</option>`).join('');
+        modelSelect.disabled = false;
+        updateLibPreview(null);
+    };
+
+    modelSelect.onchange = () => {
+        const mfr = mfrSelect.value;
+        const line = typeSelect.value;
+        const mod = modelSelect.value;
+        const comp = COMPONENT_LIBRARY.find(c => c.fabricante === mfr && c.linha === line && c.modelo === mod);
+        updateLibPreview(comp);
+    };
+
+    if(mfrSelect.value) mfrSelect.onchange();
+}
+
+function updateLibPreview(comp) {
+    selectedComponent = comp;
+    const box = $('libPreview');
+    if(!comp) {
+        box.classList.add('hidden');
+        return;
+    }
+    $('prevTitle').textContent = `${comp.linha} - ${comp.modelo}`;
+    $('prevH').textContent = comp.altura.toFixed(1);
+    $('prevW').textContent = comp.largura.toFixed(1);
+    $('prevP').textContent = (comp.profundidade || 0).toFixed(1);
+
+    const placaBox = $('prevPlacaBox');
+    const pH = (comp.alturaPlaca !== undefined && !isNaN(comp.alturaPlaca)) ? comp.alturaPlaca : comp.altura;
+    const pW = (comp.larguraPlaca !== undefined && !isNaN(comp.larguraPlaca)) ? comp.larguraPlaca : comp.largura;
+
+    $('prevPlacaH').textContent = pH.toFixed(1);
+    $('prevPlacaW').textContent = pW.toFixed(1);
+    placaBox.style.display = 'block';
+
+    box.classList.remove('hidden');
+}
+
+function insertSelectedComponent(worldPos = null) {
+    if(!selectedComponent) return;
+    snapshot();
+    
+    const centerWorld = world({x: canvas.clientWidth / 2, y: canvas.clientHeight / 2});
+    const pos = worldPos || {
+        x: Math.round((centerWorld.x - selectedComponent.largura / 2) / gridStep) * gridStep,
+        y: Math.round((centerWorld.y - selectedComponent.altura / 2) / gridStep) * gridStep
+    };
+
+    const compEntity = {
+        type: 'component',
+        fabricante: selectedComponent.fabricante,
+        linha: selectedComponent.linha,
+        modelo: selectedComponent.modelo,
+        altura: selectedComponent.altura,
+        largura: selectedComponent.largura,
+        profundidade: selectedComponent.profundidade || 0,
+        x1: pos.x,
+        y1: pos.y,
+        x2: pos.x + selectedComponent.largura,
+        y2: pos.y + selectedComponent.altura,
+        colorHex: '#08c997',
+        lineStyle: 'solid',
+        layer: 'COMPONENTES',
+        alturaPlaca: (selectedComponent.alturaPlaca !== undefined && !isNaN(selectedComponent.alturaPlaca)) ? selectedComponent.alturaPlaca : selectedComponent.altura,
+        larguraPlaca: (selectedComponent.larguraPlaca !== undefined && !isNaN(selectedComponent.larguraPlaca)) ? selectedComponent.larguraPlaca : selectedComponent.largura
+    };
+    
+    entities.push(compEntity);
+    selectedIndices.clear();
+    selectedIndices.add(entities.length - 1);
+    
+    fit();
+    renderPanels();
+    render();
+    markDirty();
+    setStatus(`Peça ${selectedComponent.linha} (${selectedComponent.modelo}) inserida no projeto.`);
+}
+
+$('insertComponentBtn').onclick = () => insertSelectedComponent();
+
+const libMgrModal = $('libMgrModal');
+$('btnOpenLibManager').onclick = () => {
+    resetRegForm();
+    renderLibTable();
+    libMgrModal.classList.remove('hidden');
+};
+$('btnCloseLibMgr').onclick = () => libMgrModal.classList.add('hidden');
+
+function resetRegForm() {
+    $('editItemIdx').value = '-1';
+    $('regMfr').value = '';
+    $('regLinha').value = '';
+    $('regModelo').value = '';
+    $('regH').value = '';
+    $('regW').value = '';
+    $('regP').value = '';
+    $('regPlacaH').value = '';
+    $('regPlacaW').value = '';
+    $('btnSaveRegPiece').textContent = 'Cadastrar Peça';
+    $('btnCancelEdit').classList.add('hidden');
+}
+
+$('btnCancelEdit').onclick = resetRegForm;
+
+$('btnSaveRegPiece').onclick = () => {
+    const fab = $('regMfr').value.trim();
+    const lin = $('regLinha').value.trim();
+    const mod = $('regModelo').value.trim();
+    const h = parseFloat($('regH').value);
+    const w = parseFloat($('regW').value);
+    const p = parseFloat($('regP').value) || 200;
+    const ph = parseFloat($('regPlacaH').value);
+    const pw = parseFloat($('regPlacaW').value);
+    const editIdx = parseInt($('editItemIdx').value);
+
+    if(!fab || !lin || !mod || isNaN(h) || isNaN(w) || h <= 0 || w <= 0) {
+        alert('Por favor, preencha os campos de Fabricante, Linha, Modelo e dimensões do Painel (H × L).');
+        return;
+    }
+
+    const itemObj = { 
+        fabricante: fab, 
+        linha: lin, 
+        modelo: mod, 
+        altura: h, 
+        largura: w,
+        profundidade: p,
+        alturaPlaca: (!isNaN(ph) && ph > 0) ? ph : h,
+        larguraPlaca: (!isNaN(pw) && pw > 0) ? pw : w
+    };
+
+    if(editIdx >= 0) {
+        COMPONENT_LIBRARY[editIdx] = itemObj;
+    } else {
+        addOrUpdateLibraryPiece(itemObj);
+    }
+
+    saveLibraryToStorage();
+    initLibrary(fab);
+    resetRegForm();
+    renderLibTable();
+    setStatus('Biblioteca de peças atualizada, ordenada e salva.');
+};
+
+function renderLibTable() {
+    const query = ($('libSearchInput').value || '').toLowerCase();
+    const tbody = $('libTableBody');
+    tbody.innerHTML = '';
+
+    sortLibrary();
+    const filtered = COMPONENT_LIBRARY.filter(c => 
+        c.fabricante.toLowerCase().includes(query) ||
+        c.linha.toLowerCase().includes(query) ||
+        c.modelo.toLowerCase().includes(query)
+    );
+
+    filtered.forEach((item) => {
+        const originalIdx = COMPONENT_LIBRARY.indexOf(item);
+        const tr = document.createElement('tr');
+        const pH = (item.alturaPlaca !== undefined && !isNaN(item.alturaPlaca)) ? item.alturaPlaca : item.altura;
+        const pW = (item.larguraPlaca !== undefined && !isNaN(item.larguraPlaca)) ? item.larguraPlaca : item.largura;
+
+        tr.innerHTML = `
+            <td><b>${escapeHtml(item.fabricante)}</b></td>
+            <td>${escapeHtml(item.linha)}</td>
+            <td>${escapeHtml(item.modelo)}</td>
+            <td>${item.altura.toFixed(1)} × ${item.largura.toFixed(1)} × ${(item.profundidade||0).toFixed(1)} mm</td>
+            <td><span style="color:#ffc107">${pW.toFixed(1)} × ${pH.toFixed(1)} mm</span></td>
+            <td style="text-align:right">
+                <button class="btn-tb-act btn-tb-edit" data-idx="${originalIdx}">Editar</button>
+                <button class="btn-tb-act btn-tb-del" data-idx="${originalIdx}">Excluir</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.btn-tb-edit').forEach(b => {
+        b.onclick = () => {
+            const idx = parseInt(b.dataset.idx);
+            const item = COMPONENT_LIBRARY[idx];
+            $('editItemIdx').value = idx;
+            $('regMfr').value = item.fabricante;
+            $('regLinha').value = item.linha;
+            $('regModelo').value = item.modelo;
+            $('regH').value = item.altura;
+            $('regW').value = item.largura;
+            $('regP').value = item.profundidade || '';
+            $('regPlacaH').value = (item.alturaPlaca !== undefined) ? item.alturaPlaca : '';
+            $('regPlacaW').value = (item.larguraPlaca !== undefined) ? item.larguraPlaca : '';
+            $('btnSaveRegPiece').textContent = 'Salvar Alterações';
+            $('btnCancelEdit').classList.remove('hidden');
+        };
+    });
+
+    tbody.querySelectorAll('.btn-tb-del').forEach(b => {
+        b.onclick = () => {
+            const idx = parseInt(b.dataset.idx);
+            const item = COMPONENT_LIBRARY[idx];
+            if(confirm(`Deseja realmente remover a peça "${item.linha} (${item.modelo})"?`)) {
+                COMPONENT_LIBRARY.splice(idx, 1);
+                saveLibraryToStorage();
+                initLibrary();
+                renderLibTable();
+            }
+        };
+    });
+}
+
+$('libSearchInput').oninput = renderLibTable;
+
+$('btnResetDefaultLib').onclick = () => {
+    if(confirm('Tem certeza de que deseja restaurar a biblioteca para o padrão inicial ordenado?')) {
+        COMPONENT_LIBRARY = [...DEFAULT_COMPONENT_LIBRARY];
+        saveLibraryToStorage();
+        initLibrary();
+        renderLibTable();
+        resetRegForm();
+        setStatus('Biblioteca restaurada e ordenada.');
+    }
+};
+
+$('btnClearAllLib').onclick = () => {
+    if(COMPONENT_LIBRARY.length === 0) { alert('A biblioteca já está vazia.'); return; }
+    if(confirm('Tem certeza de que deseja apagar todas as peças da biblioteca?')) {
+        COMPONENT_LIBRARY = [];
+        saveLibraryToStorage();
+        initLibrary();
+        renderLibTable();
+        resetRegForm();
+        setStatus('Biblioteca esvaziada.');
+    }
+};
+
+$('clearCanvasBtn').onclick = () => {
+    if(entities.length === 0) { setStatus('O desenho já está vazio.'); return; }
+    if(confirm('Tem certeza de que deseja apagar todos os objetos da área de desenho?')) {
+        snapshot(); entities = []; selectedIndices.clear();
+        render(); renderPanels(); markDirty();
+        setStatus('Todos os objetos foram removidos.');
+    }
+};
+
+const libFileInput = $('libFileInput');
+$('btnTriggerImportLib').onclick = () => { libFileInput.value = ''; libFileInput.click(); };
+
+libFileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    try {
+        let newItems = [];
+        if(ext === 'json') {
+            const txt = await file.text();
+            newItems = JSON.parse(txt);
+        } else if(['xlsx', 'xls', 'csv'].includes(ext)) {
+            const data = await file.arrayBuffer();
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonRows = XLSX.utils.sheet_to_json(firstSheet, {defval: ''});
+            
+            newItems = jsonRows.map(r => {
+                const getVal = (keys) => {
+                    for(let k of keys) {
+                        for(let rk in r) {
+                            if(rk.trim().toLowerCase().includes(k.toLowerCase())) return r[rk];
+                        }
+                    }
+                    return '';
+                };
+
+                const item = {
+                    fabricante: String(getVal(['Fabricant', 'Fabricante']) || 'Rittal').trim(),
+                    linha: String(getVal(['Linha', 'de Prod']) || 'VX25').trim(),
+                    modelo: String(getVal(['Tamanho', 'Modelo']) || 'Padrão').trim(),
+                    altura: parseFloat(getVal(['Altura (mm)', 'altura (mn)']) || 100),
+                    largura: parseFloat(getVal(['Largura (mm)', 'largura (mn)']) || 100),
+                    profundidade: parseFloat(getVal(['Profundidade (mm)', 'profundidade']) || 300)
+                };
+                
+                const pw = getVal(['Largura da Placa', 'largura da placa']);
+                const ph = getVal(['Altura da Placa', 'altura da placa']);
+                
+                if(pw !== undefined && pw !== '' && !isNaN(parseFloat(pw))) item.larguraPlaca = parseFloat(pw);
+                if(ph !== undefined && ph !== '' && !isNaN(parseFloat(ph))) item.alturaPlaca = parseFloat(ph);
+                
+                return item;
+            });
+        }
+
+        if(Array.isArray(newItems) && newItems.length > 0) {
+            let countAdded = 0, countUpdated = 0, firstMfr = null;
+            newItems.forEach(item => {
+                if(item.fabricante && item.modelo && !isNaN(item.largura) && !isNaN(item.altura)){
+                    if(!firstMfr) firstMfr = item.fabricante;
+                    const res = addOrUpdateLibraryPiece(item);
+                    if(res.updated) countUpdated++; else countAdded++;
+                }
+            });
+            saveLibraryToStorage();
+            initLibrary(firstMfr);
+            showModal('Importação Concluída', `${countAdded} nova(s) peça(s) adicionada(s) e ${countUpdated} atualizada(s) com ordenação aplicada.`);
+            setStatus(`Biblioteca salva: +${countAdded} novas, ${countUpdated} unificadas.`);
+        } else {
+            showModal('Erro na Importação', 'Nenhum formato de peça válido foi encontrado.');
+        }
+    } catch(err) {
+        showModal('Erro ao Ler Arquivo', 'Falha no processamento: ' + err.message);
+    }
+};
+
+function colorFor(e){ return e.colorHex || '#08c997'; }
+function setStatus(s){$('statusText').textContent=s}
+function markDirty(v=true){dirty=v;if($('dirty'))$('dirty').textContent=v?'Não salvo':'Salvo';$('docLabel').innerHTML=`${escapeHtml(fileName)} <span>· ${v?'não salvo':'salvo'}</span>`}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]||c))}
+function snapshot(){undoStack.push(JSON.stringify(entities));if(undoStack.length>60)undoStack.shift();redoStack=[];markDirty()}
+function restore(list){entities=JSON.parse(list);entities.forEach(e=>e.bnd=null);selectedIndices.clear();render();renderPanels()}
+function undo(){if(!undoStack.length)return;redoStack.push(JSON.stringify(entities));restore(undoStack.pop());setStatus('Ação desfeita')}
+function redo(){if(!redoStack.length)return;undoStack.push(JSON.stringify(entities));restore(redoStack.pop());setStatus('Ação refeita')}
+function resize(){const r=canvas.getBoundingClientRect();dpr=window.devicePixelRatio||1;canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.height*dpr));ctx.setTransform(dpr,0,0,dpr,0,0);render()}
+function world(p){return{x:(p.x-canvas.clientWidth/2-panX)/zoom,y:-(p.y-canvas.clientHeight/2-panY)/zoom}}
+function screen(p){return{x:canvas.clientWidth/2+panX+p.x*zoom,y:canvas.clientHeight/2+panY-p.y*zoom}}
+function eventPoint(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+
+canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect();
+    const mouseX = e.clientX - r.left;
+    const mouseY = e.clientY - r.top;
+    
+    const wx = (mouseX - canvas.clientWidth / 2 - panX) / zoom;
+    const wy = -(mouseY - canvas.clientHeight / 2 - panY) / zoom;
+
+    const zoomFactor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    const newZoom = Math.max(0.05, Math.min(10, zoom * zoomFactor));
+
+    panX = mouseX - canvas.clientWidth / 2 - wx * newZoom;
+    panY = mouseY - canvas.clientHeight / 2 - (-wy) * newZoom;
+    zoom = newZoom;
+
+    render();
+}, { passive: false });
+
+function getObjectSnaps(p) {
+    let snaps = [];
+    let tol = 14 / zoom;
+    entities.forEach(e => {
+        let pts = [];
+        if(e.type === 'line') {
+            pts = [{x:e.x1, y:e.y1}, {x:e.x2, y:e.y2}];
+        } else if(e.type === 'rect') {
+            pts = [
+                {x:e.x1, y:e.y1}, 
+                {x:e.x2, y:e.y1}, 
+                {x:e.x2, y:e.y2}, 
+                {x:e.x1, y:e.y2}
+            ];
+        } else if(e.type === 'component') {
+            pts = [
+                {x:e.x1, y:e.y1}, 
+                {x:e.x2, y:e.y1}, 
+                {x:e.x2, y:e.y2}, 
+                {x:e.x1, y:e.y2}
+            ];
+
+            const rwPanel = Math.abs(e.x2 - e.x1);
+            const rhPanel = Math.abs(e.y2 - e.y1);
+            const rx = Math.min(e.x1, e.x2);
+            const ry = Math.min(e.y1, e.y2);
+            const pWVal = (e.larguraPlaca !== undefined && !isNaN(e.larguraPlaca)) ? e.larguraPlaca : rwPanel;
+            const pHVal = (e.alturaPlaca !== undefined && !isNaN(e.alturaPlaca)) ? e.alturaPlaca : rhPanel;
+            
+            const px = rx + (rwPanel - pWVal) / 2;
+            const py = ry + (rhPanel - pHVal) / 2;
+
+            pts.push(
+                {x: px, y: py},
+                {x: px + pWVal, y: py},
+                {x: px + pWVal, y: py + pHVal},
+                {x: px, y: py + pHVal}
+            );
+        } else if(e.type === 'dim') {
+            pts = [{x:e.x1, y:e.y1}, {x:e.x2, y:e.y2}];
+        }
+        
+        pts.forEach(pt => {
+            let d = Math.hypot(pt.x - p.x, pt.y - p.y);
+            if(d < tol) {
+                snaps.push({point: pt, type: 'Vertex / Endpoint', dist: d});
+            }
+        });
+
+        if(e.type === 'line' || e.type === 'dim') {
+            let mid = {x: (e.x1 + e.x2)/2, y: (e.y1 + e.y2)/2};
+            let d = Math.hypot(mid.x - p.x, mid.y - p.y);
+            if(d < tol) {
+                snaps.push({point: mid, type: 'Midpoint', dist: d});
+            }
+        } else if(e.type === 'circle') {
+            let c = {x: e.x, y: e.y};
+            let d = Math.hypot(c.x - p.x, c.y - p.y);
+            if(d < tol) {
+                snaps.push({point: c, type: 'Center', dist: d});
+            }
+        }
+    });
+    snaps.sort((a,b) => a.dist - b.dist);
+    return snaps;
+}
+
+function snapPoint(p){
+    activeSnapMarker = null;
+    let currentP = {...p};
+
+    if(snape) {
+        let osnaps = getObjectSnaps(currentP);
+        if(osnaps.length > 0) {
+            activeSnapMarker = osnaps[0];
+            return osnaps[0].point;
+        }
+    }
+
+    const curDraw = activeDrawState || (drag && drag.kind === 'draw' ? drag : null);
+    if(etrack && etrackMarkers.length > 0 && curDraw && curDraw.start) {
+        let trackTol = 8 / zoom;
+        for(let m of etrackMarkers) {
+            if(Math.abs(currentP.x - m.x) < trackTol) {
+                currentP.x = m.x;
+                break;
+            }
+            if(Math.abs(currentP.y - m.y) < trackTol) {
+                currentP.y = m.y;
+                break;
+            }
+        }
+    }
+
+    if(ortho && curDraw && curDraw.start) {
+        const dx = Math.abs(currentP.x - curDraw.start.x);
+        const dy = Math.abs(currentP.y - curDraw.start.y);
+        if(dx > dy) {
+            currentP.y = curDraw.start.y;
+        } else {
+            currentP.x = curDraw.start.x;
+        }
+    }
+
+    if(!snap) return currentP;
+    let best = {x: Math.round(currentP.x/gridStep)*gridStep, y: Math.round(currentP.y/gridStep)*gridStep};
+    let minDst = 12 / zoom;
+    const vpCheck = {minX: currentP.x - minDst, maxX: currentP.x + minDst, minY: currentP.y - minDst, maxY: currentP.y + minDst};
+    entities.forEach(e => {
+        if(e.type === 'line' || e.type === 'rect' || e.type === 'component' || e.type === 'dim') {
+            const b = getCachedBounds(e);
+            if(!isVisibleInViewport(b, vpCheck)) return;
+            [{x:e.x1, y:e.y1}, {x:e.x2, y:e.y2}].forEach(pt => {
+                let d = Math.hypot(pt.x - currentP.x, pt.y - currentP.y);
+                if(d < minDst) { minDst = d; best = pt; }
+            });
+        }
+    });
+    return best;
+}
+
+function getCachedBounds(e) {
+    if (!e.bnd) {
+        if (e.type === 'line' || e.type === 'rect' || e.type === 'component') {
+            e.bnd = { minX: Math.min(e.x1, e.x2), maxX: Math.max(e.x1, e.x2), minY: Math.min(e.y1, e.y2), maxY: Math.max(e.y1, e.y2) };
+        } else if (e.type === 'circle') {
+            e.bnd = { minX: e.x - e.r, maxX: e.x + e.r, minY: e.y - e.r, maxY: e.y + e.r };
+        } else if (e.type === 'dim') {
+            const minX = Math.min(e.x1, e.x2);
+            const maxX = Math.max(e.x1, e.x2);
+            const minY = Math.min(e.y1, e.y2);
+            const maxY = Math.max(e.y1, e.y2);
+            e.bnd = { minX: minX - 15, maxX: maxX + 15, minY: minY - 15, maxY: maxY + 15 };
+        } else if (e.points) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (let i = 0; i < e.points.length; i++) {
+                let p = e.points[i];
+                if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+            }
+            e.bnd = { minX, maxX, minY, maxY };
+        } else if (e.type === 'text') {
+            const txt = e.text || '';
+            const h = e.height || 20;
+            e.bnd = { minX: e.x, maxX: e.x + (txt.length * h * 0.6), minY: e.y - h, maxY: e.y };
+        } else {
+            e.bnd = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+        }
+    }
+    return e.bnd;
+}
+
+function getViewportWorldBounds() {
+    const p1 = world({x: 0, y: 0});
+    const p2 = world({x: canvas.clientWidth, y: canvas.clientHeight});
+    return {
+        minX: Math.min(p1.x, p2.x), maxX: Math.max(p1.x, p2.x),
+        minY: Math.min(p1.y, p2.y), maxY: Math.max(p1.y, p2.y)
+    };
+}
+
+function isVisibleInViewport(b, vp) {
+    return !(b.maxX < vp.minX || b.minX > vp.maxX || b.maxY < vp.minY || b.minY > vp.maxY);
+}
+
+function render(){
+    if(!ctx)return;
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#101214';
+    ctx.fillRect(0,0,w,h);
+    if(showGrid)drawGrid(w,h);
+
+    const vp = getViewportWorldBounds();
+    entities.forEach((e,i)=>{
+        const b = getCachedBounds(e);
+        if(!isVisibleInViewport(b, vp)) return; 
+        drawEntity(e, selectedIndices.has(i));
+    });
+
+    const activeDraw = activeDrawState || (drag && drag.kind === 'draw' ? drag : null);
+    
+    if(activeDraw && activeDraw.preview) {
+        if (activeDraw.tool !== 'line' || activeDraw.hasMoved) {
+            drawEntity(activeDraw.preview, true);
+        }
+    }
+
+    if (tool === 'dim' && dimState.step === 2 && dimState.p1) {
+        ctx.save();
+        ctx.strokeStyle = '#08c997';
+        ctx.fillStyle = '#08c997';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        const curWorld = dimState.current || dimState.p1;
+        let p1Scr = screen(dimState.p1), pCurScr = screen(curWorld);
+        ctx.beginPath();
+        ctx.moveTo(p1Scr.x, p1Scr.y);
+        ctx.lineTo(pCurScr.x, pCurScr.y);
+        ctx.stroke();
+
+        let dist = Math.hypot(curWorld.x - dimState.p1.x, curWorld.y - dimState.p1.y);
+        let midScr = { x: (p1Scr.x + pCurScr.x)/2, y: (p1Scr.y + pCurScr.y)/2 };
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round(dist)} mm`, midScr.x, midScr.y - 8);
+        ctx.restore();
+    }
+
+    if(etrack && activeDraw && activeDraw.kind === 'draw' && activeDraw.start && activeDraw.hasMoved) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(8, 201, 151, 0.4)';
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1;
+        etrackMarkers.forEach(m => {
+            let pStart = screen(m), pCur = screen(activeDraw.preview.x2 !== undefined ? {x: activeDraw.preview.x2, y: activeDraw.preview.y2} : activeDraw.start);
+            ctx.beginPath();
+            ctx.moveTo(pStart.x, pStart.y);
+            ctx.lineTo(pCur.x, pCur.y);
+            ctx.stroke();
+        });
+        ctx.restore();
+    }
+
+    if(activeSnapMarker) {
+        ctx.save();
+        let sp = screen(activeSnapMarker.point);
+        ctx.strokeStyle = '#08c997';
+        ctx.fillStyle = 'rgba(8, 201, 151, 0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if(activeSnapMarker.type.includes('Endpoint') || activeSnapMarker.type.includes('Vertex')) {
+            ctx.rect(sp.x - 5, sp.y - 5, 10, 10);
+        } else if(activeSnapMarker.type === 'Midpoint') {
+            ctx.moveTo(sp.x, sp.y - 6);
+            ctx.lineTo(sp.x + 6, sp.y + 6);
+            ctx.lineTo(sp.x - 6, sp.y + 6);
+            ctx.closePath();
+        } else {
+            ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = '10px Inter, sans-serif';
+        ctx.fillStyle = '#08c997';
+        ctx.fillText(activeSnapMarker.type, sp.x + 10, sp.y - 4);
+        ctx.restore();
+    }
+
+    if (selectionBox) {
+        ctx.save();
+        ctx.strokeStyle = '#08c997';
+        ctx.fillStyle = 'rgba(8, 201, 151, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        const p1 = screen(selectionBox.p1), p2 = screen(selectionBox.p2);
+        ctx.fillRect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y));
+        ctx.strokeRect(Math.min(p1.x, p2.x), Math.min(p1.y, p2.y), Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y));
+        ctx.restore();
+    }
+
+    $('zoomReadout').textContent=`${Math.round(zoom*100)}%`;
+    $('emptyHint').classList.toggle('hidden',entities.length>0);
+}
+
+function drawGrid(w, h) {
+    ctx.save();
+    let dynamicStep = gridStep;
+    while (dynamicStep * zoom < 30) { dynamicStep *= 2; }
+    while (dynamicStep * zoom > 120) { dynamicStep /= 2; }
+
+    const step = dynamicStep * zoom;
+    const ox = ((w / 2 + panX) % step + step) % step;
+    const oy = ((h / 2 + panY) % step + step) % step;
+
+    ctx.beginPath();
+    for (let x = ox; x < w; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+    for (let y = oy; y < h; y += step) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+    ctx.strokeStyle = '#1b2023';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const axis = screen({ x: 0, y: 0 });
+    ctx.beginPath();
+    ctx.moveTo(axis.x, 0); ctx.lineTo(axis.x, h);
+    ctx.moveTo(0, axis.y); ctx.lineTo(w, axis.y);
+    ctx.strokeStyle = '#34403f';
+    ctx.stroke();
+    ctx.restore();
+}
+
+function setCtxLineStyle(style) {
+    if (style === 'dashed') ctx.setLineDash([6, 4]);
+    else if (style === 'dotted') ctx.setLineDash([2, 3]);
+    else if (style === 'dashdot') ctx.setLineDash([8, 4, 2, 4]);
+    else ctx.setLineDash([]);
+}
+
+function drawEntity(e,hilite=false){
+    ctx.save();
+    ctx.strokeStyle=hilite?'#f2c35b':colorFor(e);
+    ctx.fillStyle=ctx.strokeStyle;
+    ctx.lineWidth=(hilite?2:1.5);
+    setCtxLineStyle(e.lineStyle || 'solid');
+    
+    ctx.beginPath();
+    if(e.type==='line'){let a=screen({x:e.x1,y:e.y1}),b=screen({x:e.x2,y:e.y2});ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+    else if(e.type==='rect'){
+        let a=screen({x:e.x1,y:e.y1}),b=screen({x:e.x2,y:e.y2});
+        ctx.rect(a.x,a.y,b.x-a.x,b.y-a.y);
+        ctx.stroke();
+    }
+    else if(e.type==='component'){
+        let a=screen({x:e.x1,y:e.y1}), b=screen({x:e.x2,y:e.y2});
+        let rx=Math.min(a.x,b.x), ry=Math.min(a.y,b.y), rw=Math.abs(b.x-a.x), rh=Math.abs(b.y-a.y);
+        
+        ctx.strokeRect(rx, ry, Math.max(1, rw), Math.max(1, rh));
+
+        const rwPanel = Math.abs(e.x2 - e.x1);
+        const rhPanel = Math.abs(e.y2 - e.y1);
+        const pWVal = (e.larguraPlaca !== undefined && !isNaN(e.larguraPlaca)) ? e.larguraPlaca : rwPanel;
+        const pHVal = (e.alturaPlaca !== undefined && !isNaN(e.alturaPlaca)) ? e.alturaPlaca : rhPanel;
+
+        ctx.save();
+        ctx.strokeStyle = hilite ? '#ffe082' : '#ffc107'; 
+        ctx.lineWidth = hilite ? 1.8 : 1.2;
+        setCtxLineStyle('solid');
+
+        const pwScr = pWVal * zoom;
+        const phScr = pHVal * zoom;
+        const pxScr = rx + (rw - pwScr) / 2;
+        const pyScr = ry + (rh - phScr) / 2;
+
+        ctx.strokeRect(pxScr, pyScr, Math.max(1, pwScr), Math.max(1, phScr));
+        ctx.restore();
+        
+        const lineStr = e.linha || '';
+        const modelStr = e.modelo || '';
+        const hVal = e.altura || Math.round(rhPanel);
+        const wVal = e.largura || Math.round(rwPanel);
+        const pVal = e.profundidade || 0;
+        const fullStr = `${modelStr} (${hVal}x${wVal}x${pVal}mm)`.trim();
+
+        if (showDescriptions && fullStr) {
+            ctx.save();
+            let fontSize = Math.max(10, Math.min(13, zoom * 12));
+            ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = hilite ? '#f2c35b' : '#79e6ca';
+
+            ctx.fillText(fullStr, rx, ry - 4);
+            ctx.restore();
+        }
+    }
+    else if(e.type==='circle'){let c=screen({x:e.x,y:e.y});ctx.arc(c.x,c.y,Math.max(0.5,e.r*zoom),0,Math.PI*2);ctx.stroke();}
+    else if(e.type==='polyline'){
+        const pts = e.points;
+        for(let i=0; i<pts.length; i++){
+            let q = screen(pts[i]);
+            i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
+        }
+        if(e.closed) ctx.closePath();
+        ctx.stroke();
+    }
+    else if(e.type==='text'){
+        let p=screen({x:e.x,y:e.y});
+        let hPx = Math.max(8, (e.height || 20) * zoom);
+        ctx.font = `bold ${hPx}px Inter, Segoe UI, Arial, sans-serif`;
+        ctx.fillStyle = hilite ? '#f2c35b' : colorFor(e);
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(e.text || '', p.x, p.y);
+    }
+    else if(e.type==='dim'){
+        const s1 = screen({x:e.x1, y:e.y1}), s2 = screen({x:e.x2, y:e.y2});
+        ctx.save();
+        ctx.strokeStyle = hilite ? '#f2c35b' : '#08c997';
+        ctx.fillStyle = hilite ? '#f2c35b' : '#08c997';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(s1.x, s1.y);
+        ctx.lineTo(s2.x, s2.y);
+        ctx.stroke();
+
+        ctx.fillRect(s1.x - 3, s1.y - 3, 6, 6);
+        ctx.fillRect(s2.x - 3, s2.y - 3, 6, 6);
+
+        const dist = Math.hypot(e.x2 - e.x1, e.y2 - e.y1);
+        const label = e.text || `${Math.round(dist)} mm`;
+        const midScr = { x: (s1.x + s2.x)/2, y: (s1.y + s2.y)/2 };
+        
+        ctx.font = `bold ${Math.max(10, 11 * zoom)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.fillText(label, midScr.x, midScr.y - 6);
+        ctx.restore();
+    }
+
+    if(hilite){
+        const b = getCachedBounds(e);
+        [b.minX, b.maxX].forEach(x => [b.minY, b.maxY].forEach(y => {
+            let p = screen({x, y});
+            ctx.fillStyle = '#f2c35b';
+            ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+        }));
+    }
+    ctx.restore();
+}
+
+function distToSegment(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+
+function hit(p,e){
+    const tol = 10 / zoom;
+    const b = getCachedBounds(e);
+    if (p.x < b.minX - tol || p.x > b.maxX + tol || p.y < b.minY - tol || p.y > b.maxY + tol) return false;
+    
+    if(e.type==='line') return distToSegment(p,{x:e.x1,y:e.y1},{x:e.x2,y:e.y2})<tol;
+    if(e.type==='circle') return Math.abs(Math.hypot(p.x-e.x,p.y-e.y)-e.r)<tol;
+    
+    if(e.type==='rect'||e.type==='component'){
+        const p1 = {x: e.x1, y: e.y1}, p2 = {x: e.x2, y: e.y1};
+        const p3 = {x: e.x2, y: e.y2}, p4 = {x: e.x1, y: e.y2};
+        return distToSegment(p, p1, p2) < tol ||
+               distToSegment(p, p2, p3) < tol ||
+               distToSegment(p, p3, p4) < tol ||
+               distToSegment(p, p4, p1) < tol;
+    }
+    
+    if(e.type==='dim') return distToSegment(p, {x:e.x1, y:e.y1}, {x:e.x2, y:e.y2}) < tol;
+    if(e.type==='polyline') return e.points.some((q,i)=>i&&distToSegment(p,e.points[i-1],q)<tol);
+    if(e.type==='text') return true;
+    return false;
+}
+
+function renderPanels(){
+    const list=$('entityList');list.innerHTML='';
+    $('entityCount').textContent=entities.length;
+    
+    const maxShow = Math.min(entities.length, 100);
+    for(let i=0; i<maxShow; i++){
+        const e = entities[i];
+        const isSel = selectedIndices.has(i);
+        const r=document.createElement('div');
+        r.className='entity-row'+(isSel?' selected':'');
+        const titleText = e.type === 'component' ? `${e.modelo} (${e.altura}x${e.largura}x${e.profundidade||0}mm)` : (e.type === 'text' ? `TEXTO: ${e.text || ''}` : (e.type === 'dim' ? `DISTÂNCIA: ${Math.round(Math.hypot(e.x2-e.x1, e.y2-e.y1))}mm` : e.type.toUpperCase()));
+        r.innerHTML=`<span style="color:${colorFor(e)}">${e.type==='component'?'📦':e.type==='line'?'╱':e.type==='circle'?'◯':e.type==='rect'?'▱':e.type==='text'?'T':'⤧'}</span><span>${escapeHtml(titleText)}</span>`;
+        r.onclick=(ev)=>{
+            if(!ev.shiftKey) selectedIndices.clear();
+            selectedIndices.add(i);
+            render();renderPanels();
+        };
+        list.append(r);
+    }
+    renderProperties();
+}
+
+function alignSelected(mode) {
+    if(selectedIndices.size < 2) return;
+    snapshot();
+    let items = [...selectedIndices].map(i => entities[i]);
+    
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    items.forEach(e => {
+        let b = getCachedBounds(e);
+        minX = Math.min(minX, b.minX); maxX = Math.max(maxX, b.maxX);
+        minY = Math.min(minY, b.minY); maxY = Math.max(maxY, b.maxY);
+    });
+
+    items.forEach(e => {
+        let w = Math.abs(e.x2 - e.x1), h = Math.abs(e.y2 - e.y1);
+        e.bnd = null;
+        if(mode === 'left') { e.x1 = minX; e.x2 = minX + w; }
+        else if(mode === 'right') { e.x2 = maxX; e.x1 = maxX - w; }
+        else if(mode === 'top') { e.y2 = maxY; e.y1 = maxY - h; }
+        else if(mode === 'bottom') { e.y1 = minY; e.y2 = minY + h; }
+        else if(mode === 'centerH') { let cx = (minX + maxX)/2; e.x1 = cx - w/2; e.x2 = cx + w/2; }
+        else if(mode === 'centerV') { let cy = (minY + maxY)/2; e.y1 = cy - h/2; e.y2 = cy + h/2; }
+    });
+    render(); renderPanels(); markDirty();
+    setStatus(`Objetos alinhados (${mode}).`);
+}
+
+function distributeSelected(axis) {
+    if(selectedIndices.size < 3) return;
+    snapshot();
+    let idxs = [...selectedIndices];
+    let items = idxs.map(i => ({ idx: i, e: entities[i] }));
+
+    if(axis === 'horizontal') {
+        items.sort((a, b) => Math.min(a.e.x1, a.e.x2) - Math.min(b.e.x1, b.e.x2));
+        let first = items[0].e, last = items[items.length - 1].e;
+        
+        let startX = Math.min(first.x1, first.x2);
+        let endX = Math.max(last.x1, last.x2);
+        let totalSpan = endX - startX;
+
+        let totalWidths = 0;
+        items.forEach(it => { totalWidths += Math.abs(it.e.x2 - it.e.x1); });
+
+        let totalFreeSpace = totalSpan - totalWidths;
+        let gap = totalFreeSpace / (items.length - 1);
+
+        let curX = startX;
+        items.forEach(it => {
+            let w = Math.abs(it.e.x2 - it.e.x1);
+            it.e.bnd = null;
+            it.e.x1 = curX; 
+            it.e.x2 = curX + w;
+            curX += w + gap;
+        });
+    } else if(axis === 'vertical') {
+        items.sort((a, b) => Math.min(a.e.y1, a.e.y2) - Math.min(b.e.y1, b.e.y2));
+        let first = items[0].e, last = items[items.length - 1].e;
+
+        let startY = Math.min(first.y1, first.y2);
+        let endY = Math.max(last.y1, last.y2);
+        let totalSpan = endY - startY;
+
+        let totalHeights = 0;
+        items.forEach(it => { totalHeights += Math.abs(it.e.y2 - it.e.y1); });
+
+        let totalFreeSpace = totalSpan - totalHeights;
+        let gap = totalFreeSpace / (items.length - 1);
+
+        let curY = startY;
+        items.forEach(it => {
+            let h = Math.abs(it.e.y2 - it.e.y1);
+            it.e.bnd = null;
+            it.e.y1 = curY;
+            it.e.y2 = curY + h;
+            curY += h + gap;
+        });
+    }
+    render(); renderPanels(); markDirty();
+    setStatus(`Objetos distribuídos (${axis}).`);
+}
+
+function renderProperties(){
+    const p=$('properties');
+    if(!selectedIndices.size){p.innerHTML='<div class="selection-empty">Selecione um objeto para editar suas propriedades.</div>';return}
+    
+    if(selectedIndices.size > 1) {
+        let alignBox = `
+            <div class="selection-title">${selectedIndices.size} objetos selecionados</div>
+            <div style="margin-top:10px;font-weight:600;color:var(--muted);font-size:10px">ALINHAMENTO</div>
+            <div class="align-grid">
+                <button id="btnAlignLeft" title="Alinhar à Esquerda">← Esquerda</button>
+                <button id="btnAlignCenterH" title="Centralizar Horizontal">↔ Centro</button>
+                <button id="btnAlignRight" title="Alinhar à Direita">Direita →</button>
+                <button id="btnAlignTop" title="Alinhar ao Topo">↑ Topo</button>
+                <button id="btnAlignCenterV" title="Centralizar Vertical">↕ Meio</button>
+                <button id="btnAlignBottom" title="Alinhar à Base">↓ Base</button>
+            </div>
+            <div style="margin-top:10px;font-weight:600;color:var(--muted);font-size:10px">DISTRIBUIÇÃO</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+                <button id="btnDistH" style="flex:1;background:#202428;border:1px solid var(--line);padding:6px;border-radius:4px;font-size:11px">Distrib. Horiz.</button>
+                <button id="btnDistV" style="flex:1;background:#202428;border:1px solid var(--line);padding:6px;border-radius:4px;font-size:11px">Distrib. Vert.</button>
+            </div>
+        `;
+        p.innerHTML = alignBox;
+
+        $('btnAlignLeft').onclick = () => alignSelected('left');
+        $('btnAlignCenterH').onclick = () => alignSelected('centerH');
+        $('btnAlignRight').onclick = () => alignSelected('right');
+        $('btnAlignTop').onclick = () => alignSelected('top');
+        $('btnAlignCenterV').onclick = () => alignSelected('centerV');
+        $('btnAlignBottom').onclick = () => alignSelected('bottom');
+        $('btnDistH').onclick = () => distributeSelected('horizontal');
+        $('btnDistV').onclick = () => distributeSelected('vertical');
+        return;
+    }
+
+    const idx=[...selectedIndices][0],e=entities[idx];
+    let badge = e.type === 'component' ? `<span class="prop-badge">Componente: ${escapeHtml(e.linha || '')} (${escapeHtml(e.modelo || '')})</span>` : '';
+    
+    let html=badge+`<div class="selection-title">Propriedades do Objeto #${idx+1} (${e.type.toUpperCase()})</div>`;
+    html+=`<label class="field"><span>Cor Hex</span><input id="propColor" type="color" value="${e.colorHex||'#08c997'}"></label>`;
+    html+=`<label class="field"><span>Estilo Linha</span><select id="propStyle"><option value="solid" ${(e.lineStyle||'solid')==='solid'?'selected':''}>Contínua</option><option value="dashed" ${e.lineStyle==='dashed'?'selected':''}>Tracejada</option><option value="dotted" ${e.lineStyle==='dotted'?'selected':''}>Pontilhada</option><option value="dashdot" ${e.lineStyle==='dashdot'?'selected':''}>Traço-Ponto</option></select></label>`;
+    
+    if(e.type==='line'||e.type==='rect'||e.type==='component'||e.type==='dim'){
+        html+=`<label class="field"><span>X1 (mm)</span><input id="propX1" type="number" step="any" value="${e.x1}"></label>`;
+        html+=`<label class="field"><span>Y1 (mm)</span><input id="propY1" type="number" step="any" value="${e.y1}"></label>`;
+        html+=`<label class="field"><span>X2 (mm)</span><input id="propX2" type="number" step="any" value="${e.x2}"></label>`;
+        html+=`<label class="field"><span>Y2 (mm)</span><input id="propY2" type="number" step="any" value="${e.y2}"></label>`;
+
+        if(e.type==='rect'||e.type==='component'){
+            html+=`<label class="field"><span>Largura L (mm)</span><input id="propW" type="number" step="any" value="${Math.abs(e.x2-e.x1)}"></label>`;
+            html+=`<label class="field"><span>Altura H (mm)</span><input id="propH" type="number" step="any" value="${Math.abs(e.y2-e.y1)}"></label>`;
+        }
+        if(e.type==='component'){
+            html+=`<label class="field"><span>Profundidade P</span><input id="propP" type="number" step="any" value="${e.profundidade||0}"></label>`;
+            html+=`<label class="field"><span style="color:#ffc107">Largura Placa (mm)</span><input id="propPlacaW" type="number" step="any" value="${(e.larguraPlaca!==undefined)?e.larguraPlaca:Math.abs(e.x2-e.x1)}"></label>`;
+            html+=`<label class="field"><span style="color:#ffc107">Altura Placa (mm)</span><input id="propPlacaH" type="number" step="any" value="${(e.alturaPlaca!==undefined)?e.alturaPlaca:Math.abs(e.y2-e.y1)}"></label>`;
+        }
+    }else if(e.type==='circle'){
+        html+=`<label class="field"><span>Centro X</span><input id="propCX" type="number" step="any" value="${e.x}"></label>`;
+        html+=`<label class="field"><span>Centro Y</span><input id="propCY" type="number" step="any" value="${e.y}"></label>`;
+        html+=`<label class="field"><span>Raio (mm)</span><input id="propR" type="number" step="any" value="${e.r}"></label>`;
+    }else if(e.type==='text'){
+        html+=`<label class="field"><span>Texto</span><input id="propTxt" type="text" value="${escapeHtml(e.text||'')}"></label>`;
+        html+=`<label class="field"><span>Altura Fonte</span><input id="propTxtH" type="number" step="any" value="${e.height||20}"></label>`;
+        html+=`<label class="field"><span>Posição X</span><input id="propTX" type="number" step="any" value="${e.x}"></label>`;
+        html+=`<label class="field"><span>Posição Y</span><input id="propTY" type="number" step="any" value="${e.y}"></label>`;
+    }
+
+    p.innerHTML=html;
+
+    const bindProp = (id, fn) => {
+        const el = $(id);
+        if(el) el.onchange = () => { snapshot(); fn(el); e.bnd = null; render(); renderPanels(); markDirty(); };
+    };
+
+    bindProp('propColor', el => e.colorHex = el.value);
+    bindProp('propStyle', el => e.lineStyle = el.value);
+
+    if(e.type==='line'||e.type==='rect'||e.type==='component'||e.type==='dim'){
+        bindProp('propX1', el => e.x1 = parseFloat(el.value));
+        bindProp('propY1', el => e.y1 = parseFloat(el.value));
+        bindProp('propX2', el => e.x2 = parseFloat(el.value));
+        bindProp('propY2', el => e.y2 = parseFloat(el.value));
+
+        if(e.type==='rect'||e.type==='component'){
+            bindProp('propW', el => { const val=parseFloat(el.value); e.x2 = e.x1 + val; if(e.type==='component') e.largura = val; });
+            bindProp('propH', el => { const val=parseFloat(el.value); e.y2 = e.y1 + val; if(e.type==='component') e.altura = val; });
+        }
+        if(e.type==='component'){
+            bindProp('propP', el => e.profundidade = parseFloat(el.value));
+            bindProp('propPlacaW', el => e.larguraPlaca = parseFloat(el.value));
+            bindProp('propPlacaH', el => e.alturaPlaca = parseFloat(el.value));
+        }
+    }else if(e.type==='circle'){
+        bindProp('propCX', el => e.x = parseFloat(el.value));
+        bindProp('propCY', el => e.y = parseFloat(el.value));
+        bindProp('propR', el => e.r = parseFloat(el.value));
+    }else if(e.type==='text'){
+        bindProp('propTxt', el => e.text = el.value);
+        bindProp('propTxtH', el => e.height = parseFloat(el.value));
+        bindProp('propTX', el => e.x = parseFloat(el.value));
+        bindProp('propTY', el => e.y = parseFloat(el.value));
+    }
+}
+
+function setTool(t){
+    tool=t;
+    document.querySelectorAll('.tool[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===t));
+    canvas.className='viewport '+(t==='select'?'selecting':'');
+    $('toolStatus').textContent=t.toUpperCase();
+    hideDyn();
+    dimState={step:1,p1:null,p2:null};
+    lineChainStart = null;
+    activeDrawState = null;
+    etrackMarkers = [];
+    render();
+}
+
+function updateDynInputPosition(sp) {
+    const dyn = $('dynInput');
+    if(!dyn || dyn.classList.contains('hidden')) return;
+    const stage = document.querySelector('.stage').getBoundingClientRect();
+    let left = sp.x + 15;
+    let top = sp.y + 15;
+    if (left + 220 > stage.width) left = sp.x - 210;
+    if (top + 40 > stage.height) top = sp.y - 45;
+    dyn.style.left = `${Math.max(10, left)}px`;
+    dyn.style.top = `${Math.max(10, top)}px`;
+}
+
+function showDyn(lbl1, val1=''){
+    const d=$('dynInput'), l1=$('dynLbl1'), v1=$('dynVal1');
+    if(!d) return;
+
+    l1.textContent = lbl1;
+    if(!userInteractedWithInput) v1.value = val1;
+    d.classList.remove('hidden');
+    if(!dynTyping && !userInteractedWithInput){
+        v1.focus();
+        v1.select();
+    }
+}
+
+function hideDyn(){
+    const d=$('dynInput');
+    if(d) d.classList.add('hidden');
+    dynTyping = false;
+    userInteractedWithInput = false;
+}
+
+$('dynVal1').oninput = () => { userInteractedWithInput = true; dynTyping = true; };
+$('dynVal1').onfocus = () => { dynTyping = true; };
+
+function applyDynInput() {
+    const v1Str = $('dynVal1').value.trim();
+    const v1 = parseFloat(v1Str);
+
+    const curDraw = activeDrawState || (drag && drag.kind === 'draw' ? drag : null);
+    if (!curDraw) return;
+
+    if (tool === 'line') {
+        if (isNaN(v1)) return;
+        
+        let targetX = curDraw.start.x, targetY = curDraw.start.y;
+        let angle = Math.atan2(curDraw.current.y - curDraw.start.y, curDraw.current.x - curDraw.start.x);
+        
+        if (ortho) {
+            const dx = Math.abs(curDraw.current.x - curDraw.start.x);
+            const dy = Math.abs(curDraw.current.y - curDraw.start.y);
+            if (dx >= dy) {
+                angle = (curDraw.current.x >= curDraw.start.x) ? 0 : Math.PI;
+            } else {
+                angle = (curDraw.current.y >= curDraw.start.y) ? Math.PI / 2 : -Math.PI / 2;
+            }
+        }
+        
+        targetX = curDraw.start.x + Math.cos(angle) * v1;
+        targetY = curDraw.start.y + Math.sin(angle) * v1;
+
+        curDraw.current = { x: targetX, y: targetY };
+        curDraw.preview.x2 = targetX;
+        curDraw.preview.y2 = targetY;
+        curDraw.hasMoved = true;
+
+        userInteractedWithInput = false;
+        dynTyping = false;
+        render();
+        setStatus('Linha ajustada por distância. Clique no ponto final para confirmar ou continue desenhando.');
+        $('dynVal1').blur();
+    } 
+    else if (tool === 'circle') {
+        if (isNaN(v1)) return;
+        snapshot();
+        entities.push({ type: 'circle', x: curDraw.start.x, y: curDraw.start.y, r: v1, colorHex: '#08c997', lineStyle: 'solid' });
+        activeDrawState = null;
+        drag = null;
+        hideDyn();
+        render(); renderPanels(); markDirty();
+        setStatus('Círculo adicionado.');
+    }
+}
+
+window.addEventListener('keydown', e => {
+    const activeEl = document.activeElement;
+    const isInputActive = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+
+    if (e.key === 'Enter') {
+        if (isInputActive && activeEl.id === 'dynVal1') {
+            e.preventDefault();
+            applyDynInput();
+            return;
+        }
+    }
+
+    if (e.key === 'Escape') {
+        if (isInputActive) {
+            activeEl.blur();
+        }
+        setTool('select');
+        return;
+    }
+
+    if (isInputActive) return;
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIndices.size > 0) {
+            e.preventDefault();
+            cmdProc.execute('DELETE');
+        }
+    } else if (e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        setTool('line');
+    } else if (e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        setTool('rect');
+    } else if (e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        setTool('text');
+    } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        setTool('dim');
+    }
+});
+
+$('dynVal1').onkeydown = e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        applyDynInput();
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        hideDyn();
+        setTool('select');
+    }
+};
+
+canvas.onpointerdown = e => {
+    const p = snapPoint(world(eventPoint(e)));
+    if (e.button === 1 || e.buttons === 4) {
+        drag = { kind: 'pan', start: { x: e.clientX, y: e.clientY }, origPan: { x: panX, y: panY } };
+        return;
+    }
+    
+    if (tool === 'select') {
+        const hitIdx = entities.findIndex(ent => hit(p, ent));
+        if (hitIdx >= 0) {
+            if (!e.shiftKey && !selectedIndices.has(hitIdx)) selectedIndices.clear();
+            selectedIndices.add(hitIdx);
+            drag = { kind: 'move', start: p, items: [...selectedIndices].map(i => ({ idx: i, orig: { ...entities[i] } })) };
+        } else {
+            if (!e.shiftKey) selectedIndices.clear();
+            selectionBox = { p1: p, p2: p };
+            drag = { kind: 'box' };
+        }
+        render(); renderPanels();
+    } 
+    else if (tool === 'line') {
+        userInteractedWithInput = false;
+        dynTyping = false;
+        if (!lineChainStart) {
+            lineChainStart = p;
+            etrackMarkers = [p];
+            activeDrawState = {
+                kind: 'draw', tool: 'line', start: p, current: p, hasMoved: false,
+                preview: { type: 'line', x1: p.x, y1: p.y, x2: p.x, y2: p.y, colorHex: '#08c997' }
+            };
+            setStatus('Clique no segundo ponto da linha ou digite a distância no campo flutuante.');
+        } else {
+            if (activeDrawState && activeDrawState.hasMoved) {
+                snapshot();
+                const targetP = activeDrawState.preview.x2 !== undefined ? { x: activeDrawState.preview.x2, y: activeDrawState.preview.y2 } : p;
+                entities.push({ type: 'line', x1: activeDrawState.start.x, y1: activeDrawState.start.y, x2: targetP.x, y2: targetP.y, colorHex: '#08c997', lineStyle: 'solid' });
+                lineChainStart = targetP;
+                etrackMarkers = [targetP];
+                activeDrawState = {
+                    kind: 'draw', tool: 'line', start: targetP, current: targetP, hasMoved: false,
+                    preview: { type: 'line', x1: targetP.x, y1: targetP.y, x2: targetP.x, y2: targetP.y, colorHex: '#08c997' }
+                };
+                render(); renderPanels(); markDirty();
+                setStatus('Linha adicionada. Clique para próxima linha ou ESC para encerrar.');
+            }
+        }
+    } 
+    else if (tool === 'rect') {
+        userInteractedWithInput = false;
+        dynTyping = false;
+        if (!activeDrawState) {
+            activeDrawState = {
+                kind: 'draw', tool: 'rect', start: p, current: p,
+                preview: { type: 'rect', x1: p.x, y1: p.y, x2: p.x, y2: p.y, colorHex: '#08c997' }
+            };
+            setStatus('Clique no segundo canto do retângulo.');
+        } else {
+            snapshot();
+            const r = activeDrawState.preview;
+            entities.push({ type: 'rect', x1: r.x1, y1: r.y1, x2: r.x2, y2: r.y2, colorHex: '#08c997', lineStyle: 'solid' });
+            activeDrawState = null;
+            render(); renderPanels(); markDirty();
+            setTool('select');
+            setStatus('Retângulo criado.');
+        }
+    }
+    else if (tool === 'circle') {
+        userInteractedWithInput = false;
+        dynTyping = false;
+        if (!activeDrawState) {
+            activeDrawState = {
+                kind: 'draw', tool: 'circle', start: p, current: p,
+                preview: { type: 'circle', x: p.x, y: p.y, r: 0, colorHex: '#08c997' }
+            };
+            showDyn('Raio:', '50');
+            setStatus('Defina o raio arrastando ou digite no campo flutuante.');
+        } else {
+            snapshot();
+            const r = Math.hypot(p.x - activeDrawState.start.x, p.y - activeDrawState.start.y);
+            entities.push({ type: 'circle', x: activeDrawState.start.x, y: activeDrawState.start.y, r: r, colorHex: '#08c997', lineStyle: 'solid' });
+            activeDrawState = null;
+            hideDyn();
+            render(); renderPanels(); markDirty();
+            setTool('select');
+            setStatus('Círculo criado.');
+        }
+    }
+    else if (tool === 'text') {
+        snapshot();
+        const txt = prompt('Digite o texto:', 'Texto CAD');
+        if(txt) {
+            entities.push({ type: 'text', x: p.x, y: p.y, text: txt, height: 20, colorHex: '#08c997' });
+            render(); renderPanels(); markDirty();
+            setStatus('Texto inserido.');
+        }
+        setTool('select');
+    }
+    else if (tool === 'dim') {
+        if (dimState.step === 1) {
+            dimState.p1 = p;
+            dimState.step = 2;
+            setStatus('Selecione o segundo ponto para a distância entre pontos.');
+        } else if (dimState.step === 2) {
+            dimState.p2 = p;
+            snapshot();
+            const dist = Math.hypot(dimState.p2.x - dimState.p1.x, dimState.p2.y - dimState.p1.y);
+            entities.push({
+                type: 'dim',
+                x1: dimState.p1.x, y1: dimState.p1.y,
+                x2: dimState.p2.x, y2: dimState.p2.y,
+                text: `${Math.round(dist)} mm`,
+                colorHex: '#08c997'
+            });
+            dimState = { step: 1, p1: null, p2: null };
+            render(); renderPanels(); markDirty();
+            setTool('select');
+            setStatus(`Distância calculada e registrada: ${Math.round(dist)} mm.`);
+        }
+    }
+};
+
+canvas.onpointermove = e => {
+    const rawP = world(eventPoint(e));
+    const p = snapPoint(rawP);
+    $('coords').textContent = `X ${p.x.toFixed(2)} · Y ${p.y.toFixed(2)} mm`;
+
+    if (drag) {
+        if (drag.kind === 'pan') {
+            panX = drag.origPan.x + (e.clientX - drag.start.x);
+            panY = drag.origPan.y + (e.clientY - drag.start.y);
+            render();
+        } else if (drag.kind === 'move') {
+            const dx = p.x - drag.start.x, dy = p.y - drag.start.y;
+            drag.items.forEach(it => {
+                let ent = entities[it.idx];
+                ent.bnd = null;
+                if(ent.type === 'line' || ent.type === 'rect' || ent.type === 'component' || ent.type === 'dim') {
+                    ent.x1 = it.orig.x1 + dx; ent.y1 = it.orig.y1 + dy;
+                    ent.x2 = it.orig.x2 + dx; ent.y2 = it.orig.y2 + dy;
+                } else if(ent.type === 'circle' || ent.type === 'text') {
+                    ent.x = it.orig.x + dx; ent.y = it.orig.y + dy;
+                }
+            });
+            render();
+        } else if (drag.kind === 'box') {
+            selectionBox.p2 = p;
+            render();
+        }
+        return;
+    }
+
+    const curDraw = activeDrawState || (drag && drag.kind === 'draw' ? drag : null);
+    if (curDraw) {
+        curDraw.current = p;
+        updateDynInputPosition(screen(p));
+        if (curDraw.tool === 'line') {
+            if (p.x !== curDraw.start.x || p.y !== curDraw.start.y) {
+                curDraw.hasMoved = true;
+            }
+            curDraw.preview.x2 = p.x; curDraw.preview.y2 = p.y;
+            let d = Math.hypot(p.x - curDraw.start.x, p.y - curDraw.start.y);
+            showDyn('Distância ao próximo ponto:', Math.round(d).toString());
+        } else if (curDraw.tool === 'rect') {
+            curDraw.preview.x2 = p.x; curDraw.preview.y2 = p.y;
+            let w = Math.abs(p.x - curDraw.preview.x1), h = Math.abs(p.y - curDraw.preview.y1);
+            showDyn('Dimensões (L×H):', `${Math.round(w)} × ${Math.round(h)}`);
+        } else if (curDraw.tool === 'circle') {
+            let r = Math.hypot(p.x - curDraw.start.x, p.y - curDraw.start.y);
+            curDraw.preview.r = r;
+            showDyn('Raio:', Math.round(r).toString());
+        }
+        render();
+    } else if (tool === 'dim' && dimState.step === 2) {
+        dimState.current = p;
+        render();
+    }
+};
+
+window.onpointerup = () => {
+    if (selectionBox) {
+        const minX = Math.min(selectionBox.p1.x, selectionBox.p2.x);
+        const maxX = Math.max(selectionBox.p1.x, selectionBox.p2.x);
+        const minY = Math.min(selectionBox.p1.y, selectionBox.p2.y);
+        const maxY = Math.max(selectionBox.p1.y, selectionBox.p2.y);
+
+        entities.forEach((ent, i) => {
+            const b = getCachedBounds(ent);
+            if (b.minX >= minX && b.maxX <= maxX && b.minY >= minY && b.maxY <= maxY) {
+                selectedIndices.add(i);
+            }
+        });
+        selectionBox = null;
+        render(); renderPanels();
+    }
+    drag = null;
+};
+
+function exportToDWG() {
+    if (entities.length === 0) {
+        alert('Não há objetos no desenho para exportar.');
+        return;
+    }
+
+    let dxfContent = "0\nSECTION\n2\nHEADER\n0\nENDSEC\n";
+    dxfContent += "0\nSECTION\n2\nTABLES\n0\nENDSEC\n";
+    dxfContent += "0\nSECTION\n2\nBLOCKS\n0\nENDSEC\n";
+    dxfContent += "0\nSECTION\n2\nENTITIES\n";
+
+    entities.forEach(e => {
+        if (e.type === 'line') {
+            dxfContent += `0\nLINE\n8\n${e.layer || '0'}\n10\n${e.x1}\n20\n${e.y1}\n30\n0.0\n11\n${e.x2}\n21\n${e.y2}\n31\n0.0\n`;
+        } else if (e.type === 'rect' || e.type === 'component') {
+            const x1 = e.x1, y1 = e.y1, x2 = e.x2, y2 = e.y2;
+            const pts = [{x:x1, y:y1}, {x:x2, y:y1}, {x:x2, y:y2}, {x:x1, y:y2}];
+            for (let i = 0; i < 4; i++) {
+                let pA = pts[i], pB = pts[(i+1)%4];
+                dxfContent += `0\nLINE\n8\n${e.layer || 'PAINEIS'}\n10\n${pA.x}\n20\n${pA.y}\n30\n0.0\n11\n${pB.x}\n21\n${pB.y}\n31\n0.0\n`;
+            }
+            if (e.type === 'component' && e.modelo) {
+                let cx = (x1 + x2)/2, cy = (y1 + y2)/2;
+                dxfContent += `0\nTEXT\n8\nETIQUETAS\n10\n${cx}\n20\n${cy}\n40\n20.0\n1\n${e.linha || ''} ${e.modelo} (${e.altura}x${e.largura}mm)\n`;
+            }
+        } else if (e.type === 'circle') {
+            dxfContent += `0\nCIRCLE\n8\n${e.layer || '0'}\n10\n${e.x}\n20\n${e.y}\n30\n0.0\n40\n${e.r}\n`;
+        } else if (e.type === 'text') {
+            dxfContent += `0\nTEXT\n8\n${e.layer || 'TEXTOS'}\n10\n${e.x}\n20\n${e.y}\n40\n${e.height || 20}\n1\n${e.text || ''}\n`;
+        } else if (e.type === 'dim') {
+            dxfContent += `0\nLINE\n8\nCOTAS\n10\n${e.x1}\n20\n${e.y1}\n30\n0.0\n11\n${e.x2}\n21\n${e.y2}\n31\n0.0\n`;
+        }
+    });
+
+    dxfContent += "0\nENDSEC\n0\nEOF\n";
+
+    const cleanName = (fileName || 'projeto_omini').replace(/\.[^/.]+$/, "");
+    const blob = new Blob([dxfContent], { type: 'application/dxf;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${cleanName}_dwg_export.dxf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setStatus('Arquivo exportado com sucesso no formato DWG/DXF!');
+    showModal('Exportação Concluída', 'O projeto foi exportado para o formato CAD compatível (DWG/DXF) contendo todas as entidades, painéis e cotas.');
+}
+
+$('saveBtn').onclick = exportToDWG;
+
+cmdProc.register('LINE', 'Q', () => setTool('line'));
+cmdProc.register('RECT', 'W', () => setTool('rect'));
+cmdProc.register('CIRCLE', '', () => setTool('circle'));
+cmdProc.register('TEXT', 'E', () => setTool('text'));
+cmdProc.register('DIM', 'R', () => setTool('dim'));
+cmdProc.register('SELECT', 'ESC', () => setTool('select'));
+cmdProc.register('COPY', '', () => {
+    clipboard = [...selectedIndices].map(i => JSON.parse(JSON.stringify(entities[i])));
+    setStatus(`${clipboard.length} objetos copiados para a área de transferência.`);
+});
+cmdProc.register('PASTE', '', () => {
+    if(!clipboard.length) return;
+    snapshot();
+    selectedIndices.clear();
+    clipboard.forEach(item => {
+        let copyItem = JSON.parse(JSON.stringify(item));
+        copyItem.bnd = null;
+        if(copyItem.x1 !== undefined) { copyItem.x1 += 20; copyItem.x2 += 20; copyItem.y1 += 20; copyItem.y2 += 20; }
+        if(copyItem.x !== undefined) { copyItem.x += 20; copyItem.y += 20; }
+        entities.push(copyItem);
+        selectedIndices.add(entities.length - 1);
+    });
+    render(); renderPanels(); markDirty();
+    setStatus(`${clipboard.length} objetos colados.`);
+});
+cmdProc.register('DELETE', '', () => {
+    if(!selectedIndices.size) return;
+    snapshot();
+    const sorted = [...selectedIndices].sort((a,b)=>b-a);
+    sorted.forEach(i => entities.splice(i, 1));
+    selectedIndices.clear();
+    render(); renderPanels(); markDirty();
+    setStatus('Objetos selecionados apagados.');
+});
+
+$('copyBtn').onclick = () => cmdProc.execute('COPY');
+$('pasteBtn').onclick = () => cmdProc.execute('PASTE');
+$('deleteBtn').onclick = () => cmdProc.execute('DELETE');
+$('undoBtn').onclick = undo;
+$('redoBtn').onclick = redo;
+
+$('cmdInput').onkeydown = e => {
+    if(e.key === 'Enter') {
+        cmdProc.execute($('cmdInput').value);
+        $('cmdInput').value = '';
+    }
+};
+
+document.querySelectorAll('.tool[data-tool]').forEach(btn => {
+    btn.onclick = () => setTool(btn.dataset.tool);
+});
+
+$('zoomIn').onclick = () => { zoom = Math.min(10, zoom * 1.25); render(); };
+$('zoomOut').onclick = () => { zoom = Math.max(0.05, zoom / 1.25); render(); };
+$('zoomPlus').onclick = $('zoomIn').onclick;
+$('zoomMinus').onclick = $('zoomOut').onclick;
+$('fitMini').onclick = fit;
+$('fitBtn').onclick = fit;
+
+function fit(){
+    if(!entities.length){zoom=1;panX=0;panY=0;render();return;}
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+    entities.forEach(e=>{
+        const b = getCachedBounds(e);
+        minX=Math.min(minX,b.minX); maxX=Math.max(maxX,b.maxX);
+        minY=Math.min(minY,b.minY); maxY=Math.max(maxY,b.maxY);
+    });
+    const w=canvas.clientWidth,h=canvas.clientHeight;
+    const dw=Math.max(50,maxX-minX),dh=Math.max(50,maxY-minY);
+    zoom=Math.min(w/dw,h/dh)*0.85;
+    panX=-((minX+maxX)/2)*zoom;
+    panY=((minY+maxY)/2)*zoom;
+    render();
+}
+
+$('gridBtn').onclick = () => { showGrid = !showGrid; render(); };
+$('snapBtn').onclick = () => { snap = !snap; $('snapCheck').checked = snap; };
+$('orthoBtn').onclick = () => { ortho = !ortho; $('orthoCheck').checked = ortho; };
+$('snapeBtn').onclick = () => { snape = !snape; $('snapeCheck').checked = snape; };
+$('etrackBtn').onclick = () => { etrack = !etrack; $('etrackCheck').checked = etrack; };
+$('toggleDescBtn').onclick = () => { showDescriptions = !showDescriptions; render(); };
+
+$('snapCheck').onchange = e => snap = e.target.checked;
+$('gridCheck').onchange = e => showGrid = e.target.checked;
+$('orthoCheck').onchange = e => ortho = e.target.checked;
+$('snapeCheck').onchange = e => snape = e.target.checked;
+$('etrackCheck').onchange = e => etrack = e.target.checked;
+$('gridStep').onchange = e => { gridStep = Math.max(0.1, parseFloat(e.target.value) || 10); render(); };
+$('units').onchange = e => setStatus(`Unidade alterada para ${e.target.value}`);
+
+window.onresize = resize;
+resize();
+loadLibraryFromStorage();
+initLibrary();
+render();
+setStatus('Engine CAD OMINI pronta.');
+
+// ==========================================
+// INTEGRAÇÃO POSTMESSAGE OMINI TOOLS
+// ==========================================
+window.exportarDadosCanvas = function() {
+    let dadosCanvas = {};
+    if (typeof entities !== 'undefined') {
+        dadosCanvas.entities = entities;
+    }
+    let inputsLayout = {};
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        if (el.id || el.name) {
+            inputsLayout[el.id || el.name] = el.value;
+        }
+    });
+    dadosCanvas.inputs = inputsLayout;
+    return dadosCanvas;
+};
+
+window.addEventListener('message', (event) => {
+    if (event.data && event.data.tipo === 'CARREGAR_DADOS_FERRAMENTA') {
+        let dadosSalvos = event.data.dados;
+        if (dadosSalvos) {
+            if (dadosSalvos.inputs) {
+                Object.keys(dadosSalvos.inputs).forEach(chave => {
+                    let el = document.getElementById(chave) || document.querySelector(`[name="${chave}"]`);
+                    if (el) {
+                        el.value = dadosSalvos.inputs[chave];
+                        el.dispatchEvent(new Event('input', { bubbles: true }));
+                        el.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            }
+            if (dadosSalvos.entities && Array.isArray(dadosSalvos.entities)) {
+                entities = dadosSalvos.entities;
+                entities.forEach(e => e.bnd = null);
+            }
+            if (typeof render === 'function') render();
+            if (typeof renderPanels === 'function') renderPanels();
+            if (typeof fit === 'function') fit();
+            console.log("[OMINI CAD] Desenhos carregados com sucesso!");
+        }
+    }
+});
+
+window.salvarEFecharFerramenta = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const painelId = urlParams.get('painelId');
+
+    let dadosFerramenta = {};
+    if (window.exportarDadosCanvas && typeof window.exportarDadosCanvas === 'function') {
+        dadosFerramenta = window.exportarDadosCanvas();
+    }
+
+    if (window.parent && window.parent !== window) {
+        window.parent.postMessage({
+            tipo: 'SALVAR_DADOS_FERRAMENTA',
+            painelId: painelId,
+            ferramenta: 'layoutpaineis',
+            dados: dadosFerramenta
+        }, '*');
+    }
+
+    if (window.parent && window.parent.app && typeof window.parent.app.fecharModalFerramentaIframe === 'function') {
+        window.parent.app.fecharModalFerramentaIframe();
+    } else {
+        window.history.back();
+    }
+};
+
+window.fecharFerramentaSemSalvar = function() {
+    if (window.parent && window.parent.app && typeof window.parent.app.fecharModalFerramentaIframe === 'function') {
+        window.parent.app.fecharModalFerramentaIframe();
+    } else {
+        window.history.back();
+    }
+};
+
+})();</script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+<head>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M38 3 13 36h17l-4 25L52 25H35z' fill='%2300c58b'/%3E%3C/svg%3E">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>OMINI - Transformadores de Potência e Comando</title>
+    
+    <script>
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: "rgb(var(--rgb-bg-dark) / <alpha-value>)",
+                            aside: "rgb(var(--rgb-bg-aside) / <alpha-value>)",
+                            card: "rgb(var(--rgb-bg-card) / <alpha-value>)",
+                            border: "rgb(var(--rgb-border) / <alpha-value>)",
+                            input: "rgb(var(--rgb-bg-input) / <alpha-value>)",
+                            accent: "rgb(var(--rgb-accent) / <alpha-value>)",
+                            text: "rgb(var(--rgb-text) / <alpha-value>)",
+                            muted: "rgb(var(--rgb-muted) / <alpha-value>)"
+                        }
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        mono: ["Fira Code", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --rgb-bg-dark: 241 245 249;   
+            --rgb-bg-aside: 255 255 255;  
+            --rgb-bg-card: 255 255 255;   
+            --rgb-bg-input: 248 250 252;  
+            --rgb-border: 226 232 240;    
+            --rgb-text: 15 23 42;         
+            --rgb-muted: 100 116 139;     
+            --rgb-accent: 16 185 129;     
+        }
+        .dark {
+            --rgb-bg-dark: 18 19 21;      
+            --rgb-bg-aside: 23 24 28;     
+            --rgb-bg-card: 30 32 35;      
+            --rgb-bg-input: 24 26 29;     
+            --rgb-border: 42 45 50;       
+            --rgb-text: 255 255 255;      
+            --rgb-muted: 148 163 184;     
+        }
+        
+        body { font-family: Inter, sans-serif; background-color: rgb(var(--rgb-bg-dark)); color: rgb(var(--rgb-text)); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgb(var(--rgb-bg-dark)); }
+        ::-webkit-scrollbar-thumb { background: rgb(var(--rgb-border)); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgb(var(--rgb-accent)); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-brand-dark text-brand-text overflow-x-hidden">
+    <div id="ominitools-footer-bar" class="fixed bottom-0 left-0 right-0 p-3 bg-brand-aside border-t border-brand-border flex items-center justify-between z-50 shadow-2xl">
+    <div class="flex items-center space-x-2 text-xs text-brand-muted px-2">
+        <i class="fa-solid fa-floppy-disk text-brand-accent"></i>
+        <span>Sincronização via Mensageria Segura (Painel Ativo).</span>
+    </div>
+    <div class="flex items-center space-x-3">
+        <button onclick="fecharFerramentaSemSalvar()" class="px-4 py-2 bg-brand-card hover:bg-brand-border text-xs rounded-lg text-brand-muted font-medium transition border border-brand-border">Cancelar</button>
+        <button onclick="salvarEFecharFerramenta()" class="bg-brand-accent hover:opacity-90 text-brand-dark text-xs font-bold px-5 py-2 rounded-lg transition flex items-center space-x-2 shadow-lg">
+            <i class="fa-solid fa-check"></i>
+            <span>Salvar e Fechar</span>
+        </button>
+    </div>
+</div>
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div class="p-4 md:p-8 max-w-6xl w-full mx-auto space-y-6">
+                <div class="bg-brand-card border border-brand-border rounded-xl p-6 space-y-6">
+                    <div class="border-b border-brand-border/60 pb-4 flex flex-wrap justify-between items-center gap-2">
+                        <div>
+                            <h3 class="font-semibold text-brand-text text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-sliders text-brand-accent"></i> Dimensionamento do Transformador de Comando AC
+                            </h3>
+                            <p class="text-xs text-brand-muted mt-1">Estimativa rápida para painéis e comando | Seleção da Potência Comercial Adequada</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-brand-muted font-medium">Tensão Comando:</label>
+                            <select id="trafo_cmd_v" onchange="calcTrafoComando()" class="bg-brand-input text-xs text-brand-accent border border-brand-border rounded px-2.5 py-1 font-semibold focus:outline-none cursor-pointer">
+                                <option value="220" selected>220 V</option>
+                                <option value="110">110 V</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        <div class="lg:col-span-7 bg-brand-input/40 border border-brand-border rounded-xl p-4 space-y-3">
+                            <span class="text-xs font-semibold text-brand-text uppercase tracking-wider block border-b border-brand-border/50 pb-2">
+                                <i class="fa-solid fa-list-check text-brand-accent"></i> Levantamento de Cargas do Painel
+                            </span>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-xs font-mono">
+                                    <thead>
+                                        <tr class="text-brand-muted border-b border-brand-border/50">
+                                            <th class="pb-2 w-16 text-center">Qtde.</th>
+                                            <th class="pb-2">Cargas</th>
+                                            <th class="pb-2 w-28 text-center">Pot. (Watts)</th>
+                                            <th class="pb-2 w-28 text-right">Pot. Total (W)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-brand-border/30 text-brand-text">
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q1" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Iluminação</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p1" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot1" class="py-1.5 text-right font-bold text-brand-text">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q2" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Tomadas Auxiliares</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p2" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot2" class="py-1.5 text-right font-bold text-brand-text">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q3" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Exaustores</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p3" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot3" class="py-1.5 text-right font-bold text-brand-text">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q4" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Ar-Condicionado</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p4" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot4" class="py-1.5 text-right font-bold text-brand-text">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q5" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Fontes DC</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p5" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot5" class="py-1.5 text-right font-bold text-brand-text">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5"><input type="number" id="cmd_q6" value="1" min="0" oninput="calcTrafoComando()" class="w-12 bg-brand-input border border-brand-border rounded px-1.5 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td class="py-1.5 font-sans font-medium text-brand-muted">Mais (Outras Cargas)</td>
+                                            <td class="py-1.5"><input type="number" id="cmd_p6" placeholder="0" oninput="calcTrafoComando()" class="w-24 bg-brand-input border border-brand-border rounded px-2 py-1 text-center text-brand-text focus:outline-none focus:border-brand-accent"></td>
+                                            <td id="cmd_tot6" class="py-1.5 text-right font-bold text-brand-text">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-5 space-y-4">
+                            <div class="bg-brand-input/60 border border-brand-border rounded-xl p-4 space-y-3">
+                                <div class="grid grid-cols-2 gap-3 text-center">
+                                    <div class="p-2.5 bg-brand-input rounded-lg border border-brand-border/60">
+                                        <span class="text-[10px] text-brand-muted block uppercase font-medium">Potência Total</span>
+                                        <span id="res_cmd_p_tot" class="font-mono text-lg font-bold text-brand-text">0 W</span>
+                                    </div>
+                                    <div class="p-2.5 bg-brand-input rounded-lg border border-brand-border/60">
+                                        <span class="text-[10px] text-brand-muted block uppercase font-medium">Corrente Total</span>
+                                        <span id="res_cmd_i_tot" class="font-mono text-lg font-bold text-brand-text">0,00 A</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-brand-input border border-brand-accent/40 rounded-xl p-4 space-y-3 border-l-4 border-l-brand-accent">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-brand-accent uppercase tracking-wider">Transformador Comercial Recomendado</span>
+                                    <span class="text-[10px] bg-brand-accent/20 text-brand-accent px-2 py-0.5 rounded font-mono">Linha Comercial</span>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between items-baseline">
+                                        <span class="text-xs text-brand-muted">Modelo de Trafo (VA):</span>
+                                        <span id="res_cmd_trafo_va" class="font-mono text-2xl font-bold text-brand-accent">0 VA (0 kVA)</span>
+                                    </div>
+                                    <div class="flex justify-between items-baseline border-t border-brand-border/50 pt-2">
+                                        <span class="text-xs text-brand-muted">Corrente do Trafo:</span>
+                                        <span id="res_cmd_trafo_i" class="font-mono text-lg font-bold text-brand-text">0,00 A</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+
+            <div 
+        </div>
+    </main>
+
+    <div id="toast" class="fixed bottom-5 right-5 bg-brand-card border border-brand-accent text-brand-text text-xs px-4 py-2.5 rounded-lg shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none flex items-center gap-2 z-50">
+        <i class="fa-solid fa-check text-brand-accent"></i>
+        <span id="toast-msg">Copiado para a área de transferência!</span>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fa-solid fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.className = 'fa-solid fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const icon = document.getElementById('theme-icon');
+            if(icon) {
+                icon.className = document.documentElement.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            }
+            if (typeof initTool === 'function') {
+                initTool();
+            }
+        });
+
+        const SQRT3 = 1.73, TRAFO_CATALOG_VA = [150, 500, 750, 1e3, 1500, 2e3, 3e3];
+        const FAN_CATALOG = [
+            { m3: 25, label: "25M³ - 230VAC 92X92" },
+            { m3: 72, label: "72M³ - 230VAC 124X124" },
+            { m3: 125, label: "125M³ - 230VAC 177X177" },
+            { m3: 191, label: "191M³ - 230VAC 224X224" },
+            { m3: 280, label: "280M³ - 230VAC 224X224" },
+            { m3: 716, label: "716M³ - 230VAC 292X292" },
+            { m3: 910, label: "910M³ - 230VAC 292X292" }
+        ];
+        let currentMontagem = "frontal";
+
+        function selectMontagem(e) {
+            currentMontagem = e;
+            ["frontal", "traseira", "superior"].forEach((t => {
+                const n = document.getElementById(`card-${t}`), o = document.getElementById(`badge-${t}`);
+                if (n && o) {
+                    t === e ? (n.className = "montagem-card cursor-pointer bg-brand-input border-2 border-brand-accent rounded-xl p-4 flex flex-col justify-between space-y-3", o.className = "text-[10px] font-mono text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded font-semibold", o.textContent = "Ativo", n.style.opacity = "1") : (n.className = "montagem-card cursor-pointer bg-brand-input border-2 border-brand-border rounded-xl p-4 flex flex-col justify-between space-y-3 opacity-80 hover:opacity-100", o.className = "text-[10px] font-mono text-brand-muted bg-brand-card border border-brand-border px-2 py-0.5 rounded", o.textContent = "Selecionar", n.style.opacity = "0.8")
+                }
+            }));
+            if (typeof calcBusbar === 'function') calcBusbar();
+        }
+
+        function calcIKwMono() {
+            const e = parseFloat(document.getElementById("ikw_mono_p")?.value), t = parseFloat(document.getElementById("ikw_mono_v")?.value), n = document.getElementById("res_ikw_mono");
+            if (!n) return;
+            if (!e || !t || 0 === t) return void (n.innerText = "0.00 A");
+            const o = 1e3 * e / t; n.innerText = o.toFixed(2) + " A";
+        }
+
+        function calcIKwTri() {
+            const e = parseFloat(document.getElementById("ikw_tri_p")?.value), t = parseFloat(document.getElementById("ikw_tri_v")?.value), n = document.getElementById("res_ikw_tri");
+            if (!n) return;
+            if (!e || !t || 0 === t) return void (n.innerText = "0.00 A");
+            const o = 1e3 * e / (t * SQRT3); n.innerText = o.toFixed(2) + " A";
+        }
+
+        function calcKvaMono() {
+            const e = parseFloat(document.getElementById("kva_mono_i")?.value), t = parseFloat(document.getElementById("kva_mono_v")?.value), n = document.getElementById("res_kva_mono");
+            if (!n) return;
+            if (!e || !t) return void (n.innerText = "0.00 kVA");
+            const o = e * t / 1e3; n.innerText = o.toFixed(2) + " kVA";
+        }
+
+        function calcKvaTri() {
+            const e = parseFloat(document.getElementById("kva_tri_i")?.value), t = parseFloat(document.getElementById("kva_tri_v")?.value), n = document.getElementById("res_kva_tri");
+            if (!n) return;
+            if (!e || !t) return void (n.innerText = "0.00 kVA");
+            const o = e * t * SQRT3 / 1e3; n.innerText = o.toFixed(2) + " kVA";
+        }
+
+        function calcIpk() {
+            const e = parseFloat(document.getElementById("icw_val")?.value), t = document.getElementById("icw_unit")?.value, n = document.getElementById("res_ipk_cos"), o = document.getElementById("res_ipk_n"), a = document.getElementById("res_ipk_ka"), r = document.getElementById("res_ipk_a");
+            if (!a || !r) return;
+            if (!e || e <= 0) { if(n)n.innerText = "--"; if(o)o.innerText = "--"; a.innerText = "0.0 kA"; r.innerText = "0 A"; return; }
+            const i = "a" === t ? e / 1e3 : e;
+            let c = 0, l = 0, m = "";
+            i <= 5 ? (c = .7, l = 1.5, m = "row-icw-1") : i <= 10 ? (c = .5, l = 1.7, m = "row-icw-2") : i <= 20 ? (c = .3, l = 2, m = "row-icw-3") : i <= 50 ? (c = .25, l = 2.1, m = "row-icw-4") : (c = .2, l = 2.2, m = "row-icw-5");
+            const s = i * l, u = 1e3 * s;
+            if(n)n.innerText = c.toFixed(2).replace(".", ",");
+            if(o)o.innerText = l.toFixed(1).replace(".", ",");
+            a.innerText = s.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 }) + " kA";
+            r.innerText = u.toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " A";
+        }
+
+        function calcMotor() {
+            const e = parseFloat(document.getElementById("motor_kw")?.value), t = document.getElementById("motor_unit")?.value, n = parseFloat(document.getElementById("motor_v")?.value), o = document.getElementById("res_i_motor"), a = document.getElementById("res_i_disj");
+            if (!o || !a) return;
+            if (!e || !n || 0 === n) { o.innerText = "0.00 A"; a.innerText = "0.00 A"; return; }
+            let r = e; "cv" === t ? r = 736 * e / 1e3 : "hp" === t && (r = 746 * e / 1e3);
+            const i = 1e3 * r / n / 1.73 / .9 / .9, c = 1.15 * i;
+            o.innerText = i.toFixed(2) + " A";
+            a.innerText = c.toFixed(2) + " A";
+        }
+
+        function calcTrafoComando() {
+            const e = parseFloat(document.getElementById("trafo_cmd_v")?.value); 
+            let t = 0;
+            for (let e = 1; e <= 6; e++) {
+                const qElem = document.getElementById(`cmd_q${e}`);
+                const pElem = document.getElementById(`cmd_p${e}`);
+                const totElem = document.getElementById(`cmd_tot${e}`);
+                if (qElem && pElem && totElem) {
+                    const n = (parseFloat(qElem.value) || 0) * (parseFloat(pElem.value) || 0);
+                    t += n; totElem.innerText = n.toLocaleString("pt-BR");
+                }
+            }
+            const n = document.getElementById("res_cmd_p_tot"), o = document.getElementById("res_cmd_i_tot"), a = document.getElementById("res_cmd_trafo_va"), r = document.getElementById("res_cmd_trafo_i");
+            if (!n) return;
+            if (t <= 0 || !e) { n.innerText = "0 W"; if(o)o.innerText = "0,00 A"; if(a)a.innerText = "0 VA (0 kVA)"; if(r)r.innerText = "0,00 A"; return; }
+            const i = t / e; let c = TRAFO_CATALOG_VA[TRAFO_CATALOG_VA.length - 1];
+            for (let e of TRAFO_CATALOG_VA) if (t <= e) { c = e; break; }
+            const l = c / 1e3, m = c / e;
+            n.innerText = t.toLocaleString("pt-BR") + " W";
+            if(o)o.innerText = i.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " A";
+            if(a)a.innerText = `${c}VA(${l.toLocaleString("pt-BR")}kVA)`;
+            if(r)r.innerText = m.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " A";
+        }
+
+        function calcTrafoTri() {
+            const e = parseFloat(document.getElementById("trafo_tri_kva")?.value), t = parseFloat(document.getElementById("trafo_tri_v")?.value), n = document.getElementById("res_trafo_tri");
+            if (!n) return;
+            if (!e || !t || 0 === t) return void (n.innerText = "0.00 A");
+            const o = 1e3 * e / (t * SQRT3); n.innerText = o.toFixed(2) + " A";
+        }
+
+        function calcTrafoMono() {
+            const e = parseFloat(document.getElementById("trafo_mono_kva")?.value), t = parseFloat(document.getElementById("trafo_mono_v")?.value), n = document.getElementById("res_trafo_mono");
+            if (!n) return;
+            if (!e || !t || 0 === t) return void (n.innerText = "0.00 A");
+            const o = 1e3 * e / t; n.innerText = o.toFixed(2) + " A";
+        }
+
+        function calcTrafoFull() {
+            const e = document.getElementById("icc_system")?.value, t = parseFloat(document.getElementById("z_percent")?.value), n = parseFloat(document.getElementById("z_vll")?.value);
+            let o = parseFloat(document.getElementById("z_s")?.value);
+            const a = document.getElementById("z_s_unit")?.value, r = document.getElementById("res_trafo_in"), i = document.getElementById("res_trafo_z"), c = document.getElementById("res_trafo_icc");
+            if (!r) return;
+            if (!t || !n || !o || 0 === t || 0 === n || 0 === o) { r.innerText = "0.00 A"; if(i)i.innerText = "0.0000 Ω"; if(c)c.innerText = "0.00 A (0 kA)"; return; }
+            const l = "kva" === a ? 1e3 * o : o; let m = 0;
+            m = "tri" === e ? l / (n * SQRT3) : l / n;
+            const d = t / 100 * (Math.pow(n, 2) / l), s = m / (t / 100), u = s / 1e3;
+            r.innerText = m.toFixed(2) + " A";
+            if(i)i.innerText = d.toFixed(4) + " Ω";
+            if(c)c.innerText = `${s.toFixed(2)}A(${u.toFixed(2)}kA)`;
+        }
+
+        function updateTotalLosses() {
+            let e = (parseFloat(document.getElementById("comp_loss_1")?.value) || 0) + (parseFloat(document.getElementById("comp_loss_2")?.value) || 0) + (parseFloat(document.getElementById("comp_loss_3")?.value) || 0) + (parseFloat(document.getElementById("comp_loss_4")?.value) || 0) + (parseFloat(document.getElementById("comp_loss_5")?.value) || 0);
+            if (e > 0) {
+                const pd = document.getElementById("clim_pd");
+                const pdUnit = document.getElementById("clim_pd_unit");
+                if(pd) pd.value = e;
+                if(pdUnit) pdUnit.value = "w";
+            }
+            calcClimatizacao();
+        }
+
+        function calcClimatizacao() {
+            let e = parseFloat(document.getElementById("clim_pd")?.value);
+            const t = document.getElementById("clim_pd_unit")?.value, n = parseFloat(document.getElementById("clim_k_factor")?.value);
+            let o = parseFloat(document.getElementById("clim_h")?.value), a = parseFloat(document.getElementById("clim_w")?.value), r = parseFloat(document.getElementById("clim_d")?.value);
+            const doors = parseInt(document.getElementById("clim_doors")?.value) || 1;
+            const dimRadio = document.querySelector('input[name="dim_unit"]:checked');
+            if (!dimRadio && document.getElementById("clim_h")) return;
+            const i = dimRadio ? dimRadio.value : "mm";
+            const c = parseFloat(document.getElementById("clim_pos")?.value), l = parseFloat(document.getElementById("clim_te")?.value), m = parseFloat(document.getElementById("clim_ti")?.value), d = document.getElementById("res_clim_btu"), s = document.getElementById("res_clim_watts"), u = document.getElementById("res_clim_m3h"), _ = document.getElementById("res_clim_cfm"), g = document.getElementById("res_clim_grelha"), volBox = document.getElementById("res_clim_vol"), T = document.getElementById("res_clim_dt"), y = document.getElementById("res_clim_diag"), f_rec = document.getElementById("res_clim_fan_rec");
+            
+            if (!s) return;
+            if (isNaN(e) || isNaN(a) || isNaN(o) || isNaN(r) || isNaN(l) || isNaN(m)) { if(d)d.innerText = "0,00 BTU"; s.innerText = "0,00 W"; if(u)u.innerText = "0,00 m³/h"; if(_)_.innerText = "0,00 CFM"; if(g)g.innerText = "0,0000 m²"; if(volBox)volBox.innerText = "0.00 m³"; if(T)T.innerText = "0 °C"; if(y)y.innerText = "--"; if(f_rec)f_rec.innerText = "--"; return; }
+            
+            const v = "kw" === t ? 1e3 * e : e; 
+            let hM = o, wM = a, dM = r;
+            if ("mm" === i) { hM /= 1e3; wM /= 1e3; dM /= 1e3; }
+            
+            const volumeTotal = hM * wM * dM;
+            const B = (hM * wM * 2 + hM * dM * 2 + wM * dM) * c;
+            const E = l - m; 
+            
+            let A = v + (n * B * E); 
+            let diagText = "";
+            const F = 3.41214 * A; 
+            
+            const totalM3h = A * 3.0 / (E > 0 ? E : 1); 
+            const m3hPerDoor = totalM3h / (doors > 0 ? doors : 1);
+            const C = totalM3h * 0.58857; 
+            const gridArea = totalM3h / 10797.33; 
+
+            if (A <= 0) { diagText = "Troca Natural Suficiente"; if(y)y.className = "text-brand-accent font-semibold"; A = 0; } else { diagText = "Ar-Condicionado / Exaustor Forçada"; if(y)y.className = "text-sky-500 dark:text-sky-400 font-semibold"; }
+            
+            let bestFan = "Nenhum necessário";
+            if (totalM3h > 0) {
+                let found = FAN_CATALOG.find(fan => fan.m3 >= m3hPerDoor);
+                if (found) {
+                    bestFan = `${doors}x Exaustor ${found.label} (${Math.round(m3hPerDoor)} m³/h por porta)`;
+                } else {
+                    bestFan = `${doors}x Exaustor ${FAN_CATALOG[FAN_CATALOG.length-1].label} (${Math.round(m3hPerDoor)} m³/h por porta)`;
+                }
+            }
+
+            s.innerText = A.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " W";
+            if(d)d.innerText = F.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " BTU";
+            if (u) u.innerText = totalM3h.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " m³/h";
+            if (_) _.innerText = C.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " CFM";
+            if (g) g.innerText = gridArea.toLocaleString("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 }) + " m²";
+            if (volBox) volBox.innerText = volumeTotal.toFixed(2) + " m³";
+            if (T) T.innerText = E.toFixed(1) + " °C";
+            if (y) y.innerText = diagText;
+            if (f_rec) f_rec.innerText = bestFan;
+        }
+
+        function calcBusbar() {
+            const current = parseFloat(document.getElementById("bus_current")?.value) || 0;
+            const icw = parseFloat(document.getElementById("bus_icw")?.value) || 0;
+            const mainRec = document.getElementById("bus_main_rec");
+            const altRec = document.getElementById("bus_alt_rec");
+            const badge = document.getElementById("bus_badge");
+            if (!mainRec) return;
+            if(badge) badge.textContent = `Aprovado(${current}A/${icw}kA)`;
+
+            if (currentMontagem === "frontal") {
+                if (current <= 630 && icw <= 37) {
+                    mainRec.textContent = "BARRA CHATA (ATÉ 630A / 37kA)";
+                    altRec.textContent = "Corrente Nominal: 630A | Corrente Máxima de Curto (Icw): 37kA";
+                } else if (current <= 800 && icw <= 37) {
+                    mainRec.textContent = "PLS800 - SISTEMA RILINE (800A / 37kA)";
+                    altRec.textContent = "Corrente Nominal: 800A | Corrente Máxima de Curto (Icw): 37kA";
+                } else if (current <= 1600 && icw <= 37) {
+                    mainRec.textContent = "PLS1600 - SUPORTE DE 3 POLOS (1600A / 37kA)";
+                    altRec.textContent = "Corrente Nominal: 1600A | Corrente Máxima de Curto (Icw): 37kA";
+                } else {
+                    mainRec.textContent = "PLS1600 - SUPORTE DE 4 POLOS (1600A / 50kA)";
+                    altRec.textContent = "Corrente Nominal: 1600A | Corrente Máxima de Curto (Icw): 50kA";
+                }
+            } else if (currentMontagem === "traseira") {
+                if (current <= 1680 && icw <= 50) {
+                    mainRec.textContent = "SISTEMA 185 - CÓD. 9677.500 (1680A / 50kA)";
+                    altRec.textContent = "Corrente Nominal: 1680A | Corrente Máxima de Curto (Icw): 50kA";
+                } else {
+                    mainRec.textContent = "SUPORTE TRASEIRO - CÓD. 9686.070 (2960A / 100kA)";
+                    altRec.textContent = "Corrente Nominal: 2960A | Corrente Máxima de Curto (Icw): 100kA";
+                }
+            } else if (currentMontagem === "superior") {
+                if (current <= 2960 && icw <= 100) {
+                    mainRec.textContent = "SUPORTE DE BARRAS 30X10 OU 50X10 (2960A / 100kA)";
+                    altRec.textContent = "Corrente Nominal: 2960A | Corrente Máxima de Curto (Icw): 100kA (Cód. 9686.060)";
+                } else {
+                    mainRec.textContent = "SISTEMA FORA DO PADRÃO";
+                    altRec.textContent = "Consulte a engenharia.";
+                }
+            }
+        }
+
+        function calcCvToKw() {
+            const e = parseFloat(document.getElementById("conv_cv")?.value), t = document.getElementById("res_cv_kw"), n = document.getElementById("res_cv_w");
+            if (!t) return;
+            if (!e) { t.innerText = "0.00 kW"; if(n)n.innerText = "0 W"; return; }
+            const o = 736 * e, a = o / 1e3;
+            t.innerText = a.toFixed(2) + " kW";
+            if(n)n.innerText = o.toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " W";
+        }
+
+        function calcHpToKw() {
+            const e = parseFloat(document.getElementById("conv_hp")?.value), t = document.getElementById("res_hp_kw"), n = document.getElementById("res_hp_w");
+            if (!t) return;
+            if (!e) { t.innerText = "0.00 kW"; if(n)n.innerText = "0 W"; return; }
+            const o = 746 * e, a = o / 1e3;
+            t.innerText = a.toFixed(2) + " kW";
+            if(n)n.innerText = o.toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " W";
+        }
+
+        function copyToClipboard(e) {
+            const t = document.getElementById(e);
+            if (!t) return;
+            const n = t.innerText;
+            navigator.clipboard.writeText(n).then((() => {
+                const e = document.getElementById("toast");
+                if(e) {
+                    e.classList.remove("opacity-0"), e.classList.add("opacity-100"), setTimeout((() => { e.classList.remove("opacity-100"), e.classList.add("opacity-0") }), 2e3)
+                }
+            }))
+        }
+
+        function resetAllInputs() {
+            document.querySelectorAll("input").forEach((e => { "radio" !== e.type && "checkbox" !== e.type && (e.value = e.getAttribute("value") || "") }));
+            document.querySelectorAll("select").forEach((e => { e.selectedIndex = 0 }));
+            initTool();
+        }
+
+        function initTool() {
+            try { calcIKwMono(); } catch(err){}
+            try { calcIKwTri(); } catch(err){}
+            try { calcKvaMono(); } catch(err){}
+            try { calcKvaTri(); } catch(err){}
+            try { calcIpk(); } catch(err){}
+            try { calcMotor(); } catch(err){}
+            try { calcTrafoComando(); } catch(err){}
+            try { calcTrafoTri(); } catch(err){}
+            try { calcTrafoMono(); } catch(err){}
+            try { calcTrafoFull(); } catch(err){}
+            try { calcClimatizacao(); } catch(err){}
+            try { calcBusbar(); } catch(err){}
+            try { calcCvToKw(); } catch(err){}
+            try { calcHpToKw(); } catch(err){}
+        }
+
+        window.onload = function() {
+            initTool();
+        };
+        function obterNomeFerramentaLimpo() {
+        let path = window.location.pathname;
+        let arquivo = path.split('/').pop().split('\\').pop();
+        return arquivo.replace('.html', '').trim();
+    }
+
+    // 1. OUVIR OS DADOS ENVIADOS PELA PÁGINA PRINCIPAL AO ABRIR
+    window.addEventListener('message', (event) => {
+        if (event.data && event.data.tipo === 'CARREGAR_DADOS_FERRAMENTA') {
+            let dadosSalvos = event.data.dados;
+            if (dadosSalvos) {
+                Object.keys(dadosSalvos).forEach(chaveInput => {
+                    let el = document.getElementById(chaveInput) || document.querySelector(`[name="${chaveInput}"]`);
+                    if (el) {
+                        if (el.type === 'checkbox' || el.type === 'radio') {
+                            el.checked = dadosSalvos[chaveInput];
+                        } else {
+                            el.value = dadosSalvos[chaveInput];
+                            el.dispatchEvent(new Event('input', { bubbles: true }));
+                            el.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                });
+                console.log("[OMINI TOOL] Dados carregados via PostMessage com sucesso!");
+            }
+        }
+    });
+
+    // 2. SALVAR E ENVIAR OS DADOS PARA O PAI GRAVAR
+    function salvarEFecharFerramenta() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const painelId = urlParams.get('painelId');
+
+        let dadosFerramenta = {};
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            if (el.id || el.name) {
+                let chave = el.id || el.name;
+                if (el.type === 'checkbox' || el.type === 'radio') {
+                    dadosFerramenta[chave] = el.checked;
+                    if (el.type === 'radio' && el.checked) {
+                        dadosFerramenta[el.name] = el.value;
+                    }
+                } else {
+                    dadosFerramenta[chave] = el.value;
+                }
+            }
+        });
+
+        if (window.exportarDadosCanvas && typeof window.exportarDadosCanvas === 'function') {
+            dadosFerramenta.canvasData = window.exportarDadosCanvas();
+        }
+
+        let nomeFerramenta = obterNomeFerramentaLimpo();
+
+        // Envia os dados direto para o pai salvar na sessão dele (bypassando o bloqueio de storage do iframe)
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+                tipo: 'SALVAR_DADOS_FERRAMENTA',
+                painelId: painelId,
+                ferramenta: nomeFerramenta,
+                dados: dadosFerramenta
+            }, '*');
+        }
+
+        // Fecha o modal
+        if (window.parent && window.parent.app && typeof window.parent.app.fecharModalFerramentaIframe === 'function') {
+            window.parent.app.fecharModalFerramentaIframe();
+        } else {
+            window.history.back();
+        }
+    }
+
+    function fecharFerramentaSemSalvar() {
+        if (window.parent && window.parent.app && typeof window.parent.app.fecharModalFerramentaIframe === 'function') {
+            window.parent.app.fecharModalFerramentaIframe();
+        } else {
+            window.history.back();
+        }
+    }
+    </script>
+</body>
+</html>
