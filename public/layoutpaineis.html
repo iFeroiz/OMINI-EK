@@ -1371,10 +1371,10 @@ function applyDynInput() {
 
     if (tool === 'line') {
         if (isNaN(v1)) return;
-        snapshot();
-        let targetX = curDraw.start.x, targetY = curDraw.start.y;
         
+        let targetX = curDraw.start.x, targetY = curDraw.start.y;
         let angle = Math.atan2(curDraw.current.y - curDraw.start.y, curDraw.current.x - curDraw.start.x);
+        
         if (ortho) {
             const dx = Math.abs(curDraw.current.x - curDraw.start.x);
             const dy = Math.abs(curDraw.current.y - curDraw.start.y);
@@ -1384,31 +1384,22 @@ function applyDynInput() {
                 angle = (curDraw.current.y >= curDraw.start.y) ? Math.PI / 2 : -Math.PI / 2;
             }
         }
+        
         targetX = curDraw.start.x + Math.cos(angle) * v1;
         targetY = curDraw.start.y + Math.sin(angle) * v1;
 
-        const newLine = { type: 'line', x1: curDraw.start.x, y1: curDraw.start.y, x2: targetX, y2: targetY, colorHex: '#08c997', lineStyle: 'solid' };
-        entities.push(newLine);
-        
-        // CORREÇÃO: Atualiza o ponto de início da cadeia para o novo ponto final exato (sem disparar linha fantasma horizontal)
-        lineChainStart = { x: targetX, y: targetY };
-        etrackMarkers = [{ x: targetX, y: targetY }];
-        
-        activeDrawState = {
-            kind: 'draw',
-            tool: 'line',
-            start: lineChainStart,
-            current: { x: targetX, y: targetY },
-            hasMoved: false,
-            preview: { type: 'line', x1: targetX, y1: targetY, x2: targetX, y2: targetY }
-        };
+        // CORREÇÃO: Atualiza apenas o ponto final do preview em andamento (estica a linha atual).
+        // Nenhuma entidade é gravada na lista ainda, permitindo continuar a cadeia ou clicar para fixar.
+        curDraw.current = { x: targetX, y: targetY };
+        curDraw.preview.x2 = targetX;
+        curDraw.preview.y2 = targetY;
+        curDraw.hasMoved = true;
 
         userInteractedWithInput = false;
         dynTyping = false;
-        render(); renderPanels(); markDirty();
-        setStatus('Linha adicionada por distância. Clique ou digite para continuar.');
-        showDyn('Distância ao próximo ponto:', '');
-        $('dynVal1').focus();
+        render();
+        setStatus('Linha ajustada por distância. Clique no ponto final para confirmar ou continue desenhando.');
+        $('dynVal1').blur();
     } 
     else if (tool === 'circle') {
         if (isNaN(v1)) return;
@@ -1422,9 +1413,57 @@ function applyDynInput() {
     }
 }
 
+window.addEventListener('keydown', e => {
+    const activeEl = document.activeElement;
+    const isInputActive = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.tagName === 'SELECT');
+
+    if (e.key === 'Enter') {
+        if (isInputActive && activeEl.id === 'dynVal1') {
+            e.preventDefault();
+            applyDynInput();
+            return;
+        }
+    }
+
+    if (e.key === 'Escape') {
+        if (isInputActive) {
+            activeEl.blur();
+        }
+        setTool('select');
+        return;
+    }
+
+    if (isInputActive) return;
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIndices.size > 0) {
+            e.preventDefault();
+            cmdProc.execute('DELETE');
+        }
+    } else if (e.key.toLowerCase() === 'q') {
+        e.preventDefault();
+        setTool('line');
+    } else if (e.key.toLowerCase() === 'w') {
+        e.preventDefault();
+        setTool('rect');
+    } else if (e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        setTool('text');
+    } else if (e.key.toLowerCase() === 'r') {
+        e.preventDefault();
+        setTool('dim');
+    }
+});
+
 $('dynVal1').onkeydown = e => {
-    if (e.key === 'Enter') { applyDynInput(); }
-    else if (e.key === 'Escape') { setTool('select'); }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        applyDynInput();
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        hideDyn();
+        setTool('select');
+    }
 };
 
 canvas.onpointerdown = e => {
@@ -1461,12 +1500,13 @@ canvas.onpointerdown = e => {
         } else {
             if (activeDrawState && activeDrawState.hasMoved) {
                 snapshot();
-                entities.push({ type: 'line', x1: activeDrawState.start.x, y1: activeDrawState.start.y, x2: p.x, y2: p.y, colorHex: '#08c997', lineStyle: 'solid' });
-                lineChainStart = p;
-                etrackMarkers = [p];
+                const targetP = activeDrawState.preview.x2 !== undefined ? { x: activeDrawState.preview.x2, y: activeDrawState.preview.y2 } : p;
+                entities.push({ type: 'line', x1: activeDrawState.start.x, y1: activeDrawState.start.y, x2: targetP.x, y2: targetP.y, colorHex: '#08c997', lineStyle: 'solid' });
+                lineChainStart = targetP;
+                etrackMarkers = [targetP];
                 activeDrawState = {
-                    kind: 'draw', tool: 'line', start: p, current: p, hasMoved: false,
-                    preview: { type: 'line', x1: p.x, y1: p.y, x2: p.x, y2: p.y, colorHex: '#08c997' }
+                    kind: 'draw', tool: 'line', start: targetP, current: targetP, hasMoved: false,
+                    preview: { type: 'line', x1: targetP.x, y1: targetP.y, x2: targetP.x, y2: targetP.y, colorHex: '#08c997' }
                 };
                 render(); renderPanels(); markDirty();
                 setStatus('Linha adicionada. Clique para próxima linha ou ESC para encerrar.');
@@ -1622,18 +1662,6 @@ window.onpointerup = () => {
     }
     drag = null;
 };
-
-// Atalho de Teclado Global para DELETE
-window.addEventListener('keydown', e => {
-    if (e.key === 'Delete' || e.key === 'Backspace') {
-        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
-        if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return;
-        if (selectedIndices.size > 0) {
-            e.preventDefault();
-            cmdProc.execute('DELETE');
-        }
-    }
-});
 
 // ==========================================
 // FUNÇÃO DE EXPORTAÇÃO DWG / DXF COMPATÍVEL
