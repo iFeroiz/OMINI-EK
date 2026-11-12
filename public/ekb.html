@@ -55,7 +55,7 @@
             <div class="flex items-center space-x-4">
                 <div class="hidden sm:flex items-center space-x-2 text-xs text-gray-400 bg-dark-700/50 px-3 py-1.5 rounded-full border border-dark-600">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="doc-count-badge">4 arquivos catalogados</span>
+                    <span id="doc-count-badge">Carregando...</span>
                 </div>
             </div>
         </div>
@@ -96,13 +96,20 @@
                 </button>
             </div>
 
-            <!-- Botão de Vincular Pasta -->
-            <div class="flex justify-end mt-4">
+            <!-- Botões de Ação -->
+            <div class="flex justify-between items-center mt-4">
+                <button id="resync-btn" class="text-xs text-gray-400 hover:text-emerald-400 transition-colors flex items-center space-x-1 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Atualizar / Reindexar Pasta</span>
+                </button>
+
                 <button id="link-folder-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-dark-900 transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    <span>Vincular Pasta</span>
+                    <span>Vincular Nova Pasta</span>
                 </button>
             </div>
 
@@ -156,13 +163,12 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        // 1. IndexedDB para persistir referência de diretório local
-        const DB_NAME = 'OMINI_FilesDB';
-        const STORE_NAME = 'handles';
+        const DB_NAME = 'OMINI_CacheDB';
+        const STORE_NAME = 'documentsCache';
 
         function openDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
+                const request = indexedDB.open(DB_NAME, 2);
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -174,24 +180,27 @@
             });
         }
 
-        async function saveDirectoryHandle(handle) {
+        async function saveCachedDocuments(docs, folderName) {
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).put(handle, 'linkedFolder');
+            const store = tx.objectStore(STORE_NAME);
+            store.put(docs, 'cachedDocsList');
+            store.put(folderName, 'linkedFolderName');
             return tx.complete;
         }
 
-        async function getDirectoryHandle() {
+        async function getCachedDocuments() {
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
             return new Promise((resolve) => {
-                const req = tx.objectStore(STORE_NAME).get('linkedFolder');
-                req.onsuccess = () => resolve(req.result);
+                const req = store.get('cachedDocsList');
+                req.onsuccess = () => resolve(req.result || null);
                 req.onerror = () => resolve(null);
             });
         }
 
-        // Base de Dados Inicial
+        // Base de Dados Inicial Padrão
         let documentsDB = [
             {
                 id: 1,
@@ -199,8 +208,7 @@
                 type: "pdf",
                 manufacturer: "Siemens",
                 category: "Manuais/Siemens/Protecao",
-                content: "Catálogo técnico oficial da linha Siemens. Disjuntores miniatura 5SL1, 5SL6 e 5SY para proteção de instalações elétricas residenciais e industriais. Corrente nominal de 0.3 A até 63 A, curva C, capacidade de interrupção até 6kA. Especificações para CCM e QGBT.",
-                fileHandle: null
+                content: "Catálogo técnico oficial da linha Siemens. Disjuntores miniatura 5SL1, 5SL6 e 5SY para proteção de instalações elétricas residenciais e industriais. Corrente nominal de 0.3 A até 63 A, curva C, capacidade de interrupção até 6kA. Especificações para CCM e QGBT."
             },
             {
                 id: 2,
@@ -208,8 +216,7 @@
                 type: "docx",
                 manufacturer: "Siemens",
                 category: "Engenharia/Projetos/Siemens",
-                content: "Especificação técnica para painéis elétricos CCM e QGBT. Utilização obrigatória de disjuntores termomagnéticos 5SL1 para circuitos de comando auxiliares e chaves disjuntores 3RV2 para proteção de motores elétricos trifásicos. Tabela de ajuste de sobrecarga e correntes nominais.",
-                fileHandle: null
+                content: "Especificação técnica para painéis elétricos CCM e QGBT. Utilização obrigatória de disjuntores termomagnéticos 5SL1 para circuitos de comando auxiliares e chaves disjuntores 3RV2 para proteção de motores elétricos trifásicos. Tabela de ajuste de sobrecarga e correntes nominais."
             },
             {
                 id: 3,
@@ -217,8 +224,7 @@
                 type: "pdf",
                 manufacturer: "ABB",
                 category: "Manuais/ABB/Drives",
-                content: "Manual do usuário e guia de instalação rápida para Inversores ABB ACS580. Parâmetros de controle vetorial, diagramas de fiação, entradas digitais e analógicas, comunicação Modbus RTU integrada. Compatível com motores de indução e imãs permanentes.",
-                fileHandle: null
+                content: "Manual do usuário e guia de instalação rápida para Inversores ABB ACS580. Parâmetros de controle vetorial, diagramas de fiação, entradas digitais e analógicas, comunicação Modbus RTU integrada. Compatível com motores de indução e imãs permanentes."
             },
             {
                 id: 4,
@@ -226,13 +232,13 @@
                 type: "xlsx",
                 manufacturer: "Schneider",
                 category: "Comercial/Schneider",
-                content: "Tabela de preços atualizada Schneider Electric. Itens inclusos: disjuntores Acti9 iC60N, relés térmicos, contatores TeSys D, inversores de frequência Altivar ATV320 e softstarters ATS48. Códigos referência e descontos corporativos aplicáveis para integradores.",
-                fileHandle: null
+                content: "Tabela de preços atualizada Schneider Electric. Itens inclusos: disjuntores Acti9 iC60N, relés térmicos, contatores TeSys D, inversores de frequência Altivar ATV320 e softstarters ATS48. Códigos referência e descontos corporativos aplicáveis para integradores."
             }
         ];
 
         let currentFilter = 'all';
         let currentManufacturerFilter = 'all';
+        let activeDirectoryHandle = null;
 
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-btn');
@@ -242,6 +248,7 @@
         const statsText = document.getElementById('stats-text');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const linkFolderBtn = document.getElementById('link-folder-btn');
+        const resyncBtn = document.getElementById('resync-btn');
         const docCountBadge = document.getElementById('doc-count-badge');
         const manufacturerFilterContainer = document.getElementById('manufacturer-filter-container');
         const manufacturerPills = document.getElementById('manufacturer-pills');
@@ -269,7 +276,6 @@
                 clearBtn.classList.add('hidden');
             }
 
-            // 1. Filtro por tipo de arquivo
             let queryMatchedDocs = documentsDB.filter(doc => {
                 if (currentFilter === 'pdf' && doc.type !== 'pdf') return false;
                 if (currentFilter === 'docx' && doc.type !== 'docx' && doc.type !== 'xlsx') return false;
@@ -277,7 +283,6 @@
                 return true;
             });
 
-            // 2. Filtro por termos digitados na busca
             if (query) {
                 const terms = query.split(/\s+/).filter(t => t.length > 0);
                 queryMatchedDocs = queryMatchedDocs.filter(doc => {
@@ -292,10 +297,8 @@
                 });
             }
 
-            // 3. Extrair lista única de Fabricantes presentes na pesquisa atual
             updateManufacturerFilters(queryMatchedDocs);
 
-            // 4. Filtrar pelos fabricantes selecionados
             let finalResults = queryMatchedDocs;
             if (currentManufacturerFilter !== 'all') {
                 finalResults = queryMatchedDocs.filter(doc => doc.manufacturer === currentManufacturerFilter);
@@ -319,7 +322,6 @@
             manufacturerFilterContainer.classList.remove('hidden');
             manufacturerPills.innerHTML = '';
 
-            // Botão "Todos os fabricantes"
             const allBtn = document.createElement('button');
             allBtn.className = `mfg-btn px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
                 currentManufacturerFilter === 'all' 
@@ -333,7 +335,6 @@
             });
             manufacturerPills.appendChild(allBtn);
 
-            // Botão por fabricante
             manufacturers.forEach(mfg => {
                 const btn = document.createElement('button');
                 btn.className = `mfg-btn px-3 py-1 rounded-lg text-xs font-semibold border transition-all ${
@@ -393,29 +394,9 @@
                             </p>
                         </div>
                     </div>
-                    <button id="open-btn-${idx}" class="flex-shrink-0 w-10 h-10 rounded-xl bg-dark-700 hover:bg-emerald-600 hover:text-dark-900 text-gray-300 flex items-center justify-center transition-all border border-dark-600 cursor-pointer" title="Abrir arquivo">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                    </button>
                 `;
                 
                 resultsContainer.appendChild(card);
-
-                document.getElementById(`open-btn-${idx}`).addEventListener('click', async () => {
-                    try {
-                        if (doc.fileHandle) {
-                            const file = await doc.fileHandle.getFile();
-                            const url = URL.createObjectURL(file);
-                            window.open(url, '_blank');
-                        } else {
-                            alert(`Arquivo padrão do sistema: ${doc.name}`);
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        alert("Não foi possível abrir o arquivo diretamente: " + err.message);
-                    }
-                });
             });
         }
 
@@ -431,7 +412,7 @@
                             const subFiles = await scanDirectoryRecursive(entry, currentPath);
                             files = files.concat(subFiles);
                         } catch (subErr) {
-                            console.warn("Subdiretório ignorado por restrição de acesso:", currentPath);
+                            console.warn("Subdiretório ignorado:", currentPath);
                         }
                     }
                 }
@@ -441,8 +422,11 @@
             return files;
         }
 
-        async function indexDirectoryHandle(dirHandle) {
+        async function indexAndCacheFolder(dirHandle) {
+            docCountBadge.textContent = "Lendo e indexando arquivos...";
             const allScannedFiles = await scanDirectoryRecursive(dirHandle);
+            
+            let newDocsList = [...documentsDB.slice(0, 4)]; // Mantém os 4 padrões ou substitui por novos
             let loadedCount = 0;
 
             for (const item of allScannedFiles) {
@@ -451,11 +435,10 @@
                     const fileName = file.name;
                     const fileExt = fileName.split('.').pop().toLowerCase();
                     
-                    // Extração do Fabricante a partir do caminho da pasta
                     const pathParts = item.path.split('/');
                     let manufacturer = "";
                     if (pathParts.length > 1) {
-                        manufacturer = pathParts[0]; // Primeira pasta dentro do diretório raiz vinculado
+                        manufacturer = pathParts[0];
                     }
 
                     let textSample = "";
@@ -465,27 +448,23 @@
                         textSample = `Arquivo técnico localizado em: ${item.path}. Extensão .${fileExt}.`;
                     }
 
-                    const existingIdx = documentsDB.findIndex(d => d.name === fileName && d.category.includes(dirHandle.name));
-                    const docObj = {
-                        id: documentsDB.length + 1,
+                    newDocsList.push({
+                        id: newDocsList.length + 1,
                         name: fileName,
                         type: fileExt,
                         manufacturer: manufacturer,
                         category: `Pasta / ${dirHandle.name}/${item.path.substring(0, item.path.lastIndexOf('/') + 1)}`.replace(/\/$/, ''),
-                        content: textSample.slice(0, 1000),
-                        fileHandle: item.entry
-                    };
-
-                    if (existingIdx >= 0) {
-                        documentsDB[existingIdx] = docObj;
-                    } else {
-                        documentsDB.push(docObj);
-                    }
+                        content: textSample.slice(0, 1000)
+                    });
                     loadedCount++;
                 } catch (fileErr) {
-                    console.warn("Arquivo ignorado por restrição de leitura:", item.path);
+                    console.warn("Arquivo ignorado:", item.path);
                 }
             }
+
+            // Salva na memória do navegador (IndexedDB)
+            documentsDB = newDocsList;
+            await saveCachedDocuments(documentsDB, dirHandle.name);
 
             docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
             performSearch();
@@ -500,9 +479,8 @@
 
             try {
                 const dirHandle = await window.showDirectoryPicker();
-                await saveDirectoryHandle(dirHandle);
-                const loadedCount = await indexDirectoryHandle(dirHandle);
-                alert(`Sucesso! ${loadedCount} arquivos da pasta "${dirHandle.name}" foram vinculados.`);
+                const loadedCount = await indexAndCacheFolder(dirHandle);
+                alert(`Sucesso! ${loadedCount} arquivos da pasta "${dirHandle.name}" foram indexados e salvos em cache.`);
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error(err);
@@ -511,23 +489,35 @@
             }
         }
 
-        async function loadSavedFolderIfExists() {
+        // Carregamento instantâneo do Cache na inicialização
+        async function initApp() {
             try {
-                const savedHandle = await getDirectoryHandle();
-                if (!savedHandle) return;
-
-                let permission = await savedHandle.queryPermission({ mode: 'read' });
-                if (permission !== 'granted') {
-                    permission = await savedHandle.requestPermission({ mode: 'read' });
-                }
-
-                if (permission === 'granted') {
-                    await indexDirectoryHandle(savedHandle);
+                const cachedDocs = await getCachedDocuments();
+                if (cachedDocs && cachedDocs.length > 0) {
+                    documentsDB = cachedDocs;
+                    docCountBadge.textContent = `${documentsDB.length} arquivos em cache`;
                 }
             } catch (err) {
-                console.warn("Não foi possível restaurar a pasta automaticamente:", err);
+                console.warn("Erro ao ler cache local:", err);
             }
+            performSearch();
         }
+
+        // Botão de reescanear a pasta caso tenha adicionado novos arquivos no PC
+        resyncBtn.addEventListener('click', async () => {
+            if (!window.showDirectoryPicker) {
+                alert("Seu navegador não suporta reindexação direta.");
+                return;
+            }
+            try {
+                alert("Por favor, selecione novamente a pasta dos arquivos para atualizar o cache.");
+                const dirHandle = await window.showDirectoryPicker();
+                const loadedCount = await indexAndCacheFolder(dirHandle);
+                alert(`Cache atualizado com sucesso! ${loadedCount} arquivos carregados.`);
+            } catch (err) {
+                if (err.name !== 'AbortError') console.error(err);
+            }
+        });
 
         // Event Listeners
         searchInput.addEventListener('input', () => {
@@ -559,8 +549,7 @@
         linkFolderBtn.addEventListener('click', linkLocalFolder);
 
         // Inicialização
-        performSearch();
-        window.addEventListener('DOMContentLoaded', loadSavedFolderIfExists);
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
