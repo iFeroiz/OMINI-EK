@@ -121,7 +121,7 @@
         <div class="bg-brand-card/50 border-b border-brand-border px-6 py-2 flex items-center justify-between text-xs text-brand-muted">
             <div class="flex items-center space-x-2">
                 <i class="fa-solid fa-circle-info text-brand-accent"></i>
-                <span>Arraste os cards de projetos. Cada painel armazena isoladamente seus dados, cálculos e desenhos.</span>
+                <span>Arraste os cards de projetos. Cada painel armazena isoladamente seus dados, cálculos e listas de materiais.</span>
             </div>
             <div class="flex items-center space-x-3">
                 <button onclick="app.exportarDados()" class="hover:text-brand-text transition"><i class="fa-solid fa-download mr-1"></i> Exportar JSON</button>
@@ -162,7 +162,7 @@
             </div>
 
             <div class="px-6 py-3 border-t border-brand-border bg-brand-aside flex items-center justify-between">
-                <span class="text-xs text-brand-muted"><i class="fa-solid fa-screwdriver-wrench text-brand-accent mr-1"></i> Clique em qualquer painel para abrir a Folha de Dados, o Checklist, os Cálculos e os Desenhos específicos.</span>
+                <span class="text-xs text-brand-muted"><i class="fa-solid fa-screwdriver-wrench text-brand-accent mr-1"></i> Clique em qualquer painel para abrir a Folha de Dados, a Lista de Materiais, o Checklist e os Cálculos.</span>
                 <button onclick="app.fecharModalProjeto()" class="bg-brand-card hover:bg-brand-border text-brand-text text-xs font-semibold px-4 py-2 rounded-lg transition border border-brand-border">Fechar</button>
             </div>
         </div>
@@ -193,8 +193,11 @@
                 <button onclick="app.trocarAbaPainel('dados')" id="tab-btn-dados" class="py-2.5 px-3 border-b-2 font-semibold border-brand-accent text-brand-accent flex items-center space-x-2 transition">
                     <i class="fa-solid fa-file-lines"></i><span>Folha de Dados</span>
                 </button>
+                <button onclick="app.trocarAbaPainel('lista')" id="tab-btn-lista" class="py-2.5 px-3 border-b-2 border-transparent text-brand-muted hover:text-brand-text font-semibold flex items-center space-x-2 transition">
+                    <i class="fa-solid fa-list-check"></i><span>Lista de Materiais & Proposta</span>
+                </button>
                 <button onclick="app.trocarAbaPainel('checklist')" id="tab-btn-checklist" class="py-2.5 px-3 border-b-2 border-transparent text-brand-muted hover:text-brand-text font-semibold flex items-center space-x-2 transition">
-                    <i class="fa-solid fa-list-check"></i><span>Checklist Técnico</span>
+                    <i class="fa-solid fa-square-check"></i><span>Checklist Técnico</span>
                 </button>
                 <button onclick="app.trocarAbaPainel('calculos')" id="tab-btn-calculos" class="py-2.5 px-3 border-b-2 border-transparent text-brand-muted hover:text-brand-text font-semibold flex items-center space-x-2 transition">
                     <i class="fa-solid fa-calculator"></i><span>Cálculos & Ferramentas</span>
@@ -362,6 +365,20 @@
                     </section>
                 </div>
 
+                <!-- LISTA DE MATERIAIS & PROPOSTA (Referenciando via iframe a ferramenta lista.html) -->
+                <div id="tab-content-lista" class="hidden h-full flex flex-col min-h-[500px]">
+                    <div class="bg-brand-card border border-brand-accent/30 rounded-xl p-3 mb-3 flex items-center justify-between shrink-0">
+                        <div class="flex items-center space-x-2">
+                            <i class="fa-solid fa-list-check text-brand-accent"></i>
+                            <span class="text-xs font-bold text-brand-text">Gestão de Proposta & Lista de Materiais</span>
+                        </div>
+                        <span class="text-[11px] text-brand-muted">Vinculado e isolado exclusivamente para este painel</span>
+                    </div>
+                    <div class="flex-1 bg-brand-dark relative w-full h-full overflow-hidden rounded-xl border border-brand-border">
+                        <iframe id="iframe-lista-src" src="" class="w-full h-full border-0 bg-brand-dark"></iframe>
+                    </div>
+                </div>
+
                 <div id="tab-content-checklist" class="hidden h-full">
                     <div class="inline-flex space-x-5 h-full min-h-[520px] pb-2 min-w-full">
                         <div class="w-80 flex-shrink-0 bg-brand-card text-brand-text rounded-xl p-4 flex flex-col shadow-xl border border-brand-border relative overflow-hidden">
@@ -510,7 +527,7 @@
 
             <!-- Footer com Botão Salvar e Fechar -->
             <div class="px-6 py-3 border-t border-brand-border bg-brand-aside flex items-center justify-between">
-                <span class="text-xs text-brand-muted">Folha de Dados, Checklist e Ferramentas isolados por painel.</span>
+                <span class="text-xs text-brand-muted">Folha de Dados, Lista, Checklist e Ferramentas isolados por painel.</span>
                 <button onclick="app.fecharModalChecklistParaPainel()" class="bg-brand-accent hover:opacity-90 text-brand-dark text-xs font-bold px-6 py-2 rounded-lg transition shadow-lg flex items-center space-x-2">
                     <i class="fa-solid fa-check"></i>
                     <span>Salvar e Fechar</span>
@@ -695,7 +712,6 @@
                 this.init();
             }
 
-            // OUVINTE DE MENSAGENS DO IFRAME (ANTIBLOQUEIO DE STORAGE)
             initListenersPostMessage() {
                 window.addEventListener('message', (event) => {
                     if (event.data && event.data.tipo === 'SALVAR_DADOS_FERRAMENTA') {
@@ -707,7 +723,6 @@
                                 painel.calculos = painel.calculos || {};
                                 painel.calculos[ferramenta] = dados;
                                 this.salvarDadosLocal();
-                                console.log(`[OMINI PRINCIPAL] Dados salvos com sucesso para a ferramenta: ${ferramenta}`);
                             }
                         }
                     }
@@ -725,68 +740,42 @@
             }
 
             carregarDados() {
-                const chaves = [
-                    'sat_hierarquia_projetos_v5',
-                    'sat_hierarquia_projetos_v4',
-                    'sat_hierarquia_projetos_v3',
-                    'sat_hierarquia_projetos_v2',
-                    'sat_hierarquia_projetos_v1',
-                    'sat_hierarquia_projetos',
-                    'omini_projetos',
-                    'sat_projetos'
-                ];
-
+                const chaves = ['sat_hierarquia_projetos_v5', 'sat_hierarquia_projetos_v4', 'sat_hierarquia_projetos_v3', 'omini_projetos'];
                 for (let chave of chaves) {
                     const dadosSalvos = localStorage.getItem(chave);
                     if (dadosSalvos) {
                         try {
                             const parseado = JSON.parse(dadosSalvos);
-                            let listaProjetos = null;
-
-                            if (Array.isArray(parseado)) {
-                                listaProjetos = parseado;
-                            } else if (parseado && Array.isArray(parseado.projetos)) {
-                                listaProjetos = parseado.projetos;
-                            }
-
+                            let listaProjetos = Array.isArray(parseado) ? parseado : (parseado?.projetos || null);
                             if (listaProjetos && listaProjetos.length > 0) {
-                                let projetosLimpos = listaProjetos.map(p => {
-                                    return {
-                                        id: p.id || ('proj_' + Math.random().toString(36).substr(2, 9)),
-                                        titulo: p.titulo || p.nome || p.title || 'Projeto sem Título',
-                                        tags: Array.isArray(p.tags) ? p.tags : (p.tag ? [p.tag] : ['Projeto']),
-                                        status: this.normalizarStatus(p.status || p.coluna || p.state),
-                                        data: p.data || p.prazo || p.date || 'nov 13',
-                                        paineis: (Array.isArray(p.paineis) ? p.paineis : []).map(painel => {
-                                            return {
-                                                id: painel.id || ('painel_' + Math.random().toString(36).substr(2, 9)),
-                                                titulo: painel.titulo || painel.nome || 'Painel',
-                                                tag: painel.tag || 'PAINEL',
-                                                checklist: painel.checklist || this.gerarChecklistVazio(),
-                                                folhaDados: painel.folhaDados || this.gerarFolhaDadosVazia(),
-                                                calculos: painel.calculos || {},
-                                                desenhos: painel.desenhos || {}
-                                            };
-                                        })
-                                    };
-                                });
-
-                                let tagsGlobais = (parseado && Array.isArray(parseado.tagsGlobais)) 
-                                    ? parseado.tagsGlobais 
-                                    : ["10.26.062", "Argentina", "Urgente", "10.26.065", "Veolia", "Alta"];
-
-                                let dadosFinais = { tagsGlobais, projetos: projetosLimpos };
-                                localStorage.setItem('sat_hierarquia_projetos_v5', JSON.stringify(dadosFinais));
-                                return dadosFinais;
+                                let projetosLimpos = listaProjetos.map(p => ({
+                                    id: p.id || ('proj_' + Math.random().toString(36).substr(2, 9)),
+                                    titulo: p.titulo || p.nome || 'Projeto sem Título',
+                                    tags: Array.isArray(p.tags) ? p.tags : ['Projeto'],
+                                    status: this.normalizarStatus(p.status || 'nao_iniciado'),
+                                    data: p.data || 'nov 13',
+                                    paineis: (Array.isArray(p.paineis) ? p.paineis : []).map(painel => {
+                                        return {
+                                            id: painel.id || ('painel_' + Math.random().toString(36).substr(2, 9)),
+                                            titulo: painel.titulo || 'Painel',
+                                            tag: painel.tag || 'PAINEL',
+                                            checklist: painel.checklist || this.gerarChecklistVazio(),
+                                            folhaDados: painel.folhaDados || {},
+                                            calculos: painel.calculos || {},
+                                            desenhos: painel.desenhos || {}
+                                        };
+                                    })
+                                }));
+                                return {
+                                    tagsGlobais: parseado.tagsGlobais || ["10.26.062", "Argentina", "Urgente"],
+                                    projetos: projetosLimpos
+                                };
                             }
-                        } catch(e) {
-                            console.error(`Erro ao restaurar da chave ${chave}:`, e);
-                        }
+                        } catch(e) {}
                     }
                 }
-
                 return {
-                    tagsGlobais: ["10.26.062", "Argentina", "Urgente", "10.26.065", "Veolia", "Alta"],
+                    tagsGlobais: ["10.26.062", "Argentina", "Urgente"],
                     projetos: [
                         {
                             id: "proj_1",
@@ -800,7 +789,7 @@
                                     titulo: "Painel Principal de Comando (CCM-01)",
                                     tag: "CCM-01",
                                     checklist: this.gerarChecklistVazio(),
-                                    folhaDados: this.gerarFolhaDadosVazia(),
+                                    folhaDados: {},
                                     calculos: {},
                                     desenhos: {}
                                 }
@@ -808,79 +797,6 @@
                         }
                     ]
                 };
-            }
-
-            extrairDadosTituloProjeto(titulo) {
-                const texto = String(titulo || '').trim();
-                const sat = texto.match(/\b\d{2}\.\d{2}\.\d{3}\b/);
-                let conteudo = texto;
-                if (sat) conteudo = texto.slice(sat.index + sat[0].length);
-                conteudo = conteudo.replace(/^\s*[([]?\s*/, '').replace(/[)\\]]?\s*$/, '').trim();
-                const partes = conteudo.split(/\s+-\s+/, 2);
-                return {
-                    sat: sat ? sat[0] : '',
-                    cliente: (partes[0] || '').trim(),
-                    projeto: (partes[1] || '').trim()
-                };
-            }
-
-            sincronizarIdentificacaoProjeto(proj, painel) {
-                if (!proj || !painel) return;
-                const extraidos = this.extrairDadosTituloProjeto(proj.titulo);
-                const d = painel.folhaDados ||= this.gerarFolhaDadosVazia();
-                ['sat', 'cliente', 'projeto'].forEach(chave => {
-                    if (extraidos[chave] && !String(d[chave] || '').trim()) d[chave] = extraidos[chave];
-                });
-            }
-
-            gerarFolhaDadosVazia() { return {}; }
-
-            carregarFolhaDadosNaUI(painel) {
-                const proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
-                this.sincronizarIdentificacaoProjeto(proj, painel);
-                const d = painel.folhaDados || (painel.folhaDados = this.gerarFolhaDadosVazia());
-                document.querySelectorAll('#tab-content-dados [data-fd]').forEach(el => {
-                    let value = d[el.dataset.fd];
-                    if (el.dataset.fd === 'tipoTensao' && !value) value = 'tri';
-                    if (el.type === 'radio' || el.type === 'checkbox') {
-                        el.checked = Array.isArray(value) ? value.includes(el.value) : value === el.value;
-                    } else el.value = value ?? '';
-                });
-                this.atualizarPotenciaAparenteFolhaDados(d);
-            }
-
-            atualizarPotenciaAparenteFolhaDados(dados) {
-                const d = dados || {};
-                const numero = valor => {
-                    const n = parseFloat(String(valor ?? '').trim().replace(',', '.'));
-                    return Number.isFinite(n) && n > 0 ? n : 0;
-                };
-                const corrente = numero(d.correnteNominal);
-                const tensao = numero(d.tensao);
-                const tipo = d.tipoTensao || 'tri';
-                const fator = tipo === 'mono' ? 1 : 1.73;
-                const kva = corrente * tensao * fator / 1000;
-                const campo = document.getElementById('fd-potencia-kva');
-                if (campo) campo.textContent = `${kva.toFixed(2).replace('.', ',')} kVA`;
-                return kva;
-            }
-
-            salvarFolhaDados() {
-                const proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
-                const painel = proj?.paineis.find(p => p.id === this.painelSelecionadoId);
-                if (!painel) return;
-                const d = painel.folhaDados ||= {};
-                const keys = [...new Set([...document.querySelectorAll('#tab-content-dados [data-fd]')].map(e => e.dataset.fd))];
-                keys.forEach(key => {
-                    const els = [...document.querySelectorAll(`#tab-content-dados [data-fd="${key}"]`)];
-                    if (els[0]?.type === 'radio') d[key] = els.find(e => e.checked)?.value || '';
-                    else if (els[0]?.type === 'checkbox') d[key] = els.filter(e => e.checked).map(e => e.value);
-                    else d[key] = els[0]?.value || '';
-                });
-                this.atualizarPotenciaAparenteFolhaDados(d);
-                this.salvarDadosLocal();
-                const status = document.getElementById('fd-status');
-                if (status) status.innerHTML = '<i class="fa-solid fa-check mr-1"></i> Folha salva automaticamente.';
             }
 
             salvarDadosLocal() {
@@ -897,9 +813,7 @@
 
             getTagColor(tagName) {
                 let hash = 0;
-                for (let i = 0; i < tagName.length; i++) {
-                    hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
-                }
+                for (let i = 0; i < tagName.length; i++) hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
                 return COLOR_PALETTES[Math.abs(hash) % COLOR_PALETTES.length];
             }
 
@@ -907,9 +821,7 @@
                 let obj = {};
                 for (let cat in CHECKLIST_ITEMS_TEMPLATE) {
                     obj[cat] = {};
-                    CHECKLIST_ITEMS_TEMPLATE[cat].forEach(item => {
-                        obj[cat][item] = null;
-                    });
+                    CHECKLIST_ITEMS_TEMPLATE[cat].forEach(item => { obj[cat][item] = null; });
                 }
                 return obj;
             }
@@ -932,7 +844,6 @@
 
                     let colunaDiv = document.createElement('div');
                     colunaDiv.className = 'min-w-0 flex flex-col bg-brand-card rounded-xl border border-brand-border h-[calc(100vh-11.5rem)] shadow-md';
-                    
                     colunaDiv.ondragover = (e) => e.preventDefault();
                     colunaDiv.ondrop = (e) => {
                         e.preventDefault();
@@ -954,7 +865,7 @@
                     cardsContainer.className = 'p-3.5 flex-1 overflow-y-auto space-y-3.5 min-h-[260px]';
 
                     if (projetosDaColuna.length === 0) {
-                        cardsContainer.innerHTML = `<div class="text-center py-8 text-xs text-brand-muted italic">Nenhum projeto (Arraste aqui)</div>`;
+                        cardsContainer.innerHTML = `<div class="text-center py-8 text-xs text-brand-muted italic">Nenhum projeto</div>`;
                     } else {
                         projetosDaColuna.forEach(proj => {
                             let tagsHtml = proj.tags.map(tag => `
@@ -967,11 +878,7 @@
                             let card = document.createElement('div');
                             card.className = 'bg-brand-input hover:bg-brand-border/40 border border-brand-border rounded-xl p-5 cursor-grab active:cursor-grabbing transition shadow group relative';
                             card.draggable = true;
-                            
-                            card.ondragstart = (e) => {
-                                e.dataTransfer.setData('text/plain', proj.id);
-                                card.classList.add('dragging');
-                            };
+                            card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', proj.id); card.classList.add('dragging'); };
                             card.ondragend = () => card.classList.remove('dragging');
                             card.onclick = () => app.abrirModalProjeto(proj.id);
                             
@@ -1001,49 +908,33 @@
 
             moverProjetoParaStatus(projetoId, novoStatus) {
                 let proj = this.dados.projetos.find(p => p.id === projetoId);
-                if (proj) {
-                    proj.status = novoStatus;
-                    this.salvarDadosLocal();
-                    this.renderizarKanbanProjetos();
-                }
+                if (proj) { proj.status = novoStatus; this.salvarDadosLocal(); this.renderizarKanbanProjetos(); }
             }
 
-            filtrarProjetos(termo) {
-                this.renderizarKanbanProjetos(termo);
-            }
+            filtrarProjetos(termo) { this.renderizarKanbanProjetos(termo); }
 
             abrirModalNovoProjeto() {
-                const elTitulo = document.getElementById('nproj-titulo');
-                const elTags = document.getElementById('nproj-tags');
-                const elModal = document.getElementById('modal-novo-projeto');
-                if (elTitulo) elTitulo.value = '';
-                if (elTags) elTags.value = '';
-                if (elModal) elModal.classList.remove('hidden');
+                document.getElementById('nproj-titulo').value = '';
+                document.getElementById('nproj-tags').value = '';
+                document.getElementById('modal-novo-projeto').classList.remove('hidden');
             }
 
-            fecharModalNovoProjeto() {
-                const elModal = document.getElementById('modal-novo-projeto');
-                if (elModal) elModal.classList.add('hidden');
-            }
+            fecharModalNovoProjeto() { document.getElementById('modal-novo-projeto').classList.add('hidden'); }
 
             salvarNovoProjeto(event) {
                 event.preventDefault();
                 let titulo = document.getElementById('nproj-titulo')?.value || '';
                 let tagsInput = document.getElementById('nproj-tags')?.value || '';
                 let tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t.length > 0) : ['Projeto'];
-                
                 tags.forEach(t => this.adicionarTagGlobal(t));
-
-                let status = document.getElementById('nproj-status')?.value || 'nao_iniciado';
-                let data = document.getElementById('nproj-data')?.value || 'hoje';
 
                 let novoProj = {
                     id: 'proj_' + Date.now(),
-                    titulo, tags, status, data,
-                    identificacaoProjeto: this.extrairDadosTituloProjeto(titulo),
+                    titulo, tags,
+                    status: document.getElementById('nproj-status')?.value || 'nao_iniciado',
+                    data: document.getElementById('nproj-data')?.value || 'hoje',
                     paineis: []
                 };
-
                 this.dados.projetos.push(novoProj);
                 this.salvarDadosLocal();
                 this.fecharModalNovoProjeto();
@@ -1051,7 +942,7 @@
             }
 
             deletarProjeto(id) {
-                if (!confirm("Deseja realmente excluir este projeto e todos os seus painéis?")) return;
+                if (!confirm("Deseja realmente excluir este projeto?")) return;
                 this.dados.projetos = this.dados.projetos.filter(p => p.id !== id);
                 this.salvarDadosLocal();
                 this.renderizarKanbanProjetos();
@@ -1063,47 +954,34 @@
                     proj.tags = proj.tags.filter(t => t !== tagNome);
                     this.salvarDadosLocal();
                     this.renderizarKanbanProjetos();
-                    if (this.projetoSelecionadoId === projId) this.abrirModalProjeto(projId);
                 }
             }
 
             abrirModalAdicionarTag(projId) {
                 this.projetoParaAdicionarTagId = projId;
-                const inputNova = document.getElementById('input-nova-tag');
-                if (inputNova) inputNova.value = '';
+                document.getElementById('input-nova-tag').value = '';
                 const container = document.getElementById('tags-existentes-list');
-                if (!container) return;
                 container.innerHTML = '';
                 let proj = this.dados.projetos.find(p => p.id === projId);
-
-                if (this.dados.tagsGlobais.length === 0) {
-                    container.innerHTML = `<span class="text-[11px] text-brand-muted italic p-1">Nenhuma tag cadastrada ainda.</span>`;
-                } else {
-                    this.dados.tagsGlobais.forEach(tag => {
-                        if (!proj.tags.includes(tag)) {
-                            let btn = document.createElement('button');
-                            btn.type = 'button';
-                            btn.className = `font-mono text-[10px] px-2 py-0.5 rounded border ${this.getTagColor(tag)} hover:opacity-80 transition cursor-pointer`;
-                            btn.innerText = `+ ${tag}`;
-                            btn.onclick = () => {
-                                proj.tags.push(tag);
-                                this.salvarDadosLocal();
-                                this.fecharModalAdicionarTag();
-                                this.renderizarKanbanProjetos();
-                                if (this.projetoSelecionadoId === projId) this.abrirModalProjeto(projId);
-                            };
-                            container.appendChild(btn);
-                        }
-                    });
-                }
-                const modalAdd = document.getElementById('modal-adicionar-tag');
-                if (modalAdd) modalAdd.classList.remove('hidden');
+                this.dados.tagsGlobais.forEach(tag => {
+                    if (!proj.tags.includes(tag)) {
+                        let btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = `font-mono text-[10px] px-2 py-0.5 rounded border ${this.getTagColor(tag)} hover:opacity-80 transition cursor-pointer`;
+                        btn.innerText = `+ ${tag}`;
+                        btn.onclick = () => {
+                            proj.tags.push(tag);
+                            this.salvarDadosLocal();
+                            this.fecharModalAdicionarTag();
+                            this.renderizarKanbanProjetos();
+                        };
+                        container.appendChild(btn);
+                    }
+                });
+                document.getElementById('modal-adicionar-tag').classList.remove('hidden');
             }
 
-            fecharModalAdicionarTag() {
-                const modalAdd = document.getElementById('modal-adicionar-tag');
-                if (modalAdd) modalAdd.classList.add('hidden');
-            }
+            fecharModalAdicionarTag() { document.getElementById('modal-adicionar-tag').classList.add('hidden'); }
 
             confirmarAdicionarTag() {
                 let val = document.getElementById('input-nova-tag')?.value.trim() || '';
@@ -1114,45 +992,30 @@
                     this.adicionarTagGlobal(val);
                     this.salvarDadosLocal();
                     this.renderizarKanbanProjetos();
-                    if (this.projetoSelecionadoId === proj.id) this.abrirModalProjeto(proj.id);
                 }
                 this.fecharModalAdicionarTag();
             }
 
             abrirModalGerenciarTags() {
                 const container = document.getElementById('global-tags-list');
-                if (!container) return;
                 container.innerHTML = '';
-                if (this.dados.tagsGlobais.length === 0) {
-                    container.innerHTML = `<div class="text-center py-4 text-xs text-brand-muted italic">Nenhuma tag global cadastrada.</div>`;
-                } else {
-                    this.dados.tagsGlobais.forEach(tag => {
-                        let div = document.createElement('div');
-                        div.className = 'flex items-center justify-between bg-brand-input border border-brand-border rounded-lg px-3 py-2';
-                        div.innerHTML = `
-                            <span class="font-mono text-xs px-2 py-0.5 rounded border ${this.getTagColor(tag)}">${tag}</span>
-                            <button onclick="app.excluirTagGlobal('${tag}')" class="text-brand-muted hover:text-red-400 text-xs transition" title="Excluir tag de todo o sistema"><i class="fa-solid fa-trash"></i></button>
-                        `;
-                        container.appendChild(div);
-                    });
-                }
-                const modalTags = document.getElementById('modal-gerenciar-tags');
-                if (modalTags) modalTags.classList.remove('hidden');
+                this.dados.tagsGlobais.forEach(tag => {
+                    let div = document.createElement('div');
+                    div.className = 'flex items-center justify-between bg-brand-input border border-brand-border rounded-lg px-3 py-2';
+                    div.innerHTML = `<span class="font-mono text-xs px-2 py-0.5 rounded border ${this.getTagColor(tag)}">${tag}</span>
+                        <button onclick="app.excluirTagGlobal('${tag}')" class="text-brand-muted hover:text-red-400 text-xs transition"><i class="fa-solid fa-trash"></i></button>`;
+                    container.appendChild(div);
+                });
+                document.getElementById('modal-gerenciar-tags').classList.remove('hidden');
             }
 
-            fecharModalGerenciarTags() {
-                const modalTags = document.getElementById('modal-gerenciar-tags');
-                if (modalTags) modalTags.classList.add('hidden');
-                this.renderizarKanbanProjetos();
-            }
+            fecharModalGerenciarTags() { document.getElementById('modal-gerenciar-tags').classList.add('hidden'); }
 
             excluirTagGlobal(tagNome) {
-                if (!confirm(`Deseja excluir a tag "${tagNome}" globalmente? Ela será removida de todos los projetos.`)) return;
                 this.dados.tagsGlobais = this.dados.tagsGlobais.filter(t => t !== tagNome);
                 this.dados.projetos.forEach(p => { p.tags = p.tags.filter(t => t !== tagNome); });
                 this.salvarDadosLocal();
                 this.abrirModalGerenciarTags();
-                this.renderizarKanbanProjetos();
             }
 
             abrirModalProjeto(projetoId) {
@@ -1167,35 +1030,24 @@
                     </span>
                 `).join('');
 
-                const mpTags = document.getElementById('mp-tags-container');
-                if (mpTags) {
-                    mpTags.innerHTML = tagsHtml + `
-                        <button onclick="app.abrirModalAdicionarTag('${proj.id}')" class="w-6 h-6 rounded bg-brand-card hover:bg-brand-accent text-brand-muted hover:text-brand-dark flex items-center justify-center text-xs transition border border-brand-border"><i class="fa-solid fa-plus"></i></button>
-                    `;
-                }
-                const mpTit = document.getElementById('mp-titulo');
-                if (mpTit) mpTit.innerText = proj.titulo;
+                document.getElementById('mp-tags-container').innerHTML = tagsHtml + `<button onclick="app.abrirModalAdicionarTag('${proj.id}')" class="w-6 h-6 rounded bg-brand-card hover:bg-brand-accent text-brand-muted hover:text-brand-dark flex items-center justify-center text-xs transition border border-brand-border"><i class="fa-solid fa-plus"></i></button>`;
+                document.getElementById('mp-titulo').innerText = proj.titulo;
                 this.renderizarListaPaineisDoProjeto(proj);
-                const modalProj = document.getElementById('modal-projeto');
-                if (modalProj) modalProj.classList.remove('hidden');
+                document.getElementById('modal-projeto').classList.remove('hidden');
             }
 
             fecharModalProjeto() {
-                const modalProj = document.getElementById('modal-projeto');
-                if (modalProj) modalProj.classList.add('hidden');
+                document.getElementById('modal-projeto').classList.add('hidden');
                 this.renderizarKanbanProjetos();
             }
 
             renderizarListaPaineisDoProjeto(proj) {
                 const container = document.getElementById('mp-paineis-list');
-                if (!container) return;
                 container.innerHTML = '';
-
                 if (proj.paineis.length === 0) {
-                    container.innerHTML = `<div class="text-center py-6 text-xs text-brand-muted italic bg-brand-card rounded-xl border border-brand-border">Nenhum painel cadastrado neste projeto. Clique em "Adicionar Painel" acima.</div>`;
+                    container.innerHTML = `<div class="text-center py-6 text-xs text-brand-muted italic bg-brand-card rounded-xl border border-brand-border">Nenhum painel cadastrado.</div>`;
                     return;
                 }
-
                 proj.paineis.forEach(painel => {
                     let totalCheck = 0, concluidosCheck = 0;
                     for (let cat in (painel.checklist || {})) {
@@ -1209,16 +1061,13 @@
                     let div = document.createElement('div');
                     div.className = 'bg-brand-card hover:bg-brand-border/40 border border-brand-border rounded-xl p-3.5 flex items-center justify-between transition cursor-pointer group';
                     div.onclick = (ev) => { if (ev.target.closest('button')) return; app.abrirModalChecklist(painel.id); };
-
                     div.innerHTML = `
                         <div class="flex items-center space-x-3 truncate">
                             <span class="font-mono text-[11px] text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded border border-brand-accent/30">${painel.tag || 'PAINEL'}</span>
                             <span class="text-xs text-brand-text font-medium truncate">${painel.titulo}</span>
                         </div>
                         <div class="flex items-center space-x-3 flex-shrink-0">
-                            <span class="text-emerald-400 font-medium text-xs bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-800/30 flex items-center space-x-1.5">
-                                <i class="fa-solid fa-list-check text-[10px]"></i><span>${progresso}% concluído</span>
-                            </span>
+                            <span class="text-emerald-400 font-medium text-xs bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-800/30">${progresso}% concluído</span>
                             <button onclick="event.stopPropagation(); app.deletarPainel('${painel.id}')" class="text-brand-muted hover:text-red-400 p-1.5 transition"><i class="fa-solid fa-trash text-xs"></i></button>
                         </div>
                     `;
@@ -1227,43 +1076,33 @@
             }
 
             abrirModalNovoPainel() {
-                const npTit = document.getElementById('np-titulo');
-                const npTag = document.getElementById('np-tag');
-                const modalNp = document.getElementById('modal-novo-painel');
-                if (npTit) npTit.value = '';
-                if (npTag) npTag.value = '';
-                if (modalNp) modalNp.classList.remove('hidden');
+                document.getElementById('np-titulo').value = '';
+                document.getElementById('np-tag').value = '';
+                document.getElementById('modal-novo-painel').classList.remove('hidden');
             }
 
-            fecharModalNovoPainel() {
-                const modalNp = document.getElementById('modal-novo-painel');
-                if (modalNp) modalNp.classList.add('hidden');
-            }
+            fecharModalNovoPainel() { document.getElementById('modal-novo-painel').classList.add('hidden'); }
 
             salvarNovoPainel(event) {
                 event.preventDefault();
-                let titulo = document.getElementById('np-titulo')?.value || '';
-                let tag = document.getElementById('np-tag')?.value || 'PAINEL';
                 let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
                 if (!proj) return;
-
-                let novoPainel = {
+                proj.paineis.push({
                     id: 'painel_' + Date.now(),
-                    titulo, tag,
+                    titulo: document.getElementById('np-titulo').value,
+                    tag: document.getElementById('np-tag').value || 'PAINEL',
                     checklist: this.gerarChecklistVazio(),
-                    folhaDados: this.gerarFolhaDadosVazia(),
+                    folhaDados: {},
                     calculos: {},
                     desenhos: {}
-                };
-
-                proj.paineis.push(novoPainel);
+                });
                 this.salvarDadosLocal();
                 this.fecharModalNovoPainel();
                 this.renderizarListaPaineisDoProjeto(proj);
             }
 
             deletarPainel(painelId) {
-                if (!confirm("Deseja excluir este painel?")) return;
+                if (!confirm("Excluir este painel?")) return;
                 let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
                 if (!proj) return;
                 proj.paineis = proj.paineis.filter(p => p.id !== painelId);
@@ -1272,57 +1111,36 @@
             }
 
             abrirModalChecklist(painelId) {
-                try {
-                    const proj = this.dados?.projetos?.find(p => String(p.id) === String(this.projetoSelecionadoId));
-                    const painel = proj?.paineis?.find(p => String(p.id) === String(painelId));
-                    if (!painel) {
-                        alert('Painel não encontrado.');
-                        return;
-                    }
+                const proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                const painel = proj?.paineis.find(p => p.id === painelId);
+                if (!painel) return;
 
-                    this.painelSelecionadoId = painel.id;
-                    painel.checklist = painel.checklist && typeof painel.checklist === 'object' ? painel.checklist : {};
-                    const checklistPadrao = this.gerarChecklistVazio();
-                    Object.keys(checklistPadrao).forEach(cat => {
-                        const salvo = painel.checklist[cat] && typeof painel.checklist[cat] === 'object' ? painel.checklist[cat] : {};
-                        painel.checklist[cat] = Object.assign({}, checklistPadrao[cat], salvo);
-                    });
-                    if (!painel.folhaDados || typeof painel.folhaDados !== 'object') painel.folhaDados = this.gerarFolhaDadosVazia();
-                    if (!painel.calculos || typeof painel.calculos !== 'object') painel.calculos = {};
-                    if (!painel.desenhos || typeof painel.desenhos !== 'object') painel.desenhos = {};
+                this.painelSelecionadoId = painel.id;
+                document.getElementById('modal-painel-titulo').innerText = painel.titulo || painel.tag;
+                document.getElementById('modal-painel-sub').innerText = `Projeto: ${proj.titulo}`;
+                document.getElementById('modal-tags-container').innerHTML = proj.tags.map(tag => `<span class="font-mono text-xs px-2.5 py-1 rounded border ${this.getTagColor(tag)}">${tag}</span>`).join('');
 
-                    const modal = document.getElementById('modal-checklist');
-                    const elTit = document.getElementById('modal-painel-titulo');
-                    const elSub = document.getElementById('modal-painel-sub');
-                    const elTags = document.getElementById('modal-tags-container');
+                document.getElementById('modal-checklist').classList.remove('hidden');
+                this.trocarAbaPainel('dados');
 
-                    if (elTit) elTit.innerText = painel.titulo || painel.tag || 'Painel';
-                    if (elSub) elSub.innerText = `Projeto: ${proj.titulo || 'Projeto'}`;
-                    const tags = Array.isArray(proj.tags) ? proj.tags : [];
-                    if (elTags) elTags.innerHTML = tags.map(tag => `<span class="font-mono text-xs px-2.5 py-1 rounded border ${this.getTagColor(String(tag))}">${String(tag)}</span>`).join('');
-
-                    if (modal) modal.classList.remove('hidden');
-                    this.trocarAbaPainel('dados');
-
-                    this.renderizarConteudoChecklist(painel);
-                    this.carregarFolhaDadosNaUI(painel);
-                    this.salvarDadosLocal();
-                } catch (err) {
-                    console.error('Erro ao abrir painel:', err);
-                    alert('Erro ao abrir painel: ' + (err?.message || err));
-                }
+                this.renderizarConteudoChecklist(painel);
+                this.carregarFolhaDadosNaUI(painel);
+                
+                // Carregar iframe da lista referenciando ferramentas/lista.html com o painelId
+                const iframeLista = document.getElementById('iframe-lista-src');
+                iframeLista.src = `ferramentas\\lista.html?painelId=${painel.id}&v=${Date.now()}`;
             }
 
             fecharModalChecklistParaPainel() {
-                const modalCheck = document.getElementById('modal-checklist');
-                if (modalCheck) modalCheck.classList.add('hidden');
+                document.getElementById('modal-checklist').classList.add('hidden');
+                document.getElementById('iframe-lista-src').src = '';
                 let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
                 if (proj) this.renderizarListaPaineisDoProjeto(proj);
             }
 
             trocarAbaPainel(nomeAba) {
                 this.abaAtiva = nomeAba;
-                ['dados', 'checklist', 'calculos'].forEach(aba => {
+                ['dados', 'lista', 'checklist', 'calculos'].forEach(aba => {
                     const btn = document.getElementById(`tab-btn-${aba}`);
                     const content = document.getElementById(`tab-content-${aba}`);
                     if (aba === nomeAba) {
@@ -1335,119 +1153,102 @@
                 });
             }
 
-            abrirFerramentaCalculo(tituloFerramenta, caminhoHtml) {
-                const elIframeTit = document.getElementById('iframe-ferramenta-titulo');
-                const elIframeSub = document.getElementById('iframe-ferramenta-sub');
-                const elIframeSrc = document.getElementById('iframe-ferramenta-src');
-                const modalFerramenta = document.getElementById('modal-ferramenta-iframe');
-                
-                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
-                let painel = proj?.paineis.find(p => p.id === this.painelSelecionadoId);
-                
-                if (elIframeTit) elIframeTit.innerText = tituloFerramenta;
-                if (elIframeSub) elIframeSub.innerText = `Painel Ativo: ${painel ? (painel.tag + ' - ' + painel.titulo) : 'Geral'}`;
-                
-                let nomeFerramenta = caminhoHtml.split('/').pop().split('\\').pop().replace('.html', '').trim();
-                let dadosExistentes = painel && painel.calculos ? painel.calculos[nomeFerramenta] : null;
-
-                if (elIframeSrc) {
-                    const separador = caminhoHtml.includes('?') ? '&' : '?';
-                    elIframeSrc.src = `${caminhoHtml}${separador}painelId=${this.painelSelecionadoId}&v=${Date.now()}`;
-                    
-                    elIframeSrc.onload = () => {
-                        if (dadosExistentes && elIframeSrc.contentWindow) {
-                            elIframeSrc.contentWindow.postMessage({
-                                tipo: 'CARREGAR_DADOS_FERRAMENTA',
-                                dados: dadosExistentes
-                            }, '*');
-                        }
-                    };
-                }
-                if (modalFerramenta) modalFerramenta.classList.remove('hidden');
-            }
-
-            fecharModalFerramentaIframe() {
-                const modalFerramenta = document.getElementById('modal-ferramenta-iframe');
-                const elIframeSrc = document.getElementById('iframe-ferramenta-src');
-                if (modalFerramenta) modalFerramenta.classList.add('hidden');
-                if (elIframeSrc) elIframeSrc.src = '';
-            }
-
             renderizarConteudoChecklist(painel) {
                 for (let cat in CHECKLIST_ITEMS_TEMPLATE) {
                     const container = document.getElementById(`list-items-${cat}`);
                     if (!container) continue;
                     container.innerHTML = '';
-
-                    let totalItens = CHECKLIST_ITEMS_TEMPLATE[cat].length;
-                    let itensConcluidos = 0;
+                    let total = CHECKLIST_ITEMS_TEMPLATE[cat].length, concluidos = 0;
 
                     CHECKLIST_ITEMS_TEMPLATE[cat].forEach(itemNome => {
-                        let statusAtual = painel.checklist[cat][itemNome];
-                        if (statusAtual === 'ok' || statusAtual === 'na') itensConcluidos++;
+                        let st = painel.checklist[cat][itemNome];
+                        if (st === 'ok' || st === 'na') concluidos++;
+                        let isOk = st === 'ok', isNa = st === 'na';
 
-                        let isOk = statusAtual === 'ok';
-                        let isNa = statusAtual === 'na';
-
-                        let itemDiv = document.createElement('div');
-                        itemDiv.className = 'bg-brand-input border border-brand-border rounded-xl p-3 flex items-center justify-between text-xs shadow-sm hover:border-brand-accent/50 transition';
-                        
-                        itemDiv.innerHTML = `
-                            <span class="font-medium text-brand-text pr-2 leading-snug">${itemNome}</span>
+                        let div = document.createElement('div');
+                        div.className = 'bg-brand-input border border-brand-border rounded-xl p-3 flex items-center justify-between text-xs shadow-sm';
+                        div.innerHTML = `<span class="font-medium text-brand-text pr-2">${itemNome}</span>
                             <div class="flex items-center space-x-1.5 flex-shrink-0">
-                                <button onclick="app.mudarStatusCheckItem('${cat}', '${itemNome}', 'ok')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isOk ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30' : 'bg-brand-card text-brand-muted hover:bg-brand-border hover:text-brand-text border border-brand-border'}">OK</button>
-                                <button onclick="app.mudarStatusCheckItem('${cat}', '${itemNome}', 'na')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isNa ? 'bg-zinc-600 text-white shadow-md shadow-zinc-600/30' : 'bg-brand-card text-brand-muted hover:bg-brand-border hover:text-brand-text border border-brand-border'}">N/A</button>
-                            </div>
-                        `;
-                        container.appendChild(itemDiv);
+                                <button onclick="app.mudarStatusCheckItem('${cat}', '${itemNome}', 'ok')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isOk ? 'bg-emerald-600 text-white' : 'bg-brand-card text-brand-muted border border-brand-border'}">OK</button>
+                                <button onclick="app.mudarStatusCheckItem('${cat}', '${itemNome}', 'na')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${isNa ? 'bg-zinc-600 text-white' : 'bg-brand-card text-brand-muted border border-brand-border'}">N/A</button>
+                            </div>`;
+                        container.appendChild(div);
                     });
-
-                    let percentual = Math.round((itensConcluidos / totalItens) * 100);
-                    const valEl = document.getElementById(`prog-val-${cat}`);
-                    const barEl = document.getElementById(`prog-bar-${cat}`);
-                    if (valEl) valEl.innerText = `${percentual}%`;
-                    if (barEl) barEl.style.width = `${percentual}%`;
+                    let p = Math.round((concluidos / total) * 100);
+                    document.getElementById(`prog-val-${cat}`).innerText = `${p}%`;
+                    document.getElementById(`prog-bar-${cat}`).style.width = `${p}%`;
                 }
             }
 
-            mudarStatusCheckItem(categoria, itemNome, novoValor) {
+            mudarStatusCheckItem(cat, itemNome, val) {
                 let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
                 let painel = proj?.paineis.find(p => p.id === this.painelSelecionadoId);
                 if (!painel) return;
-
-                if (painel.checklist[categoria][itemNome] === novoValor) {
-                    painel.checklist[categoria][itemNome] = null;
-                } else {
-                    painel.checklist[categoria][itemNome] = novoValor;
-                }
-
+                painel.checklist[cat][itemNome] = (painel.checklist[cat][itemNome] === val) ? null : val;
                 this.salvarDadosLocal();
                 this.renderizarConteudoChecklist(painel);
             }
 
+            carregarFolhaDadosNaUI(painel) {
+                const d = painel.folhaDados || {};
+                document.querySelectorAll('#tab-content-dados [data-fd]').forEach(el => {
+                    let val = d[el.dataset.fd];
+                    if (el.type === 'radio' || el.type === 'checkbox') el.checked = Array.isArray(val) ? val.includes(el.value) : val === el.value;
+                    else el.value = val ?? '';
+                });
+            }
+
+            salvarFolhaDados() {
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                let painel = proj?.paineis.find(p => p.id === this.painelSelecionadoId);
+                if (!painel) return;
+                painel.folhaDados = {};
+                document.querySelectorAll('#tab-content-dados [data-fd]').forEach(el => {
+                    if (el.type === 'radio' && el.checked) painel.folhaDados[el.dataset.fd] = el.value;
+                    else if (el.type === 'checkbox') {
+                        painel.folhaDados[el.dataset.fd] = painel.folhaDados[el.dataset.fd] || [];
+                        if (el.checked && !painel.folhaDados[el.dataset.fd].includes(el.value)) painel.folhaDados[el.dataset.fd].push(el.value);
+                    } else if (el.type !== 'radio' && el.type !== 'checkbox') painel.folhaDados[el.dataset.fd] = el.value;
+                });
+                this.salvarDadosLocal();
+            }
+
+            abrirFerramentaCalculo(tituloFerramenta, caminhoHtml) {
+                const modal = document.getElementById('modal-ferramenta-iframe');
+                document.getElementById('iframe-ferramenta-titulo').innerText = tituloFerramenta;
+                let proj = this.dados.projetos.find(p => p.id === this.projetoSelecionadoId);
+                let painel = proj?.paineis.find(p => p.id === this.painelSelecionadoId);
+                let nomeFerramenta = caminhoHtml.split('/').pop().split('\\').pop().replace('.html', '').trim();
+                let dadosExistentes = painel?.calculos?.[nomeFerramenta];
+
+                const iframe = document.getElementById('iframe-ferramenta-src');
+                iframe.src = `${caminhoHtml}?painelId=${this.painelSelecionadoId}&v=${Date.now()}`;
+                iframe.onload = () => {
+                    if (dadosExistentes && iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({ tipo: 'CARREGAR_DADOS_FERRAMENTA', dados: dadosExistentes }, '*');
+                    }
+                };
+                modal.classList.remove('hidden');
+            }
+
+            fecharModalFerramentaIframe() {
+                document.getElementById('modal-ferramenta-iframe').classList.add('hidden');
+                document.getElementById('iframe-ferramenta-src').src = '';
+            }
+
             exportarDados() {
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.dados, null, 2));
-                const downloadAnchor = document.createElement('a');
-                downloadAnchor.setAttribute("href", dataStr);
-                downloadAnchor.setAttribute("download", "sat_hierarquia_projetos_backup.json");
-                document.body.appendChild(downloadAnchor);
-                downloadAnchor.click();
-                downloadAnchor.remove();
+                const dl = document.createElement('a');
+                dl.setAttribute("href", dataStr);
+                dl.setAttribute("download", "omini_projetos_backup.json");
+                document.body.appendChild(dl);
+                dl.click();
+                dl.remove();
             }
         }
 
         let app = null;
-        function iniciarOMINI() {
-            if (app) return;
-            try {
-                app = new GerenciadorProjetosPaineis();
-                window.app = app;
-            } catch (err) {
-                console.error('Falha na inicialização do OMINI:', err);
-            }
-        }
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciarOMINI, { once: true });
-        else iniciarOMINI();
+        document.addEventListener('DOMContentLoaded', () => { app = new GerenciadorProjetosPaineis(); window.app = app; });
     </script>
 </body>
 </html>
