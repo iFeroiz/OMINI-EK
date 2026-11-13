@@ -39,7 +39,7 @@
 <body class="bg-dark-900 text-gray-100 min-h-screen flex flex-col antialiased">
 
     <!-- Header / Navbar -->
-    <header class="border-b border-dark-700 bg-dark-800/80 backdrop-blur sticky top-0 z-50">
+    <header class="border-b border-dark-700 bg-dark-800/80 backdrop-blur sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -55,8 +55,14 @@
             <div class="flex items-center space-x-4">
                 <div class="hidden sm:flex items-center space-x-2 text-xs text-gray-400 bg-dark-700/50 px-3 py-1.5 rounded-full border border-dark-600">
                     <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span id="doc-count-badge">Carregando...</span>
+                    <span id="doc-count-badge">0 arquivos catalogados</span>
                 </div>
+                <a href="projplan.html" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-dark-900 transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    <span>Projetos</span>
+                </a>
             </div>
         </div>
     </header>
@@ -98,11 +104,11 @@
 
             <!-- Botões de Ação -->
             <div class="flex justify-between items-center mt-4">
-                <button id="resync-btn" class="text-xs text-gray-400 hover:text-emerald-400 transition-colors flex items-center space-x-1 cursor-pointer">
+                <button id="clear-cache-btn" class="text-xs text-gray-400 hover:text-red-400 transition-colors flex items-center space-x-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
-                    <span>Atualizar / Reindexar Pasta</span>
+                    <span>Limpar Pastas Vinculadas</span>
                 </button>
 
                 <button id="link-folder-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-dark-900 transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
@@ -124,9 +130,9 @@
                 </div>
             </div>
 
-            <!-- Filtros Dinâmicos por Fabricante -->
+            <!-- Filtros Dinâmicos por Fabricante / Pasta -->
             <div id="manufacturer-filter-container" class="mt-4 hidden">
-                <span class="text-xs font-medium text-emerald-400 block mb-2">Filtrar por Fabricante na pesquisa atual:</span>
+                <span class="text-xs font-medium text-emerald-400 block mb-2">Filtrar por Fabricante / Pasta na pesquisa atual:</span>
                 <div class="flex flex-wrap gap-2" id="manufacturer-pills">
                     <!-- Gerado Dinamicamente -->
                 </div>
@@ -147,14 +153,51 @@
         <div id="empty-state" class="w-full max-w-3xl py-16 text-center hidden">
             <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-dark-800 border border-dark-600 flex items-center justify-center text-gray-500">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                 </svg>
             </div>
-            <h3 class="text-lg font-semibold text-gray-300 mb-1">Nenhum documento encontrado</h3>
-            <p class="text-sm text-gray-500">Nenhum resultado corresponde à sua pesquisa exata nos arquivos cadastrados. Tente outros termos.</p>
+            <h3 id="empty-state-title" class="text-lg font-semibold text-gray-300 mb-1">Nenhuma pasta vinculada neste PC</h3>
+            <p id="empty-state-desc" class="text-sm text-gray-500 max-w-md mx-auto">Clique em <strong class="text-emerald-400">"Vincular Nova Pasta"</strong> ali em cima para mapear seus catálogos e manuais locais.</p>
         </div>
 
     </main>
+
+    <!-- Modal para informar o caminho real da pasta no PC atual -->
+    <div id="path-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-dark-800 border border-dark-600 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white">Confirmar Caminho da Pasta neste PC</h3>
+                    <p class="text-xs text-gray-400">Pasta selecionada: <span id="selected-folder-label" class="text-emerald-400 font-semibold"></span></p>
+                </div>
+            </div>
+
+            <p class="text-xs text-gray-300 leading-relaxed mb-3">
+                Por segurança, o navegador esconde o início do endereço do Windows. Cole abaixo o caminho completo dessa pasta neste computador (copie da barra de endereço do Explorador de Arquivos):
+            </p>
+
+            <input 
+                type="text" 
+                id="windows-path-input" 
+                placeholder="Ex: C:\Users\seu.usuario\OneDrive\Documentos\CATÁLOGOS" 
+                class="w-full px-3.5 py-3 bg-dark-900 border border-dark-600 rounded-xl text-xs font-mono text-gray-100 placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-all mb-4"
+            >
+
+            <div class="flex justify-end space-x-2.5">
+                <button id="cancel-path-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-dark-700 hover:bg-dark-600 text-gray-300 transition-all cursor-pointer">
+                    Cancelar
+                </button>
+                <button id="confirm-path-btn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-dark-900 transition-all shadow-md shadow-emerald-600/20 cursor-pointer">
+                    Salvar e Indexar Pasta
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="border-t border-dark-700 bg-dark-800/40 py-6 text-center text-xs text-gray-500">
@@ -163,12 +206,13 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-        const DB_NAME = 'OMINI_CacheDB';
-        const STORE_NAME = 'documentsCache';
+        const DB_NAME = 'OMINI_MultiFolderDB_v6';
+        const STORE_NAME = 'metadataDocumentsCache';
+        const LOCAL_STORAGE_KEY = 'OMINI_cachedDocsList_v6';
 
         function openDB() {
             return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 2);
+                const request = indexedDB.open(DB_NAME, 1);
                 request.onupgradeneeded = (e) => {
                     const db = e.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -180,80 +224,127 @@
             });
         }
 
-        async function saveCachedDocuments(docs, folderName) {
+        async function saveCachedDocuments(docs) {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(docs));
+            } catch (lsErr) {
+                console.warn("Aviso no localStorage:", lsErr);
+            }
+
             const db = await openDB();
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            store.put(docs, 'cachedDocsList');
-            store.put(folderName, 'linkedFolderName');
-            return tx.complete;
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                store.put(docs, 'cachedDocsList');
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
         }
 
         async function getCachedDocuments() {
+            try {
+                const localRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (localRaw) {
+                    const parsed = JSON.parse(localRaw);
+                    if (Array.isArray(parsed)) {
+                        return parsed;
+                    }
+                }
+            } catch (lsErr) {
+                console.warn("Erro ao ler localStorage:", lsErr);
+            }
+
             const db = await openDB();
             const tx = db.transaction(STORE_NAME, 'readonly');
             const store = tx.objectStore(STORE_NAME);
             return new Promise((resolve) => {
                 const req = store.get('cachedDocsList');
-                req.onsuccess = () => resolve(req.result || null);
-                req.onerror = () => resolve(null);
+                req.onsuccess = () => resolve(req.result || []);
+                req.onerror = () => resolve([]);
             });
         }
 
-        // Base de Dados Inicial Padrão
-        let documentsDB = [
-            {
-                id: 1,
-                name: "Catalogo_Disjuntores_Siemens_5SL1.pdf",
-                type: "pdf",
-                manufacturer: "Siemens",
-                category: "Manuais/Siemens/Protecao",
-                content: "Catálogo técnico oficial da linha Siemens. Disjuntores miniatura 5SL1, 5SL6 e 5SY para proteção de instalações elétricas residenciais e industriais. Corrente nominal de 0.3 A até 63 A, curva C, capacidade de interrupção até 6kA. Especificações para CCM e QGBT."
-            },
-            {
-                id: 2,
-                name: "Especificacao_Tecnica_Reles_3RV2.docx",
-                type: "docx",
-                manufacturer: "Siemens",
-                category: "Engenharia/Projetos/Siemens",
-                content: "Especificação técnica para painéis elétricos CCM e QGBT. Utilização obrigatória de disjuntores termomagnéticos 5SL1 para circuitos de comando auxiliares e chaves disjuntores 3RV2 para proteção de motores elétricos trifásicos. Tabela de ajuste de sobrecarga e correntes nominais."
-            },
-            {
-                id: 3,
-                name: "Manual_Inversor_ABB_ACS580.pdf",
-                type: "pdf",
-                manufacturer: "ABB",
-                category: "Manuais/ABB/Drives",
-                content: "Manual do usuário e guia de instalação rápida para Inversores ABB ACS580. Parâmetros de controle vetorial, diagramas de fiação, entradas digitais e analógicas, comunicação Modbus RTU integrada. Compatível com motores de indução e imãs permanentes."
-            },
-            {
-                id: 4,
-                name: "Tabela_Precos_Schneider_2026.xlsx",
-                type: "xlsx",
-                manufacturer: "Schneider",
-                category: "Comercial/Schneider",
-                content: "Tabela de preços atualizada Schneider Electric. Itens inclusos: disjuntores Acti9 iC60N, relés térmicos, contatores TeSys D, inversores de frequência Altivar ATV320 e softstarters ATS48. Códigos referência e descontos corporativos aplicáveis para integradores."
-            }
-        ];
-
+        let documentsDB = [];
         let currentFilter = 'all';
         let currentManufacturerFilter = 'all';
-        let activeDirectoryHandle = null;
 
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('clear-btn');
         const resultsContainer = document.getElementById('results-container');
         const emptyState = document.getElementById('empty-state');
+        const emptyStateTitle = document.getElementById('empty-state-title');
+        const emptyStateDesc = document.getElementById('empty-state-desc');
         const searchStats = document.getElementById('search-stats');
         const statsText = document.getElementById('stats-text');
         const filterBtns = document.querySelectorAll('.filter-btn');
         const linkFolderBtn = document.getElementById('link-folder-btn');
-        const resyncBtn = document.getElementById('resync-btn');
+        const clearCacheBtn = document.getElementById('clear-cache-btn');
         const docCountBadge = document.getElementById('doc-count-badge');
         const manufacturerFilterContainer = document.getElementById('manufacturer-filter-container');
         const manufacturerPills = document.getElementById('manufacturer-pills');
 
-        docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
+        // Modal de Caminho
+        const pathModal = document.getElementById('path-modal');
+        const selectedFolderLabel = document.getElementById('selected-folder-label');
+        const windowsPathInput = document.getElementById('windows-path-input');
+        const cancelPathBtn = document.getElementById('cancel-path-btn');
+        const confirmPathBtn = document.getElementById('confirm-path-btn');
+
+        function askWindowsPathModal(folderName) {
+            return new Promise((resolve) => {
+                selectedFolderLabel.textContent = folderName;
+                windowsPathInput.value = '';
+                pathModal.classList.remove('hidden');
+                setTimeout(() => windowsPathInput.focus(), 50);
+
+                function cleanup() {
+                    pathModal.classList.add('hidden');
+                    confirmPathBtn.removeEventListener('click', onConfirm);
+                    cancelPathBtn.removeEventListener('click', onCancel);
+                    windowsPathInput.removeEventListener('keydown', onKeyDown);
+                }
+
+                function onConfirm() {
+                    // Remove aspas caso o usuário use "Copiar como caminho" do Windows 11 e remove barras finais
+                    const raw = windowsPathInput.value.trim().replace(/^["']+|["']+$/g, '').replace(/[\\/]+$/, '');
+                    if (!raw) {
+                        windowsPathInput.focus();
+                        return;
+                    }
+                    cleanup();
+                    resolve(raw);
+                }
+
+                function onCancel() {
+                    cleanup();
+                    resolve(null);
+                }
+
+                function onKeyDown(e) {
+                    if (e.key === 'Enter') onConfirm();
+                    if (e.key === 'Escape') onCancel();
+                }
+
+                confirmPathBtn.addEventListener('click', onConfirm);
+                cancelPathBtn.addEventListener('click', onCancel);
+                windowsPathInput.addEventListener('keydown', onKeyDown);
+            });
+        }
+
+        function buildFullWindowsPath(doc) {
+            const base = (doc.rootPath || '').replace(/[\\/]+$/, '');
+            const rel = (doc.relativePath || doc.name).replace(/\//g, '\\').replace(/^\\+/, '');
+            return base ? `${base}\\${rel}` : rel;
+        }
+
+        function buildFileUrl(windowsPath) {
+            const parts = windowsPath.replace(/\\/g, '/').split('/');
+            const encodedParts = parts.map((part, index) => {
+                if (index === 0 && /^[a-zA-Z]:$/.test(part)) return part;
+                return encodeURIComponent(part);
+            });
+            return `file:///${encodedParts.join('/')}`;
+        }
 
         function highlightText(text, query) {
             if (!query) return text;
@@ -279,7 +370,7 @@
             let queryMatchedDocs = documentsDB.filter(doc => {
                 if (currentFilter === 'pdf' && doc.type !== 'pdf') return false;
                 if (currentFilter === 'docx' && doc.type !== 'docx' && doc.type !== 'xlsx') return false;
-                if (currentFilter === 'img' && !['png', 'jpg', 'jpeg'].includes(doc.type)) return false;
+                if (currentFilter === 'img' && !['png', 'jpg', 'jpeg', 'webp'].includes(doc.type)) return false;
                 return true;
             });
 
@@ -287,12 +378,12 @@
                 const terms = query.split(/\s+/).filter(t => t.length > 0);
                 queryMatchedDocs = queryMatchedDocs.filter(doc => {
                     const nameLower = doc.name.toLowerCase();
-                    const contentLower = doc.content.toLowerCase();
-                    const categoryLower = doc.category.toLowerCase();
+                    const fullPathLower = buildFullWindowsPath(doc).toLowerCase();
+                    const categoryLower = (doc.category || '').toLowerCase();
                     const mfgLower = (doc.manufacturer || '').toLowerCase();
                     
                     return terms.every(term => 
-                        nameLower.includes(term) || contentLower.includes(term) || categoryLower.includes(term) || mfgLower.includes(term)
+                        nameLower.includes(term) || fullPathLower.includes(term) || categoryLower.includes(term) || mfgLower.includes(term)
                     );
                 });
             }
@@ -328,7 +419,7 @@
                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50' 
                 : 'bg-dark-800 text-gray-400 border-dark-600 hover:border-gray-500'
             }`;
-            allBtn.textContent = 'Todos os fabricantes';
+            allBtn.textContent = 'Todos';
             allBtn.addEventListener('click', () => {
                 currentManufacturerFilter = 'all';
                 performSearch();
@@ -354,7 +445,17 @@
         function renderResults(results, query, duration) {
             resultsContainer.innerHTML = '';
 
+            if (documentsDB.length === 0) {
+                emptyStateTitle.textContent = "Nenhuma pasta vinculada neste PC";
+                emptyStateDesc.innerHTML = 'Clique em <strong class="text-emerald-400">"Vincular Nova Pasta"</strong> ali em cima para mapear seus catálogos e manuais locais.';
+                emptyState.classList.remove('hidden');
+                searchStats.classList.add('hidden');
+                return;
+            }
+
             if (results.length === 0) {
+                emptyStateTitle.textContent = "Nenhum documento encontrado";
+                emptyStateDesc.textContent = "Nenhum resultado corresponde à sua pesquisa nos arquivos vinculados. Tente outros termos.";
                 emptyState.classList.remove('hidden');
                 searchStats.classList.add('hidden');
                 return;
@@ -371,10 +472,11 @@
                 let badgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
                 if (doc.type === 'docx') badgeColor = "bg-blue-500/10 text-blue-400 border-blue-500/30";
                 if (doc.type === 'xlsx') badgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/30";
-                if (['png', 'jpg', 'jpeg'].includes(doc.type)) badgeColor = "bg-purple-500/10 text-purple-400 border-purple-500/30";
+                if (['png', 'jpg', 'jpeg', 'webp'].includes(doc.type)) badgeColor = "bg-purple-500/10 text-purple-400 border-purple-500/30";
 
                 const highlightedName = highlightText(doc.name, query);
-                const highlightedContent = highlightText(doc.content, query);
+                const fullWindowsPath = buildFullWindowsPath(doc);
+                const fileUrl = buildFileUrl(fullWindowsPath);
 
                 card.innerHTML = `
                     <div class="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1">
@@ -389,14 +491,26 @@
                             <h3 class="text-base font-semibold text-white truncate group-hover:text-emerald-400 transition-colors">
                                 ${highlightedName}
                             </h3>
-                            <p class="text-xs text-gray-400 mt-1 line-clamp-2 leading-relaxed">
-                                ${highlightedContent}
+                            <p class="text-[11px] font-mono text-gray-400 mt-1 truncate" title="${fullWindowsPath}">
+                                ${fullWindowsPath}
                             </p>
                         </div>
                     </div>
+                    <a id="open-doc-btn-${idx}" href="${fileUrl}" target="_blank" rel="noopener noreferrer" class="flex-shrink-0 px-3.5 h-10 rounded-xl bg-dark-700 hover:bg-emerald-600 hover:text-dark-900 text-gray-200 flex items-center justify-center space-x-1.5 transition-all border border-dark-600 cursor-pointer shadow text-xs font-semibold" title="Abrir arquivo em nova aba">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Abrir Arquivo</span>
+                    </a>
                 `;
                 
                 resultsContainer.appendChild(card);
+
+                document.getElementById(`open-doc-btn-${idx}`).addEventListener('click', () => {
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(fullWindowsPath).catch(() => {});
+                    }
+                });
             });
         }
 
@@ -422,39 +536,28 @@
             return files;
         }
 
-        async function indexAndCacheFolder(dirHandle) {
-            docCountBadge.textContent = "Lendo e indexando arquivos...";
+        async function indexAndCacheFolder(dirHandle, windowsBasePath) {
+            docCountBadge.textContent = "Catalogando arquivos...";
             const allScannedFiles = await scanDirectoryRecursive(dirHandle);
             
-            let newDocsList = [...documentsDB.slice(0, 4)]; // Mantém os 4 padrões ou substitui por novos
+            let folderDocs = [];
             let loadedCount = 0;
 
             for (const item of allScannedFiles) {
                 try {
-                    const file = await item.entry.getFile();
-                    const fileName = file.name;
+                    const fileName = item.entry.name;
                     const fileExt = fileName.split('.').pop().toLowerCase();
                     
                     const pathParts = item.path.split('/');
-                    let manufacturer = "";
-                    if (pathParts.length > 1) {
-                        manufacturer = pathParts[0];
-                    }
+                    const manufacturer = pathParts.length > 1 ? pathParts[0] : dirHandle.name;
 
-                    let textSample = "";
-                    if (['txt', 'md', 'csv', 'json', 'html', 'xml', 'log'].includes(fileExt)) {
-                        textSample = await file.text();
-                    } else {
-                        textSample = `Arquivo técnico localizado em: ${item.path}. Extensão .${fileExt}.`;
-                    }
-
-                    newDocsList.push({
-                        id: newDocsList.length + 1,
+                    folderDocs.push({
                         name: fileName,
                         type: fileExt,
                         manufacturer: manufacturer,
-                        category: `Pasta / ${dirHandle.name}/${item.path.substring(0, item.path.lastIndexOf('/') + 1)}`.replace(/\/$/, ''),
-                        content: textSample.slice(0, 1000)
+                        category: `${dirHandle.name}/${item.path.substring(0, item.path.lastIndexOf('/') + 1)}`.replace(/\/$/, ''),
+                        rootPath: windowsBasePath,
+                        relativePath: item.path
                     });
                     loadedCount++;
                 } catch (fileErr) {
@@ -462,25 +565,33 @@
                 }
             }
 
-            // Salva na memória do navegador (IndexedDB)
-            documentsDB = newDocsList;
-            await saveCachedDocuments(documentsDB, dirHandle.name);
+            // Atualiza se essa mesma pasta já existia e acumula com outras pastas vinculadas anteriormente
+            const otherFoldersDocs = documentsDB.filter(
+                d => (d.rootPath || '').toLowerCase() !== windowsBasePath.toLowerCase()
+            );
+            documentsDB = [...otherFoldersDocs, ...folderDocs];
 
-            docCountBadge.textContent = `${documentsDB.length} arquivos catalogados`;
+            await saveCachedDocuments(documentsDB);
+
+            docCountBadge.textContent = `${documentsDB.length} arquivos salvos`;
             performSearch();
             return loadedCount;
         }
 
         async function linkLocalFolder() {
             if (!window.showDirectoryPicker) {
-                alert("Seu navegador não suporta a seleção direta de pastas. Utilize o Google Chrome ou Microsoft Edge.");
+                alert("Seu navegador não suporta a seleção direta de pastas. Utilize o Microsoft Edge ou Google Chrome.");
                 return;
             }
 
             try {
                 const dirHandle = await window.showDirectoryPicker();
-                const loadedCount = await indexAndCacheFolder(dirHandle);
-                alert(`Sucesso! ${loadedCount} arquivos da pasta "${dirHandle.name}" foram indexados e salvos em cache.`);
+                const windowsBasePath = await askWindowsPathModal(dirHandle.name);
+                
+                if (!windowsBasePath) return;
+
+                const loadedCount = await indexAndCacheFolder(dirHandle, windowsBasePath);
+                alert(`Show! 🎉 ${loadedCount} arquivos da pasta "${dirHandle.name}" foram salvos neste PC!`);
             } catch (err) {
                 if (err.name !== 'AbortError') {
                     console.error(err);
@@ -489,13 +600,22 @@
             }
         }
 
-        // Carregamento instantâneo do Cache na inicialização
+        async function clearLinkedFolders() {
+            if (documentsDB.length === 0) return;
+            if (!confirm("Deseja remover todas as pastas vinculadas do cache deste computador?")) return;
+
+            documentsDB = [];
+            await saveCachedDocuments([]);
+            docCountBadge.textContent = "0 arquivos catalogados";
+            performSearch();
+        }
+
         async function initApp() {
             try {
                 const cachedDocs = await getCachedDocuments();
                 if (cachedDocs && cachedDocs.length > 0) {
                     documentsDB = cachedDocs;
-                    docCountBadge.textContent = `${documentsDB.length} arquivos em cache`;
+                    docCountBadge.textContent = `${documentsDB.length} arquivos salvos`;
                 }
             } catch (err) {
                 console.warn("Erro ao ler cache local:", err);
@@ -503,23 +623,6 @@
             performSearch();
         }
 
-        // Botão de reescanear a pasta caso tenha adicionado novos arquivos no PC
-        resyncBtn.addEventListener('click', async () => {
-            if (!window.showDirectoryPicker) {
-                alert("Seu navegador não suporta reindexação direta.");
-                return;
-            }
-            try {
-                alert("Por favor, selecione novamente a pasta dos arquivos para atualizar o cache.");
-                const dirHandle = await window.showDirectoryPicker();
-                const loadedCount = await indexAndCacheFolder(dirHandle);
-                alert(`Cache atualizado com sucesso! ${loadedCount} arquivos carregados.`);
-            } catch (err) {
-                if (err.name !== 'AbortError') console.error(err);
-            }
-        });
-
-        // Event Listeners
         searchInput.addEventListener('input', () => {
             currentManufacturerFilter = 'all';
             performSearch();
@@ -547,8 +650,8 @@
         });
 
         linkFolderBtn.addEventListener('click', linkLocalFolder);
+        clearCacheBtn.addEventListener('click', clearLinkedFolders);
 
-        // Inicialização
         window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>

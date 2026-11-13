@@ -71,45 +71,27 @@
         .dragging { opacity: 0.4; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col lg:flex-row bg-brand-dark text-brand-text overflow-x-hidden">
-
-    <!-- BARRA LATERAL -->
-    <aside class="w-full lg:w-72 bg-brand-aside border-r lg:border-r border-b lg:border-b-0 border-brand-border p-4 flex flex-col justify-between shrink-0 z-20">
-        <div>
-            <div class="flex items-center gap-3 px-2 py-3 mb-6 border-b border-brand-border/60">
-                <a href="index.html" aria-label="Voltar para o HUB" title="Voltar" class="w-9 h-9 rounded-lg bg-brand-accent/20 border border-brand-accent flex items-center justify-center text-brand-accent font-bold text-xl">
-                    <i class="fa-solid fa-bolt"></i>
-                </a>
-                <div>
-                    <h1 class="font-bold tracking-wider text-brand-text text-base">OMINI</h1>
-                    <p class="text-[10px] text-brand-accent tracking-widest font-mono uppercase">Electrical Lab</p>
-                </div>
-            </div>
-
-            <nav class="flex flex-row lg:flex-col gap-2 lg:gap-0 lg:space-y-1 overflow-x-auto pb-2 lg:pb-0">
-                <a href="#" class="nav-btn w-auto lg:w-full shrink-0 whitespace-nowrap flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium bg-brand-accent/15 text-brand-accent border border-brand-accent/30">
-                    <i class="fa-solid fa-table-columns w-5 text-center"></i>
-                    <span>Projetos & Painéis</span>
-                </a>
-            </nav>
-        </div>
-
-        <div class="mt-8 pt-4 border-t border-brand-border/60 px-2 hidden lg:block">
-            <div class="flex items-center gap-2 text-xs text-brand-muted">
-                <span class="w-2 h-2 rounded-full bg-brand-accent"></span>
-                <span>Gerenciador Ativo</span>
-            </div>
-            <p class="text-[10px] text-brand-muted mt-1">SAT Sistemas - v3.21 (PostMessage Sync)</p>
-        </div>
-    </aside>
+<body class="min-h-screen flex flex-col bg-brand-dark text-brand-text overflow-x-hidden">
 
     <!-- CONTEÚDO PRINCIPAL (KANBAN) -->
     <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
         
         <header class="h-16 border-b border-brand-border bg-brand-aside px-4 sm:px-6 flex items-center justify-between sticky top-0 z-10 shrink-0">
-            <div class="flex items-center gap-2 sm:gap-3 min-w-0 mr-2">
-                <span class="text-brand-accent text-lg shrink-0"><i class="fa-solid fa-folder-open"></i></span>
-                <h2 class="font-semibold text-brand-text text-sm sm:text-base truncate">Gerenciamento de Projetos</h2>
+            <div class="flex items-center gap-3 sm:gap-4 min-w-0 mr-2">
+                <div class="flex items-center gap-3 pr-3 sm:pr-4 border-r border-brand-border/60 shrink-0">
+                    <a href="index.html" aria-label="Voltar para o HUB" title="Voltar" class="w-9 h-9 rounded-lg bg-brand-accent/20 border border-brand-accent flex items-center justify-center text-brand-accent font-bold text-xl">
+                        <i class="fa-solid fa-bolt"></i>
+                    </a>
+                    <div>
+                        <h1 class="font-bold tracking-wider text-brand-text text-base leading-tight">OMINI</h1>
+                        <p class="text-[10px] text-brand-accent tracking-widest font-mono uppercase leading-tight">Electrical Lab</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <span class="text-brand-accent text-lg shrink-0"><i class="fa-solid fa-folder-open"></i></span>
+                    <h2 class="font-semibold text-brand-text text-sm sm:text-base truncate">Gerenciamento de Projetos</h2>
+                </div>
             </div>
 
             <div class="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
@@ -127,6 +109,12 @@
                     <i class="fa-solid fa-plus"></i>
                     <span>Novo Projeto</span>
                 </button>
+
+                <a href="ekb.html" class="bg-brand-accent hover:opacity-90 text-brand-dark text-xs font-bold px-3.5 py-2 rounded-lg inline-flex items-center space-x-2 transition shadow-lg">
+                    <i class="fa-solid fa-book"></i>
+                         <span>Manuais e Catálogos</span>
+                </a>
+                
             </div>
         </header>
 
@@ -140,8 +128,8 @@
             </div>
         </div>
 
-        <div class="flex-1 overflow-x-auto p-4 md:p-8 flex items-start">
-            <div id="kanban-columns" class="flex space-x-5 min-w-max pb-4"></div>
+        <div class="flex-1 overflow-x-hidden p-4 md:p-6 flex items-start">
+            <div id="kanban-columns" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 w-full pb-4"></div>
         </div>
 
     </main>
@@ -943,7 +931,7 @@
                     });
 
                     let colunaDiv = document.createElement('div');
-                    colunaDiv.className = 'w-80 flex-shrink-0 flex flex-col bg-brand-card rounded-xl border border-brand-border h-[calc(100vh-14rem)] shadow-md';
+                    colunaDiv.className = 'min-w-0 flex flex-col bg-brand-card rounded-xl border border-brand-border h-[calc(100vh-11.5rem)] shadow-md';
                     
                     colunaDiv.ondragover = (e) => e.preventDefault();
                     colunaDiv.ondrop = (e) => {
@@ -953,31 +941,31 @@
                     };
 
                     let cabecalhoCol = `
-                        <div class="p-3.5 border-b border-brand-border flex items-center justify-between bg-brand-aside rounded-t-xl">
-                            <div class="flex items-center space-x-2">
-                                <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${col.corTag}">${col.titulo}</span>
-                                <span class="text-xs text-brand-muted font-mono">${projetosDaColuna.length}</span>
+                        <div class="p-4 border-b border-brand-border flex items-center justify-between bg-brand-aside rounded-t-xl">
+                            <div class="flex items-center space-x-2.5">
+                                <span class="px-3 py-1 rounded-md text-sm font-semibold ${col.corTag}">${col.titulo}</span>
+                                <span class="text-sm text-brand-muted font-mono">${projetosDaColuna.length}</span>
                             </div>
-                            <button onclick="app.abrirModalNovoProjeto()" class="text-brand-muted hover:text-brand-text text-xs transition"><i class="fa-solid fa-plus"></i></button>
+                            <button onclick="app.abrirModalNovoProjeto()" class="text-brand-muted hover:text-brand-text text-sm transition"><i class="fa-solid fa-plus"></i></button>
                         </div>
                     `;
 
                     let cardsContainer = document.createElement('div');
-                    cardsContainer.className = 'p-2 flex-1 overflow-y-auto space-y-2.5 min-h-[220px]';
+                    cardsContainer.className = 'p-3.5 flex-1 overflow-y-auto space-y-3.5 min-h-[260px]';
 
                     if (projetosDaColuna.length === 0) {
                         cardsContainer.innerHTML = `<div class="text-center py-8 text-xs text-brand-muted italic">Nenhum projeto (Arraste aqui)</div>`;
                     } else {
                         projetosDaColuna.forEach(proj => {
                             let tagsHtml = proj.tags.map(tag => `
-                                <span class="inline-flex items-center font-mono text-[10px] px-2 py-0.5 rounded border ${this.getTagColor(tag)}">
+                                <span class="inline-flex items-center font-mono text-xs px-2.5 py-1 rounded border ${this.getTagColor(tag)}">
                                     ${tag}
-                                    <button onclick="event.stopPropagation(); app.removerTagDoProjeto('${proj.id}', '${tag}')" class="ml-1.5 text-brand-muted hover:text-brand-text"><i class="fa-solid fa-xmark text-[9px]"></i></button>
+                                    <button onclick="event.stopPropagation(); app.removerTagDoProjeto('${proj.id}', '${tag}')" class="ml-1.5 text-brand-muted hover:text-brand-text"><i class="fa-solid fa-xmark text-[10px]"></i></button>
                                 </span>
                             `).join('');
 
                             let card = document.createElement('div');
-                            card.className = 'bg-brand-input hover:bg-brand-border/40 border border-brand-border rounded-xl p-3.5 cursor-grab active:cursor-grabbing transition shadow group relative';
+                            card.className = 'bg-brand-input hover:bg-brand-border/40 border border-brand-border rounded-xl p-5 cursor-grab active:cursor-grabbing transition shadow group relative';
                             card.draggable = true;
                             
                             card.ondragstart = (e) => {
@@ -988,17 +976,17 @@
                             card.onclick = () => app.abrirModalProjeto(proj.id);
                             
                             card.innerHTML = `
-                                <div class="flex items-start justify-between mb-2 gap-1.5">
-                                    <div class="flex flex-wrap gap-1 items-center">
+                                <div class="flex items-start justify-between mb-3 gap-2">
+                                    <div class="flex flex-wrap gap-1.5 items-center">
                                         ${tagsHtml}
-                                        <button onclick="event.stopPropagation(); app.abrirModalAdicionarTag('${proj.id}')" title="Adicionar tag" class="w-5 h-5 rounded bg-brand-card hover:bg-brand-accent text-brand-muted hover:text-brand-dark flex items-center justify-center text-[10px] transition border border-brand-border"><i class="fa-solid fa-plus"></i></button>
+                                        <button onclick="event.stopPropagation(); app.abrirModalAdicionarTag('${proj.id}')" title="Adicionar tag" class="w-6 h-6 rounded bg-brand-card hover:bg-brand-accent text-brand-muted hover:text-brand-dark flex items-center justify-center text-xs transition border border-brand-border"><i class="fa-solid fa-plus"></i></button>
                                     </div>
-                                    <button onclick="event.stopPropagation(); app.deletarProjeto('${proj.id}')" class="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-1"><i class="fa-solid fa-trash text-xs"></i></button>
+                                    <button onclick="event.stopPropagation(); app.deletarProjeto('${proj.id}')" class="text-brand-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-1"><i class="fa-solid fa-trash text-sm"></i></button>
                                 </div>
-                                <p class="text-xs text-brand-text font-medium mb-3 leading-relaxed">${proj.titulo}</p>
-                                <div class="flex items-center justify-between text-[11px] text-brand-muted pt-2.5 border-t border-brand-border/60">
-                                    <span class="flex items-center space-x-1"><i class="fa-regular fa-calendar text-brand-muted"></i><span>${proj.data || 'Prazo'}</span></span>
-                                    <span class="text-brand-accent font-medium flex items-center space-x-1 bg-brand-accent/10 px-2 py-0.5 rounded border border-brand-accent/30"><i class="fa-solid fa-boxes-stacked text-[10px]"></i><span>${proj.paineis.length} painéis</span></span>
+                                <p class="text-sm text-brand-text font-medium mb-4 leading-relaxed break-words">${proj.titulo}</p>
+                                <div class="flex items-center justify-between text-xs text-brand-muted pt-3 border-t border-brand-border/60">
+                                    <span class="flex items-center space-x-1.5"><i class="fa-regular fa-calendar text-brand-muted"></i><span>${proj.data || 'Prazo'}</span></span>
+                                    <span class="text-brand-accent font-medium flex items-center space-x-1.5 bg-brand-accent/10 px-2.5 py-1 rounded border border-brand-accent/30"><i class="fa-solid fa-boxes-stacked text-xs"></i><span>${proj.paineis.length} painéis</span></span>
                                 </div>
                             `;
                             cardsContainer.appendChild(card);
